@@ -1,0 +1,31 @@
+[
+  {
+    "FIRSTNAME": "Test",
+    "EXPENSEAPPROVER": null,
+    "RECORD_STATUS": "UPDATE",
+    "CRNKEY": "AUD",
+    "CUSTOM21": "SBS AU",
+    "PASSWORD": null,
+    "CUSTOM9": "110104",
+    "LEDGERNAME": "Oracle",
+    "CUSTOM3": "Commissioned Content",
+    "CUSTOM1": "Content TV & Online",
+    "CUSTOM7": "60020",
+    "CUSTOM8": "000000",
+    "CUSTOM5": "N",
+    "CUSTOM6": "10",
+    "EMPID": "67890",
+    "CTRYCODE": "AU",
+    "LOGINID": "test_user_02_update_success@sbs.com.au",
+    "LOCALENAME": "en_US",
+    "ISTESTEMP": "N",
+    "EXPENSEAPPROVEREMPLOYEEID": "10914",
+    "ACTIVE": "Y",
+    "EMAILADDRESS": "test_user_02_update_success@sbs.com.au",
+    "FEEDRECORDNUMBER": "89012",
+    "LASTNAME": "User_02",
+    "CUSTOM10": "4060",
+    "LEDGERKEY": "Oracle",
+    "EXPENSEUSER": "Y"
+  }
+]

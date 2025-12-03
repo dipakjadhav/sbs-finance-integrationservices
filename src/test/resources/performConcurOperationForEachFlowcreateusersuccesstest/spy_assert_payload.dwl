@@ -1,0 +1,32 @@
+%dw 2.0
+import * from dw::test::Asserts
+---
+payload must equalTo({
+  "FIRSTNAME": "Test",
+  "EXPENSEAPPROVER": null,
+  "RECORD_STATUS": "CREATE",
+  "CRNKEY": "AUD",
+  "CUSTOM21": "SBS AU",
+  "PASSWORD": null,
+  "CUSTOM9": "110104",
+  "LEDGERNAME": "Oracle",
+  "CUSTOM3": "Commissioned Content",
+  "CUSTOM1": "Content TV & Online",
+  "CUSTOM7": "60020",
+  "CUSTOM8": "000000",
+  "CUSTOM5": "N",
+  "CUSTOM6": "10",
+  "EMPID": "12345",
+  "CTRYCODE": "AU",
+  "LOGINID": "test_user_01_create_success@sbs.com.au",
+  "LOCALENAME": "en_US",
+  "ISTESTEMP": "N",
+  "EXPENSEAPPROVEREMPLOYEEID": "10914",
+  "ACTIVE": "Y",
+  "EMAILADDRESS": "test_user_01_create_success@sbs.com.au",
+  "FEEDRECORDNUMBER": "34567",
+  "LASTNAME": "User_01",
+  "CUSTOM10": "4060",
+  "LEDGERKEY": "Oracle",
+  "EXPENSEUSER": "Y"
+})

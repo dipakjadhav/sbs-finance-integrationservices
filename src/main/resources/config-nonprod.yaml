@@ -1,0 +1,315 @@
+## Common or generic propertiesapp:
+app:
+  name: ${artifactId}
+  context: "/sbs-finance-integrationservices-tst"
+  emailNotifications:
+    enabled: "true"
+    fromAddress: "enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au"
+    toAddress : "EISupport@sbs.com.au"
+    errorSubject: "Exception occurred - "
+    
+http:
+  localhost: "127.0.0.1"
+  port: "8081"
+  private:
+    port: "8091"
+
+https:
+  localhost: "127.0.0.1"
+  port: "8082"
+  basePath: "/api"
+  saePath: "/concur/processSAE"
+  private:
+    port: "8092"
+  keystore: 
+    file: "eimulegen_keystore.jks"
+    pass: "![oPb0dYNtMjc4HhIGXZLtY6rAKVD2mQtL5OMABKHyBn8QgrbMTvJSfxB5HWB74TOB]"
+
+sbsapi:
+  key: "![CbCAMBlXSxTOalwgiYypDQ==]"
+ 
+scheduler:
+  contentCreationCronExpression: "0 15 0 1/1 * ? *"
+  contentCreationSchedulerInitialState: "started"
+  contentCreationTimeZone: "Sydney/Australia"
+  creditCardProgramDecryptionCronExpression: "0 0/5 * * * ? *"  # Every 5 minutes
+  creditCardProgramDecryptionInitialState: "started"
+
+objectStore:
+  durationInMilliseconds: "360000"
+
+api:   
+  concur:
+    scheme: "HTTPS"
+    host: "712fafb9-4ffd-4b93-8257-ffadd366861d.mock.pstmn.io"
+    port: "443"
+    clientId: "c39fd1ec-5b74-41b0-b6ff-4d2dbee1578e"
+    clientSecret: "![QCNVW05acHsir5aJME1g2UAmDKsMeF93ANb0pj4e0uOhACvPUikkF1c+upmJS7VS]"
+    grantType: "refresh_token"
+    refreshToken: "![A5lnUyWcQDtj2yKIX/5xX2XscnQJvDuEUfRsTvmH2nU=]"
+    baseURI: "/api"
+    oautTokenEndPoint: "/oauth2/v0/token"
+    userBaseURI: "/user/v1.0"
+    userEndPoint: "/profile/v4/Users"
+    userProvisioningEndPoint: "/profile/identity/v4/Users"
+    userProvisioningStatusEndPoint: "/profile/v4/provisions/{provisionId}/status"
+    companyId: "e7f90e00-8b8e-4f33-8779-7558c12a9866"
+    maxRetries: "2"
+    milliSecondsBetweenRetries: "30000" 
+  eis:
+    scheme: "HTTPS"
+    port: ""
+    host: "test.ei.sbs.com.au"
+    basePath: "/sbs-eis-integrationServices-tst/api/"
+  pnc:
+    scheme: "HTTPS"
+    port: ""
+    host: "test.ei.sbs.com.au"
+    basePath: "/sbs-pnc-integrationServices-tst/api"      
+      
+concur:
+  auth:
+    scheme: "HTTPS"
+    host: "us.api.concursolutions.com"
+    port: ""
+    username: "wsadmin@sbs.com.au"
+    password: "![KdxuPOesOkQILLX6hO4YYA==]"
+    clientId: "0f115731-1df6-489c-8a4f-9834a8789595"
+    clientSecret: "55fba504-2718-4a88-acd2-88a567686a95"
+    refreshToken: "2q2v1be2r7dnuc322cl1xk52na09b9"
+    baseURI: ""
+    getAuthTokenURI: "/oauth2/v0/token"
+    
+  lists:
+    account: "7d6249ce-bc27-aa4f-b78a-c694773667cd"
+    activity: "b7833888-6915-5e43-8a56-058f7fb5dba0"
+    company: "ded26eab-dc6a-6849-b011-785e7de1fcc6"
+    content: "fb320d04-bed8-d64e-ab83-c1458fc2ec1b"
+    cost_centre: "dcf93c60-e6ea-ba40-877c-aa0f44317833"
+    division: "75996ef1-4d5e-b349-8330-78b7c2e43123"
+    platform: "33031d5c-7a4f-0f41-ad4b-f921f146abcd"
+    projectName: "50447e78-95ad-9047-b03d-2477bb8dd450"
+    projectTask: "50447e78-95ad-9047-b03d-2477bb8dd450"
+  listItem:
+    batchSize : "100"
+# Concur SFTP credentials
+concurSftp:
+  endPoint: "processConcurFiles"
+#  outboundPath: "/in"
+  outboundPath: "/test_in"
+  outboundFilePath: "src/main/resources/"
+#  inboundPath: "/out"
+  inboundPath: "/test_out"
+  accountStringJobtype: "EVI"
+  delegationOfAuthorityJobtype: "Employee"
+  sbsentitycode: "p006182028ia"
+  fileExtension: ".txt.pgp"
+  saeCronExpression: "0 0 15 ? * *"
+  saeCronTimeZoneId: "AET"
+  saeSchedulerInitialState: "started"
+  saeExportFileExtension: "*SAE*.txt.pgp"  
+ # Decryption configuration
+  decryptionPublicKeyRingFileName:  "SBSPGP-publickeyring.gpg"
+  decryptionSecretKeyRingFileName: "SBSPrivatePGP.gpg"
+  decryptionSecretAliasId: "9D3D6501D5604F88"
+  decryptionSecretPassphrase: "![1dC9bHIOH7jE6Sy6q+mgKg==]"
+  decryptionPrincipal: "concur"
+  # Encryption configuration
+  encryptionPublicKey: "concursolutions.asc.gpg"
+  encryptionPrincipal: "ConcurSolutions (Integrations) <intadmin@concursolutions.com>"
+  encryptionKey: "![/L/mn2M8gSGwZe7EjeAV5w==]"
+  encryptionFingerPrint: "FBD626CC4961A4FC"
+  reconnectionFrequencyMS: "2000"
+  reconnectionAttempts: "2"
+  
+oracleftp: 
+  saeArchivePath : "/export/home/interface/concur/sae/ap/archive"
+  processAccountStringArchivePath: "/export/home/interface/concur/projectaccountstring/"
+  delegatonOfAuthorityArchivePath : "/export/home/interface/concur/doa2/"
+  standardAccountExtractPath: "/export/home/interface/concur/sae/ap/to_process/"
+  fileExtension: ".txt"
+
+saearchive:
+  processedfileArchivepath: "/ReserveLink/Data/ZDEV/CONCUR"
+
+aurionWS:
+  basePath: "/sbs/test2/servlet/services"
+  scheme: "HTTPS"
+  port: ""
+  host: "api.aurion.cloud"  
+  username: "batch_api_concur"
+  password: "![Puoo/eKfhFs3o+V+cDReYw==]"
+  call3MileageParamFunction: "PAYROLL_ADDALLOW"
+  call3MileageParamDelimiter: ","
+  call3MileageParamWrapper: ""
+
+#SMB connector config###
+sharedrive:
+  host: "NS1HCIFSV01.sbsms.sbs.com.au"
+  domain: "SBSMS"
+  user: "esbdevctl"
+  password: '![ffKxIbP7mQrh2HP8HkwcRzv1lNJkA04O0IeetmHSBxE=]'
+  basepath: "/Finance"
+  globalShareBasepath: "/GLOBAL-SHARE"
+
+emailNotificationService:
+  endPoint: "sendEmail"
+  apikey: "AAbNQBJwYTFt"
+  
+pncServices:
+  moveFinanceEmpArchivePath: "/data/onite/test/processed"
+  aurion:
+    logonApiEndpoint: "/aurion/logon"
+    logOffApiEndpoint: "/aurion/logoff"
+    callFunction3ApiEndpoint: "/aurion/callfunction3"
+  
+sendMileageEmailNotification:
+  fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+  toAddress: "EISupport@sbs.com.au"
+  subject: "Failed Send Mileage Records Email Notification"
+
+concurEmployeeProfileEmailNotification:
+  fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+  toAddress: "EISupport@sbs.com.au"
+  subject: "Concur Employee Profile Creation - Status"
+  provisioningRequestSttausSubject: "Concur Employee Profile Creation - Provisioning Request Status"
+  
+concurChartOfAccountEmailNotification:
+  fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+  toAddress: "EISupport@sbs.com.au"
+  oracleFailuresToAddress: "EISupport@sbs.com.au"
+  processChartOfAccountStatusSubject: "Concur Chart Of Accounts Processing - Status"
+  processProjectsStatusSubject: "Concur Projects Processing - Status"
+  processProjectTasksStatusSubject: "Concur Project Tasks Processing - Status"
+
+db:
+  oracle:
+    host: "qeddb40.unix.sbs.com.au"
+    port: "1571"
+    servicename: "DEV"
+    username: "mulesoft"
+    password: "![WZayGg2Ml6unHpGHnwChjA==]"
+    reconnectionFrequencyMS: "120000"
+    reconnectionAttempts: "5" 
+    connectionPoolingProfileMaxPoolSize: "5"
+    connectionPoolingProfileMinPoolSize: "0"
+    connectionPoolingProfileAcquireIncrement: "1"
+    connectionPoolingProfilePreparedStatementCacheSize: "5"
+    connectionPoolingProfileMaxWait: "0"
+    connectionPoolingProfileMaxIdleTime: "0"
+    connectionPoolingProfileMaxStatements: "0"
+    integrationSourceTable: "XXSBS.XXSBS_INTEGRATION_SOURCE"
+    maxRetries: "3"
+    milliSecondsBetweenRetries: "60000"   
+  ibms:
+    host: "moe20.unix.sbs.com.au"
+    port: "1521"
+    servicename: "IBMSUAT"
+    username: "Mulesoft"
+    password: "![hWVK2jj6xbm/ubsH9GwUlg==]"
+    queryTimeoutInSecs: "300"
+    reconnectionFrequencyMS: "120000"
+    reconnectionAttempts: "5" 
+    poolingProfile:
+      maxPoolSize: "5"
+      minPoolSize: "0"
+      acquireIncrement: "1"
+      preparedStatementCacheSize: "0" # Statement caching disabled
+      maxWaitSeconds: "0"             # If connection pool is exhausted, wait indefinitely to obtain a connection.
+      maxIdleSeconds: "10"            # Discard connections that are idle for more than 10 seconds 
+      maxStatements: "0"              # Statement caching disabled. This overrides preparedStatementCacheSize if set
+      keepAlive: "true"
+      jdbcReadTimeout: "3000"
+      jdbcConnectionTimeout: "5000"     
+   
+smb:  
+  useJavaComponent: "false"
+  oracle:
+    host: "NS1HCIFSV02.sbsms.sbs.com.au"
+    domain: "SBSMS"
+    sharedDirectory: "S-T-DB2drive"
+    username: "esbdevctl"
+    password: "![ffKxIbP7mQrh2HP8HkwcRzv1lNJkA04O0IeetmHSBxE=]"
+    connectionTimeoutInMilliseconds: "600000"
+    socketTimeoutInMilliseconds: "600000"
+    reconnectionFrequencyMS: "120000"
+    reconnectionAttempts: "5"
+
+ftp:
+  oracle:
+    host: "qedapp44.unix.sbs.com.au"
+    port: "21"
+    path: ""
+    username: "msoftdev"
+    password: "![hLWYVl55EekkvRimP21CMA==]"
+    connectionTimeoutInMilliseconds: "300000"
+    responseTimeoutInMilliseconds: "300000"
+    reconnectionFrequencyMS: "120000"
+    reconnectionAttempts: "5"     
+   
+costCenterAccountAnalysisReport:
+  reportFileExtentions: '.xls,.etext,.XLS,.ETEXT'
+  source:
+    workingDirectory: '/export/home/interface/'
+  target:
+    workingDirectory: 'FINPAGE/Z_DEV/'
+  maxConcurancy: "2"
+  emailNotification:
+    fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+    toAddress: "EISupport@sbs.com.au,dickens.wong@sbs.com.au"
+    subject: "SBS GL Account Analysis Report - Cost Centre Files Distribution STATUS"
+
+costCenterFSGReport:
+  source:
+    workingDirectory: '/export/home/interface/fsg/'
+  target:
+    workingDirectory: 'FINPAGE/Z_DEV/'
+  maxConcurancy: "2"  
+  emailNotification:
+    fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+    toAddress: "EISupport@sbs.com.au,dickens.wong@sbs.com.au"
+    subject: "FSG Report - Cost Centre Files Distribution STATUS"
+    
+contentCreation:
+  ftpPath: "/export/home/interface/ibms/gl/content/to_process/"
+  ICName: 'IC-034'
+  key: 'IC-034'
+  status: 'IC-034 - FTP to Oracle Success' 
+  reTriggerUrl: "https://test.ei.sbs.com.au/sbs-finance-integrationservices-tst/api/ibms/processDeals?dealcodes="
+  emailNotification:
+    fromAddress: "ESB-${env} <enterpriseintegration-sbsesb${env}-donotreply@sbs.com.au>"
+    toAddress: "EISupport@sbs.com.au,leigh.iffland@sbs.com.au"
+    defaultSubject: "IBMS-Finance-contentCreation STATUS"
+    missingContentValueToAddress: "EISupport@sbs.com.au,leigh.iffland@sbs.com.au"
+    missingContentValueSubject: "Content creation: Missing content values"
+   
+creditCardProgram:
+  interfaceKey: "IC-036A"
+  decryptionPublicKey: 
+    file: "SBSCorporateCreditCardProgram_0xF1167A36_public.gpg"
+  decryptionPrivateKey: 
+    file: "SBSCorporateCreditCardProgram_0xF1167A36_SECRET.gpg"
+    keyId: "3DFD209D"
+    fingerprint: "B0147A723DFD209D"
+    passphrase: "![Z01RwNlNnDlf6C9btkJq6RbMk+2bhy2OVlVd9ehwqqc=]"
+  emailNotification:
+    toAddress: "fin_interface_support@sbs.com.au"
+    defaultSubject: "Corporate Card Statement Decryption Failed"
+
+log:
+  categories:
+    concurEmployeeProfile: "processConcurEmployeeProfile"  
+    concurEmployeeProfileUserProvisioningRequestStatus: "concurUserProvisioningRequstStatus"
+    costCenterAccountAnalysisReportGeneration: "costCenter-account-analysis-report"
+    costCenterFSGReportGeneration: "costCenter-fsg-report"    
+    concurProcessChartOfAccounts: "concur-processChartOfAccounts"
+    concurCreateChartOfAccounts: "concur-chartOfAccounts-CREATE"
+    concurUpdateChartOfAccounts: "concur-chartOfAccounts-UPDATE"
+    concurDeleteChartOfAccounts: "concur-chartOfAccounts-DELETE"
+    concurProcessProjects: "concur-processProjects"
+    concurCreateProjects: "concur-projects-CREATE"
+    concurDeleteProjects: "concur-projects-DELETE"    
+    concurProcessProjectTasks: "concur-processProjectTasks"
+    concurCreateProjectTasks: "concur-projectTasks-CREATE"
+    concurDeleteProjectTasks: "concur-projectTasks-DELETE"
+    creditCardProgramDecryption: "IC-036A-creditCardProgram-decryptionModule"    

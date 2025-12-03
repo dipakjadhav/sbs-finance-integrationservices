@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<user-batch-result
+	xmlns="http://www.concursolutions.com/api/user/2011/02">
+	<records-succeeded>1</records-succeeded>
+	<records-failed>0</records-failed>
+	<UsersDetails>
+		<UserInfo>
+			<EmployeeID>testuser3</EmployeeID>
+			<FeedRecordNumber>1</FeedRecordNumber>
+			<Status>SUCCESS</Status>
+		</UserInfo>
+	</UsersDetails>
+</user-batch-result>

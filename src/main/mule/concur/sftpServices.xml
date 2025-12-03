@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="writeFileToConcurSftpFlow" doc:id="ec80722d-0d37-475b-ac70-eae5b475dc11" >
+		 <ee:transform doc:name="Set Multipart request" doc:id="f61ba625-032f-4e34-98d4-0aafd242bf7b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+import dw::module::Multipart
+output multipart/form-data boundary = "--------------------------file"
+var fileName = substringAfterLast(vars.concurPath, "/")
+---
+{
+	parts: {
+		file: {
+			headers: {
+				"Content-Disposition": {
+					name: "file",
+					subtype: "form-data",
+					headers: "false",
+					filename: fileName
+				},
+				"Content-Type": "text/plain"
+			},
+			content: payload
+		}
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Call - eis concur sftp write file API" doc:id="beebb268-ced7-4173-ba19-b18fdece22a8" config-ref="HTTP_Request_configuration_eis_concur_sftp" path="/${concurSftp.endPoint}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type": "multipart/form-data; boundary=-----",
+	"filePath" : vars.concurPath
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="Log- Concur sftp completed" doc:id="9e811923-c29e-4703-96ac-61f89479ead9" message='#[vars.concurPath default ""] has been sent to concur' category="writeFileToConcurSftpFlow"/>
+	</flow>
+	<flow name="purgeFileInConcurFlow" doc:id="58048195-5bcc-44ed-b94a-16ee02aea73d" >
+		<http:request method="DELETE" doc:name="Call - eis concur sftp delete file API" doc:id="83b250fa-d89a-4d34-9b39-0c0a3c6afd63" config-ref="HTTP_Request_configuration_eis_concur_sftp" path="/${concurSftp.endPoint}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"filePath" : vars.concurPath
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="Log Purge Status" doc:id="b45f4661-4ae4-47bc-b6b2-ab338c345794" message='#[vars.concurPath default ""]  has been deleted from concur. Payload: #[payload]' category="purgeFileInConcurFlow"/>
+	</flow>
+</mule>

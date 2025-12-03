@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<flow name="callMuleSoftInitStoreProcedureFlow" doc:id="8f266ef1-e694-4ba2-a1fe-bd18382b092c" >
+		<logger level="INFO" doc:name="Log - Input" doc:id="18e4f72a-f04e-4389-8835-258bedabff4f" message="&lt;&lt;#[vars.category]&gt;&gt; mulesoft_init stored proc input: #[ payload]" category="callMuleSoftInitStoreProcedureFlow"/>
+		<db:stored-procedure doc:name="Call - mulesoft_init - store proc" doc:id="eede6528-0a3c-4cb4-9731-28a9f4946e52" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[{call apps.xxsbs_integration_common.mulesoft_init(:p_batch_id_number,:p_file_name,:p_mulesoft_status,:p_mulesoft_error,:p_interface_key,:p_batch_count,:x_status)
+}]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+var p0 = payload.payload
+---
+{
+	p_batch_id_number: p0.bachid,
+	p_file_name: p0.filename,
+	p_mulesoft_status: p0.mulesoftstatus,
+	p_mulesoft_error: '',
+	p_interface_key: p0.interfacekey,
+	p_batch_count: p0.inputParameters
+}]]]></db:input-parameters>
+			<db:output-parameters >
+				<db:output-parameter key="x_status" type="INTEGER" />
+			</db:output-parameters>
+		</db:stored-procedure>
+		<logger level="INFO" doc:name="Log - Output" doc:id="3640c41f-3949-4294-80f7-83c789ee6261" message="&lt;&lt;#[vars.category]&gt;&gt; mulesoft_init stored proc output: #[ payload]" category="callMuleSoftInitStoreProcedureFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0a0c4673-c7d1-437c-9e0d-588e53ce0ecb" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="71faf989-581d-4557-b1aa-9180e4eb45a1" message="&lt;&lt;#[vars.category]&gt;&gt; Exception occurred calling mulesoft_init - store proc with payload: #[payload]. Type: #[error.errorType.identifier], description: #[error.description]" category="callMuleSoftInitStoreProcedureFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

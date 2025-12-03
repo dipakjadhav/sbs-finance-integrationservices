@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="costCenterFSGReportDistributionService-suite.xml" />
+	<munit:test name="fsgReportDistributionMainFlowTest" doc:id="0cbd8de0-6118-400c-9a2a-e8d8d350ebfe" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Publish- process cost center fsg report distribution queue" doc:id="3f2b0306-1eb8-41ed-8031-e6a0874a4639" processor="vm:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Publish- process cost center fsg report distribution queue" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://fsgreportdistributionmainFlowtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://fsgreportdistributionmainFlowtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://fsgreportdistributionmainFlowtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - getFsgReportConfigFlow" doc:id="1330607a-0578-49ab-b9a4-7af53f65ecb1" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getFsgReportConfigFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://fsgreportdistributionmainFlowtest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://fsgreportdistributionmainFlowtest\mock_variable_2.dwl')]" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://fsgreportdistributionmainFlowtest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="9dd0e55a-580b-4a44-9239-bb8c5ed75108" >
+				<munit:payload value="#[readUrl('classpath://fsgreportdistributionmainFlowtest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://fsgreportdistributionmainFlowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://fsgreportdistributionmainFlowtest\set-event_variable_.dwl')]" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://fsgreportdistributionmainFlowtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to fsgReportDistributionMainFlow" doc:id="13ac83c7-bc6e-47e8-8ae6-e086cc1892cf" name="fsgReportDistributionMainFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="62f0fd94-ba1b-4a92-ae73-1db48b347794" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import fsgreportdistributionmainFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<flow name="mockSmbDirectoryList1" doc:id="170441b5-55a6-49e5-9e1c-6e2cf7488716" >
+		<try doc:name="Try" doc:id="c7612dcb-690b-41d8-b34d-1284df1f2409" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="b3a1742c-1d91-481e-be62-c3e770d2f987" key="Mock Find matching target directory"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="9c049b04-a909-4921-a6af-11b1ad1b0e26" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="31ddd96d-1a71-4cbb-8aab-e9d533da928d" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="9f8e4a8d-2db4-42aa-9a2a-167611778e87" key="Mock Find matching target directory">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="d7cdb05c-6c86-4fd8-a724-9bbf60933d2c" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="a6beb3f4-8680-43ea-8dc8-470a86480522" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload8.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_39.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_40.dwl')]" />
+						<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_41.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_42.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="05cb6e3e-8a81-4565-ac5d-020286031f07" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload9.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_43.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_44.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_45.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_46.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_47.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 3]">
+				<munit:set-event doc:name="Set Event" doc:id="d1e48ea0-34f5-4c0f-a30b-b13d1ca06018" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload10.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_48.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_49.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_50.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_51.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_52.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 4]">
+				<munit:set-event doc:name="Set Event" doc:id="27fe8768-839e-45a0-b9d1-f7c95277e32e" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload11.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_53.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_54.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_55.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_56.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_57.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="b4b27aa0-9b79-4e43-87c6-a1af01f88c73" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="mockFlowRef1" doc:id="b9043d6a-2f35-41d1-a0b4-591fae41b5eb" >
+		<try doc:name="Try" doc:id="9c943d16-3db5-4c66-ac0c-32e24d7b0948" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="1fcaa539-3b25-412f-aca0-842e952bea4d" key="Mock Call - copyFsgReportFileFlow"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="eaef9121-f28a-4f6a-b7ab-121791b98a2f" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="5a4d09d3-db88-4e89-b066-921bbd7179cc" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="b0349633-a39f-4247-a61d-37cac1f85bee" key="Mock Call - copyFsgReportFileFlow">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="0699162d-a087-4c75-a091-e401683ddb2f" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="8f9525e0-80ee-46c6-be19-f947676034c9" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_1.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_4.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="ae26eb07-f78f-4d34-af2d-ef09971c7d56" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload1.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_6.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_9.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 3]">
+				<munit:set-event doc:name="Set Event" doc:id="28d4acb3-07a5-4d89-9a61-4385dbcffbb8" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload2.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_10.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_11.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_12.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_13.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_14.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 4]">
+				<munit:set-event doc:name="Set Event" doc:id="7ec5de61-3765-4a03-80d9-1a574fecb4dc" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload3.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_15.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_16.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_17.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_18.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_19.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="e2005752-90fe-45d7-b55b-43395272cd07" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<munit:test name="processFsgReportRecordsFlowTest" doc:id="4e2c366f-a1ab-42aa-907c-a13a77d2bf30" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - copyFsgReportFileFlow" doc:id="7063f1e4-1730-408b-9bb7-2ca8e58a4b15" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - copyFsgReportFileFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="copyFsgReportFileFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mockFlowRef1" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock - List files from source directory" doc:id="9d53224d-b5ca-4668-80cf-3c484c13c5a1" processor="ftp:list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List files from source directory" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="${costCenterFSGReport.source.workingDirectory}" attributeName="directoryPath" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mockFtpList1" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock - Call - sendCostCenterFsgReportEmailNotificationFlow" doc:id="3695aac0-ffae-4ac1-aa32-93a6f0d963eb" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - sendCostCenterFsgReportEmailNotificationFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="sendCostCenterFsgReportEmailNotificationFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload12.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_58.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_59.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_60.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock - Find target directories" doc:id="114690d1-49a1-4597-807c-cd4ed17194a1" processor="smb:directory-list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Find target directories" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="${costCenterFSGReport.target.workingDirectory}" attributeName="dirName" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="00609fd0-3a55-44b0-8fcb-6b9de353fe35" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://processFSGReportRecordsFlowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://processFSGReportRecordsFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processFsgReportRecordsFlow" doc:id="c5616196-9e09-4293-a89c-4a92b1ff60a1" name="processFsgReportRecordsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="2bdcc87b-caec-4973-87ee-252dae36ce9b" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processFSGReportRecordsFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<flow name="mockFtpList1" doc:id="453bb3a5-80ed-42b4-aa12-7ab4629317d6" >
+		<try doc:name="Try" doc:id="b02cbb00-2299-41aa-81a3-8c01f0dba0dc" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="76859d50-9791-485f-b29e-622754d37aec" key="Mock List report files matching with the given name from source directory"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="8a87fe4c-d6f8-4e7a-8d6c-5a0faa21d596" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="25640f55-4de3-4dc4-9fe6-f19a7510bda5" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="c27f0237-a766-4875-ac2c-5634279b22d8" key="Mock List report files matching with the given name from source directory">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="60cebe52-919e-4221-87de-8109c9fee2ce" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="eab1fa1a-ea7a-4623-b4ce-ee9202b2fa44" >
+					<munit:payload value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload4.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_20.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_21.dwl')]" />
+						<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_22.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_23.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="196db02d-66eb-4af6-96ab-7017e14b2c1e" >
+					<munit:payload value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload5.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_24.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_25.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_26.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_27.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_28.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 3]">
+				<munit:set-event doc:name="Set Event" doc:id="a1f0bbcb-2731-4e59-97ef-ec4be1c9b86b" >
+					<munit:payload value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload6.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_29.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_30.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_31.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_32.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_33.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 4]">
+				<munit:set-event doc:name="Set Event" doc:id="6465b9d7-4250-4f8f-8fa9-5cc61796ca54" >
+					<munit:payload value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_payload7.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_34.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_35.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_36.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_37.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processFSGReportRecordsFlowtest\mock_variable_38.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="7680f4b5-f1f1-4f53-b24d-34767775d0fb" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<munit:test name="copyFsgReportFileFlowTest" doc:id="e9ce6176-c4b5-46e0-b96a-1e8b313b7dde" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Read report file from souce directory" doc:id="35a8fe5c-db34-4945-a799-d11feab1ca4e" processor="ftp:read">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Read from source path" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ab17b809-1288-4c67-98ee-28d46176a8ae" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/octet-stream  --- readUrl('classpath://copyFSGReportFileFlowtest\mock_payload.dwl')]" mediaType="application/octet-stream " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://copyFSGReportFileFlowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_4.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Write report file to target directory" doc:id="33270ca3-cce4-4ef1-a74a-a7957aca00f2" processor="smb:file-write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Write report file to target directory" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://copyFSGReportFileFlowtest\mock_payload1.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_5.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_6.dwl')]" />
+						<munit-tools:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_8.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://copyFSGReportFileFlowtest\mock_variable_9.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Delete source file" doc:id="45127111-bf38-44ca-a2b8-8d0103cf63ed" processor="ftp:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Delete source file" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="40d1ef6d-6443-4197-ac9f-41a57fc6014a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="d6475268-ec52-42bc-b228-9f6be46a4d53" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://copyFSGReportFileFlowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_1.dwl')]" />
+					<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="counter" value="#[readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_4.dwl')]" />
+					<munit:variable key="configurations" value="#[output application/json --- readUrl('classpath://copyFSGReportFileFlowtest\set-event_variable_5.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to copyFsgReportFileFlow" doc:id="7a4fc3d2-61b7-4446-8076-4c487437531c" name="copyFsgReportFileFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="57811d40-9f9c-497e-8c30-3839b95ceaf4" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import copyFSGReportFileFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

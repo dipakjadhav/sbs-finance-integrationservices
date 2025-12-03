@@ -1,0 +1,9 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:uniface:applic:services:EV397_AURION_WS">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:LOGON soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+         <P_USER xsi:type="xsd:string">#[Mule::p('aurionWS.username')]</P_USER>
+         <P_PASSWORD xsi:type="xsd:string">#[Mule::p('secure::aurionWS.password')]</P_PASSWORD>
+      </urn:LOGON>
+   </soapenv:Body>
+</soapenv:Envelope>

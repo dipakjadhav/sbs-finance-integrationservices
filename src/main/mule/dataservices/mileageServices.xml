@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getMileageFlow" doc:id="1088710c-028f-4a18-bc05-d667ffc0d7c1" >
+		<db:select doc:id="e6b5a463-a0d8-4d56-b3bc-d825a4b2afcb" doc:name="Get Mileage Data from Oracle" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select EMPLOYEE_NO,VALIDATE_ONLY,ALLOWANCE_CODE,KM_UNITS,TRAVEL_DATE,STATUS from xxsbs.xxsbs_mileage_for_aurion where STATUS = 'CREATE']]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log - record size" doc:id="f9bd1f13-7254-4d80-a5e1-2cc1fc53f4d5" message="#['Records found: #' ++ sizeOf(payload)]" category="getMileageFlow"/>
+	</flow>
+	<flow name="updateMileageStatusFlow" doc:id="74e937d4-4dbf-4409-8d61-01a7dff27bad" >
+		<logger level="INFO" doc:name="Log - received employee numbers" doc:id="5710affd-908a-494e-8d38-5eb7d95e27d2" message="#['Update Mileage Status is called -- received employee numbers are ' ++ ((vars.responseStatus.processedEmployees default []) map ((employeeRecord, index) -&gt; employeeRecord.EMPLOYEE_NO) joinBy   ',' default '')]" category="updateMileageStatusFlow"/>
+		<ee:transform doc:name="Construct Query String" doc:id="fdf00cbe-d4ee-4759-9a1d-8c92820a5604" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="queryInString" ><![CDATA[%dw 2.0
+output application/java
+---
+"update xxsbs.xxsbs_mileage_for_aurion SET STATUS='SUCCESS',LAST_UPDATED_BY='Mulesoft',LAST_UPDATE_DATE=sysdate where STATUS ='CREATE' and EMPLOYEE_NO IN (" ++ ((vars.responseStatus.processedEmployees default []) map ((employeeRecord, index) -> employeeRecord.EMPLOYEE_NO) joinBy   ',' default '') ++ ")"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log - constructed in query" doc:id="0d032fc0-0c1f-4e7d-9fe7-8a494ee8b28a" message="#['Constructed IN Query is -- ' ++ vars.queryInString]" category="updateMileageStatusFlow"/>
+		<db:update doc:name="Update Processed Mileage Records" doc:id="34f35808-251b-4f60-bc4f-d54001cbfed6" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[#[vars.queryInString]]]></db:sql>
+
+		</db:update>
+		<logger level="INFO" doc:name="Log - Query Output" doc:id="0bf562f0-a755-499c-9a9e-08c8735eba30" message="Update Mileage Response #[payload]" category="updateMileageStatusFlow"/>
+	</flow>
+</mule>

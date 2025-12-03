@@ -1,0 +1,170 @@
+image:
+  name: 106903947092.dkr.ecr.ap-southeast-2.amazonaws.com/mule-ecr-repo:latest
+  aws:
+    oidc-role: arn:aws:iam::106903947092:role/pipeline-ecr-access
+
+options:
+  max-time: 30 # per-step timeout in minutes
+
+definitions:
+  caches:
+    sonar: ~/.sonar # Caching Sonar Qube artifacts will speed up your build
+    maven: ~/.m2 # caching the dependency
+  steps:
+  - step: &run-munit-tests
+      name: run munit tests
+      oidc: true
+      script:
+      - echo "Start MUnit tests"
+      - mvn -X clean test -Dencryption.key=$ENCRYPTION_KEY -DskipTests=false -s /root/.m2/settings.xml
+      - echo "MUnit tests completed"
+
+  - step: &build-mulesoft
+      name: Build MuleSoft Application
+      oidc: true
+      script:
+      - echo "Starting MuleSoft build"
+      - mvn clean install -X -DskipTests -s /root/.m2/settings.xml
+      - echo "MuleSoft build completed"
+      artifacts:
+        - target/*.jar
+
+  - step: &build-test-sonarqube
+      name: Build, test and analyse on sonar qube
+      runs-on:
+      - self.hosted
+      - linux
+      - Sonatype
+      image:
+          name:  sonarsource/sonarqube-scan:2.0.1
+      script:
+        - echo "Running SonarScanner..."
+        - sonar-scanner -Dsonar.projectKey=${BITBUCKET_REPO_SLUG} -Dsonar.sources=. -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.token=${SONAR_TOKEN} -Dsonar.lang.patterns.mule=src/main/mule/**/*.xml,**/*.mule -Dsonar.lang.patterns.xml=**/*.xsd,**/*.xsl,**/*.config
+
+  - step: &check-quality-gate-sonarcloud
+      name: Check the Quality Gate on Sonar Qube
+      runs-on:
+      - self.hosted
+      - linux
+      - Sonatype
+      image:
+        name: sonarsource/sonarqube-quality-gate:1.0.0
+      script: 
+      -  apt-get update && apt-get install -y curl jq
+      # Wait for analysis to complete
+      - sleep 15
+      # Check quality gate status using the Sonar Web API
+      - |
+        echo "Checking quality gate status for project ${BITBUCKET_REPO_SLUG}..."
+        RESPONSE=$(curl -s -u ${SONAR_TOKEN}: "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${BITBUCKET_REPO_SLUG}")
+        STATUS=$(echo $RESPONSE | jq -r '.projectStatus.status')
+        if [ "$STATUS" = "ERROR" ]; then
+          echo "Quality Gate failed!"
+          echo "Detailed conditions:"
+          echo $RESPONSE | jq '.projectStatus.conditions'
+          exit 1
+        elif [ "$STATUS" = "OK" ]; then
+          echo "Quality Gate passed!"
+        else
+          echo "Unexpected Quality Gate status: $STATUS"
+          echo "Full response: $RESPONSE"
+          exit 2
+        fi
+
+  - step: &deploy-to-nexus-snapshot
+      name: Deploy to EI Nexus snapshot repository
+      runs-on:
+        - self.hosted
+        - linux
+        - Sonatype
+      oidc: true
+      caches:
+        - maven
+      script:
+        - echo "Deploying artifact to EI nexus snapshot repository"        
+        - BASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        - SNAPSHOT_VERSION="${BASE_VERSION}-SNAPSHOT"
+        - mvn versions:set -DnewVersion=$SNAPSHOT_VERSION
+        - echo "Deploying snapshot version $SNAPSHOT_VERSION"
+        - cat /root/.m2/settings.xml
+        - mvn -B -U deploy -DskipTests -P snapshot -DaltDeploymentRepository=ei-nexus-snapshots::default::${EI_NEXUS_SNAPSHOTS_URL} -s /root/.m2/settings.xml -X
+        - echo "Artifact deployed to snapshot repository"
+      artifacts:
+          - target/**
+
+  - step: &deploy-to-test
+      name: Deploy artifact to test environment
+      trigger: manual
+      oidc: true
+      script:
+        - echo "Starting Cloudhub deployment"
+        - anypoint-cli-v4 runtime-mgr:cloudhub-application:modify $BITBUCKET_REPO_SLUG"-tst" target/*.jar --client_id $anypoint_client_id --client_secret $anypoint_client_secret --organization $ORG_ID --environment Test
+        - echo "Cloudhub deployment complete"
+
+  - step: &deploy-to-nexus-release
+      name: Deploy to EI Nexus Release Repository
+      runs-on:
+        - self.hosted
+        - linux
+        - Sonatype
+      oidc: true
+      caches:
+        - maven
+      script:
+        - echo "Checking and deploying artifact to EI nexus release repository"
+        - VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        - ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        - GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout | tr '.' '/')
+        - RELEASE_CHECK_URL="${EI_NEXUS_RELEASES_URL}/${GROUP_ID}/${ARTIFACT_ID}/${VERSION}/${ARTIFACT_ID}-${VERSION}.pom"
+        - echo "Checking if version exists at - $RELEASE_CHECK_URL"
+        - HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" $RELEASE_CHECK_URL)
+        - echo "HTTP Status - $HTTP_STATUS"
+        - |
+          if [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "304" ]]; then
+            echo "Version ${VERSION} already exists in release repository. Skipping deployment."
+          elif [[ "$HTTP_STATUS" == "401" ]]; then
+            echo "Authorization Failed. Check that NEXUS_USERNAME and NEXUS_PASSWORD have been set correctly in the repository variables."
+            exit 1
+          elif [[ "$HTTP_STATUS" == "403" ]]; then
+            echo "Authentication Failed. ${NEXUS_USERNAME} does not have permission to view repositories."
+            exit 1
+          else
+            echo "Version ${VERSION} does not exist in release repository. Proceeding with deployment."
+            mvn -B -U deploy -DskipTests -P release -DaltDeploymentRepository=ei-nexus-releases::default::${EI_NEXUS_RELEASES_URL} -Dskip.exchange.deploy=true -s /root/.m2/settings.xml -X
+            echo "Artifact deployed to release repository"
+          fi
+      artifacts:
+        - target/** 
+  
+  - step: &deploy-to-prod
+      name: Deploy artifact to prod environment
+      trigger: manual
+      oidc: true
+      script:
+        - echo "Starting Cloudhub deployment to Production"
+        - anypoint-cli-v4 runtime-mgr:cloudhub-application:modify $BITBUCKET_REPO_SLUG target/*.jar --client_id $anypoint_client_id --client_secret $anypoint_client_secret --organization $ORG_ID --environment Production
+        - echo "Cloudhub deployment complete"
+
+pipelines:
+  branches:
+    feature/*:
+    - step: *run-munit-tests
+    - step: *build-test-sonarqube
+    - step: *check-quality-gate-sonarcloud
+    
+    dev:
+    - step: *run-munit-tests
+    - step: *build-test-sonarqube
+    - step: *check-quality-gate-sonarcloud
+    - step: *deploy-to-nexus-snapshot
+    - step: *deploy-to-test
+    
+    release/*:
+      - step: *run-munit-tests
+      - step: *build-mulesoft
+      - step: *deploy-to-prod
+    
+    master:
+      - step: *run-munit-tests
+      - step: *deploy-to-nexus-release
+      - step: *deploy-to-prod

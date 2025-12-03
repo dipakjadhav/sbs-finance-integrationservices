@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="costCenterAccountAnalysisReportDistributionService-suite.xml" />
+	<flow name="mockFlowRef" doc:id="7728f412-6e54-492e-81bd-4037cecbff6a" >
+		<try doc:name="Try" doc:id="9051a580-db70-491f-a1bf-12348a6d4ae4" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="090db100-28a8-48ca-8c4d-9ee988920977" key="Mock Call - copyReportFileFlow"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="1d24ccfb-bf94-4cc3-ab72-27b8ee934743" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="c4a006bf-4816-4da1-907f-cc400b7a5291" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="966025a1-ab6f-4663-a2df-4e8b101b0c32" key="Mock Call - copyReportFileFlow">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="bad02a02-377d-435d-8f2a-ae22fefbc2ec" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="d19e808c-acf0-4d71-b962-3d99f93c9a86" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processRecordsFlowtest\mock_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_1.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_4.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="3d2520c6-eef4-47f1-9bdc-261624f169e9" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processRecordsFlowtest\mock_payload1.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_6.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_9.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="feed10c1-724a-454d-8a9a-3a8f88866d46" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="mockFtpList" doc:id="37865b10-74ed-4557-b6bf-1c4373b33516" >
+		<try doc:name="Try" doc:id="c1464085-6ed4-46a4-8c6c-ac68ddf84276" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="0502c7ac-99ac-4e47-92b9-928a24da203f" key="Mock List report files matching with the given pattern from source directory"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="748ad020-3cb8-4ec2-a6eb-a30c2cdb7f2e" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="332d31ed-3858-4a03-8360-3fdfedafe3db" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="c1604fbe-7ea6-4d07-8621-f7c246645dec" key="Mock List report files matching with the given pattern from source directory">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="e276f9db-b1c8-47ef-99c0-6e660d7a22b3" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="345f5f19-cca5-41f8-bf7e-0db752e0ce21" >
+					<munit:payload value="#[readUrl('classpath://processRecordsFlowtest\mock_payload2.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_10.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_11.dwl')]" />
+						<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://processRecordsFlowtest\mock_variable_12.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_13.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="3b36c3ba-f7a4-400f-8a21-7c9184d5ff51" >
+					<munit:payload value="#[readUrl('classpath://processRecordsFlowtest\mock_payload3.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_14.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_15.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_16.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_17.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_18.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 3]">
+				<munit:set-event doc:name="Set Event" doc:id="44463594-5be8-49a8-aac1-c50255267cd9" >
+					<munit:payload value="#[readUrl('classpath://processRecordsFlowtest\mock_payload4.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_19.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_20.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_21.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_22.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_23.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 4]">
+				<munit:set-event doc:name="Set Event" doc:id="890fbfe7-ddcb-4eb2-b4e3-aee0fc689b5b" >
+					<munit:payload value="#[readUrl('classpath://processRecordsFlowtest\mock_payload5.dwl')]" encoding="UTF-8" />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_24.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_25.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_26.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_27.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_28.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="13c26f18-7ade-4c30-9cd0-33affc42c5ed" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="mockSmbDirectoryList" doc:id="23bc0155-e3ca-4795-bc99-063aff035ee4" >
+		<try doc:name="Try" doc:id="6e8573a5-db4e-4c23-9e55-67f502365dfa" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="212361b2-3c3b-483a-b597-48751a0d9d03" key="Mock Find matching target directory"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="69a5dac8-22e6-4423-b137-35b74cc03093" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="01b63265-a2a4-4f48-ab19-c07553b445a7" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="db799b84-774b-4869-907f-86bb6796d3ce" key="Mock Find matching target directory">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="5068e446-c1aa-4cb7-8d04-16a8e582c076" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="af4ee4a7-cac7-4bdb-b664-8d25d67aec22" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processRecordsFlowtest\mock_payload7.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_32.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_33.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_34.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://processRecordsFlowtest\mock_variable_35.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_36.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="fbb4732f-7ab3-41a3-9f25-f16a14f9001e" >
+					<munit:payload value="#[output application/java  --- readUrl('classpath://processRecordsFlowtest\mock_payload8.dwl')]" encoding="UTF-8" mediaType="application/java " />
+					<munit:variables >
+						<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_37.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_38.dwl')]" />
+						<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_39.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_40.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="counter" value="#[readUrl('classpath://processRecordsFlowtest\mock_variable_41.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="76e66a76-5be6-4af0-9994-dd4d7b0d90b2" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<munit:test name="processRecordsFlowTest" doc:id="6839fea8-3dc5-460a-9040-9644420edaa0" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - copyReportFileFlow" doc:id="676900ef-ba37-4671-8220-d38359fda6d1" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - copyReportFileFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mockFlowRef" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock List report files matching with the given pattern from source directory" doc:id="35a6eb8f-e4aa-4912-a643-f74f7deef6fa" processor="ftp:list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List report files matching with the given pattern from source directory" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mockFtpList" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - sendCostCenterAccountAnalysisReportEmailNotificationFlow" doc:id="2c3ed19c-55f0-400d-aa11-51bc3eec1b99" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - sendCostCenterAccountAnalysisReportEmailNotificationFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://processRecordsFlowtest\mock_payload6.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://processRecordsFlowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_29.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_30.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/json --- readUrl('classpath://processRecordsFlowtest\mock_variable_31.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Find matching target directory" doc:id="3ebf8dcb-4d4e-4f51-b9ea-d0dc80d8bc8e" processor="smb:directory-list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Find matching target directory" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mockSmbDirectoryList" />
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="61faf69f-8b2f-43a0-a65d-26df22a7e827" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://processRecordsFlowtest\set-event_payload1.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://processRecordsFlowtest\set-event_attributes1.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processRecordsFlow" doc:id="0edd1f5f-851e-4d94-9ebf-e8dbc46d76aa" name="processAccountAnalysisReportRecordsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="b123d9be-a02d-46ac-8381-0b12da47f103" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processRecordsFlowtest::assert_expression_payload1
+---
+assert_expression_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="accountAnalysisReportDistributionMainFlowTest" doc:id="8006608c-5678-4a18-b120-7f99770e03af" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - getAccountAnalysisConfigFlow" doc:id="49f27f81-afb0-4c14-aa5f-885eda23bf4c" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getAccountAnalysisConfigFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="priorityRequestID" value="#[output application/java --- readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Publish- process cost center account analysis report distribution queue" doc:id="22ba1d24-7337-4d26-91a0-ba8f41d2cd59" processor="vm:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Publish- process cost center account analysis report distribution queue" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_attributes1.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="priorityRequestID" value="#[output application/java --- readUrl('classpath://accountanalysisreportdistributionmainFlowtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="0f00c257-1b99-4747-82aa-ea5badfae6db" >
+				<munit:payload value="#[readUrl('classpath://accountanalysisreportdistributionmainFlowtest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://accountanalysisreportdistributionmainFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to accountAnalysisReportDistributionMainFlow" doc:id="06f90fc2-063c-4f4c-8194-1fb62ffdfc7e" name="accountAnalysisReportDistributionMainFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="bda6becf-b434-41cc-9a32-51ca2f33746b" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import accountanalysisreportdistributionmainFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

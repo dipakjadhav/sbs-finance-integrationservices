@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:mule-sap-concur-connector="http://www.mulesoft.org/schema/mule/mule-sap-concur-connector"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:smb="http://www.mulesoft.org/schema/mule/smb" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/smb http://www.mulesoft.org/schema/mule/smb/current/mule-smb.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/mule-sap-concur-connector http://www.mulesoft.org/schema/mule/mule-sap-concur-connector/current/mule-mule-sap-concur-connector.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+	<crypto:pgp-config name="Crypto_pgp_Encrypt" doc:name="Crypto Pgp" doc:id="1d50875e-4bf9-4e3e-9837-cb531aa026b5" publicKeyring="${concurSftp.encryptionPublicKey}">
+		<crypto:pgp-key-infos >
+			<crypto:pgp-asymmetric-key-info keyId="${secure::concurSftp.encryptionKey}" fingerprint="${concurSftp.encryptionFingerPrint}"/>
+		</crypto:pgp-key-infos>
+	</crypto:pgp-config>
+	<crypto:pgp-config name="Crypto_pgp_Decrypt" doc:name="Crypto Pgp" doc:id="590bed8c-7492-4cab-85b1-3f1e0a93d9e8" privateKeyring="${concurSftp.decryptionSecretKeyRingFileName}" publicKeyring="${concurSftp.decryptionPublicKeyRingFileName}">
+		<crypto:pgp-key-infos >
+			<crypto:pgp-asymmetric-key-info keyId="${secure::concurSftp.encryptionKey}" passphrase="${secure::concurSftp.decryptionSecretPassphrase}" fingerprint="${concurSftp.decryptionSecretAliasId}"/>
+		</crypto:pgp-key-infos>
+	</crypto:pgp-config>
+	<db:config name="oracle-database-config" doc:name="Database Config" doc:id="f594f625-4c46-4c51-b32b-363cf626b97a" >
+		<db:oracle-connection host="${db.oracle.host}" user="${db.oracle.username}" password="${secure::db.oracle.password}" port="${db.oracle.port}" serviceName="${db.oracle.servicename}">
+			<reconnection >
+				<reconnect frequency="${db.oracle.reconnectionFrequencyMS}" count="${db.oracle.reconnectionAttempts}" />
+			</reconnection>
+			<db:pooling-profile maxPoolSize="${db.oracle.connectionPoolingProfileMaxPoolSize}" minPoolSize="${db.oracle.connectionPoolingProfileMinPoolSize}" acquireIncrement="${db.oracle.connectionPoolingProfileAcquireIncrement}" preparedStatementCacheSize="${db.oracle.connectionPoolingProfilePreparedStatementCacheSize}" maxWait="${db.oracle.connectionPoolingProfileMaxWait}" maxIdleTime="${db.oracle.connectionPoolingProfileMaxIdleTime}" maxStatements="${db.oracle.connectionPoolingProfileMaxStatements}">
+				<db:additional-properties >
+					<db:additional-property key="oracle.net.keepAlive" value="true" />
+					<db:additional-property key="oracle.jdbc.ReadTimeout" value="3000" />
+					<db:additional-property key="oracle.jdbc.ConnectionTimeout" value="5000" />
+				</db:additional-properties>
+			</db:pooling-profile>
+		</db:oracle-connection>
+	</db:config>
+<db:config name="ibms-database-config" doc:name="Database Config" doc:id="70fbe466-9a8d-4514-99f6-deee991be8b3" >
+	<db:oracle-connection host="${db.ibms.host}" port="${db.ibms.port}" user="${db.ibms.username}" password="${secure::db.ibms.password}"  serviceName="${db.ibms.servicename}">
+	<reconnection >
+			<reconnect frequency="${db.ibms.reconnectionFrequencyMS}" count="${db.ibms.reconnectionAttempts}" />
+		</reconnection>
+		<db:pooling-profile maxPoolSize="${db.ibms.poolingProfile.maxPoolSize}" minPoolSize="${db.ibms.poolingProfile.minPoolSize}" acquireIncrement="${db.ibms.poolingProfile.acquireIncrement}" preparedStatementCacheSize="${db.ibms.poolingProfile.preparedStatementCacheSize}" maxWait="${db.ibms.poolingProfile.maxWaitSeconds}" maxIdleTime="${db.ibms.poolingProfile.maxIdleSeconds}" maxStatements="${db.ibms.poolingProfile.maxStatements}">
+			<db:additional-properties >
+				<db:additional-property key="oracle.net.keepAlive" value="${db.ibms.poolingProfile.keepAlive}" />
+				<db:additional-property key="oracle.jdbc.ReadTimeout" value="${db.ibms.poolingProfile.jdbcReadTimeout}" />
+				<db:additional-property key="oracle.jdbc.ConnectionTimeout" value="${db.ibms.poolingProfile.jdbcConnectionTimeout}" />
+			</db:additional-properties>
+		</db:pooling-profile>
+	</db:oracle-connection>		
+</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="4ab57235-940d-478e-b674-9b1016dfb897" file="config-${env}.yaml" />
+	<global-property doc:name="Global Property" doc:id="06abd6e8-0e2a-4f27-a829-7221f248740d" name="env" value="nonprod" />
+	<ftp:config name="oracle-ftp-config" doc:name="FTP Config" doc:id="7a995c01-4d91-4ba6-862d-5a64ace75b0d" >
+		<ftp:connection host="${ftp.oracle.host}" username="${ftp.oracle.username}" password="${secure::ftp.oracle.password}" port="${ftp.oracle.port}" connectionTimeoutUnit="MILLISECONDS" connectionTimeout="${ftp.oracle.connectionTimeoutInMilliseconds}" responseTimeoutUnit="MILLISECONDS" responseTimeout="${ftp.oracle.responseTimeoutInMilliseconds}">
+			<reconnection >
+				<reconnect frequency="${ftp.oracle.reconnectionFrequencyMS}" count="${ftp.oracle.reconnectionAttempts}" />
+			</reconnection>
+			<pooling-profile initialisationPolicy="INITIALISE_ALL" exhaustedAction="WHEN_EXHAUSTED_WAIT" maxWait="60000" minEvictionMillis="60000" evictionCheckIntervalMillis="60000" />
+		</ftp:connection>
+	</ftp:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="25ddc283-c177-4a31-becd-a426e35e4624" basePath="${https.basePath}" followRedirects="false">
+		<http:request-connection host="${https.localhost}" port="${https.private.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>	
+	<http:request-config name="SOAP_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a7e6c47b-b6f0-44d6-a837-64b1820ce3f0" basePath="${aurionWS.basePath}">
+		<http:request-connection protocol="${aurionWS.scheme}" host="${aurionWS.host}" port="${aurionWS.port}" />
+	</http:request-config>
+	
+	<smb:config name="SMB_Connector_Config" doc:name="SMB Connector Config" doc:id="6c25c970-1039-41ed-9062-b0d460881496" >
+		<smb:connection domain="${sharedrive.domain}" host="${sharedrive.host}" share="${sharedrive.basepath}" username="${sharedrive.user}" password="${secure::sharedrive.password}"/>
+	</smb:config>
+	<http:request-config name="eisHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="8184762a-0fea-472e-8d48-ec803b643733" basePath="${api.eis.basePath}" >
+		<http:request-connection protocol="${api.eis.scheme}" host="${api.eis.host}" port="${api.eis.port}" />
+	</http:request-config>
+	<http:request-config name="pncHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="d2762e34-9d44-4fad-bd15-cbc043ff3da4" basePath="${api.pnc.basePath}" >
+		<http:request-connection protocol="HTTPS" host="${api.pnc.host}" port="${api.pnc.port}" />
+	</http:request-config>
+	<http:request-config name="SAP_Concur_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2e737b76-77cb-4576-b6ce-f5d1c6c33541" basePath="${api.concur.baseURI}${api.concur.userBaseURI}">
+		<http:request-connection protocol="${api.concur.scheme}" host="${api.concur.host}" port="${api.concur.port}" />
+	</http:request-config>
+	<http:request-config name="SAP_Concur_HTTP_Request_configuration-old" doc:name="HTTP Request configuration" doc:id="58f4c5ef-3e76-4355-ae52-4806f375b953" basePath="${api.concur.baseURI}${api.concur.userBaseURI}">
+		<http:request-connection protocol="${api.concur.scheme}" host="${api.concur.host}" port="${api.concur.port}" />
+	</http:request-config>
+	<http:request-config name="concurAPIHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="a7d09d49-18f4-4e15-a936-27c0b6bb5f9c">
+		<http:request-connection protocol="${api.concur.scheme}" host="${api.concur.host}" port="${api.concur.port}" >
+		</http:request-connection>
+		<http:default-headers >
+		</http:default-headers>
+	</http:request-config>
+	<http:request-config name="sapConcurHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="22341a48-b526-48f8-9f75-b9165a6c503f">
+		<http:request-connection protocol="${api.concur.scheme}" host="${api.concur.host}" port="${api.concur.port}" >
+		</http:request-connection>
+		<http:default-headers >
+			<http:default-header key="Authorization" value='#["Bearer " ++ (vars.bearerToken default "")]' />
+			<http:default-header key="Content-Type" value='#["application/json"]' />
+		</http:default-headers>
+	</http:request-config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="eaa1dbd2-f4a1-4a6e-8479-b778f9cff254" >
+		<vm:connection />
+		<vm:queues>
+			<vm:queue queueName="employeeProfileEmailNotificationQueue"/>
+			<vm:queue queueName="sendConcurChartOfAccountEmailNotificationQueue" queueType="PERSISTENT" />
+			<vm:queue queueName="processCostCenterAccountAnalysisReportDistributionQueue" />
+			<vm:queue queueName="processCostCenterFSGReportDistributionQueue" />
+			<vm:queue queueName="callInterfaceMulesoftInitProcedureQueue" />
+			<vm:queue queueName="sendContentCreationMissingContentValuesEmailQueue" />
+			<vm:queue queueName="sendContentCreationErrorEmailQueue" />
+			<vm:queue queueName="sendContentCreationSuccessEmailQueue" />
+			<vm:queue queueName="provisioningRequestStatusQueue"/>
+			<vm:queue queueName="employeeProfileProvisioningRequestStatusEmailNotificationQueue" />
+			<vm:queue queueName="creditCardProgramDecryptionEmailNotificationQueue" />
+			<vm:queue queueName="processSummaryForListItems" />
+			<vm:queue queueName="processCA" />
+			
+			
+		</vm:queues>
+	</vm:config>
+	<http:request-config name="internal_http_request_configuration" doc:name="HTTP Request configuration" doc:id="97645c10-c918-4c1a-b707-fd1f50f57ec0" basePath="${https.basePath}">
+		<http:request-connection host="localhost" port="${https.private.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="jks" path="${https.keystore.file}" alias="mule" keyPassword="${secure::https.keystore.pass}" password="${secure::https.keystore.pass}" />
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<smb:config name="SMB_Connector_Config-CostCenter" doc:name="SMB Connector Config" doc:id="7f8bf66e-7d12-488e-9f26-4175eda36a05" >
+		<smb:connection domain="${smb.oracle.domain}" host="${smb.oracle.host}" share="${smb.oracle.sharedDirectory}" username="${smb.oracle.username}" password="${secure::smb.oracle.password}" socketTimeout="${smb.oracle.socketTimeoutInMilliseconds}" connectionTimeout="${smb.oracle.connectionTimeoutInMilliseconds}" connectionTimeoutUnit="MILLISECONDS" socketTimeoutUnit="MILLISECONDS">
+			<reconnection >
+				<reconnect frequency="${smb.oracle.reconnectionFrequencyMS}" count="${smb.oracle.reconnectionAttempts}"/>
+			</reconnection>
+		</smb:connection>
+		<expiration-policy />
+	</smb:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="f051ba9a-09db-4101-b563-70243523a155" file="config-${env}.yaml" key="${encryption.key}" doc:description="${encryption.key}">
+	</secure-properties:config>
+	<http:request-config name="HTTP_Request_configuration_eis_concur_sftp" doc:name="HTTP Request configuration" doc:id="f9fbfd3f-2fb5-4416-98d0-25b5757d6e17" basePath="${api.eis.basePath}">
+		<http:request-connection protocol="${api.eis.scheme}" host="${api.eis.host}" port="${api.eis.port}" />
+	</http:request-config>
+	<http:request-config
+		name="sbs-finance-integrationservices-httpRequestConfig"
+		doc:name="HTTP Request configuration"
+		doc:id="ce973b6d-2880-4c16-b895-f399a34cb7e4"
+		basePath="/api">
+		<http:request-connection
+			host="localhost" port="${https.private.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<os:object-store name="ObjectStoreConfig" doc:name="Object store" doc:id="29443e61-ddf2-4d48-8c2c-85a3ee6f02ff" maxEntries="2" entryTtlUnit="MILLISECONDS" entryTtl="${objectStore.durationInMilliseconds}"/>
+	<smb:config name="Nutanix_Global_Share_SMB_Config" doc:name="SMB Connector Config" doc:id="ca2aa908-2508-4c4a-b962-152c3358242c" >
+		<smb:connection domain="${sharedrive.domain}" host="${sharedrive.host}" share="${sharedrive.globalShareBasepath}" username="${sharedrive.user}" password="${secure::sharedrive.password}" fileAge="30"/>
+	</smb:config>
+	<crypto:pgp-config name="CreditCardProgram_Decryt" doc:name="Crypto Pgp" doc:id="c9c12734-2d6b-4132-a05d-d5ada486298c" publicKeyring="${creditCardProgram.decryptionPublicKey.file}" privateKeyring="${creditCardProgram.decryptionPrivateKey.file}" >
+		<crypto:pgp-key-infos >
+			<crypto:pgp-asymmetric-key-info keyId="${creditCardProgram.decryptionPrivateKey.keyId}" fingerprint="${creditCardProgram.decryptionPrivateKey.fingerprint}" passphrase="${secure::creditCardProgram.decryptionPrivateKey.passphrase}" />
+		</crypto:pgp-key-infos>
+	</crypto:pgp-config>
+</mule>

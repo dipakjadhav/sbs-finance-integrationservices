@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd">
+	<sub-flow name="sendEmailNotificationSubFlow" doc:id="53581fb9-7327-4ded-bc11-18348c7569c4" >
+		<logger level="INFO" doc:name="Log - Email Payload" doc:id="3cc4c5ce-5e88-4aad-9f4d-4eb5955f702f" message="#[output text/plain
+---
+'&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; Send Email Notification Request received.']" category="sendEmailNotificationFlow" />
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="91a6450b-ff49-4b27-9a96-0a1ae50998af" correlationId="#[Mule::p('app.name') ++ &quot;-&quot; ++ Mule::p('env') ++ &quot;-&quot; ++ correlationId]">
+			<http:request method="POST" doc:name="Call - Send Email Notification API" doc:id="e88d11da-f97a-437e-8dbc-6d40fb1825f6" config-ref="eisHttpRequestConfig" path="${emailNotificationService.endPoint}">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	apikey : Mule::p('emailNotificationService.apikey')
+}]]]></http:headers>
+		</http:request>
+		</tracing:with-correlation-id>
+		<logger level="INFO" doc:name="Log - Email Response" doc:id="16744af1-e636-4a84-8866-2ca517f7ed41" message="#[output text/plain
+---
+'&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; Send Email Notification sent.']" category="sendEmailNotificationFlow" />
+	</sub-flow>
+	<flow name="sendConcurChartOfAccountEmailNotificationFlow" doc:id="8d1b6520-53eb-4ed5-a9f9-61adbc956895" >
+		<vm:listener queueName="sendConcurChartOfAccountEmailNotificationQueue" doc:name="Listener" doc:id="e07f92c9-a06b-47f8-af4a-62b6fb8d6088" config-ref="VM_Config"/>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="e1bd861e-282e-4f8d-bf69-18ea26f1f7f6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('concurChartOfAccountEmailNotification.fromAddress'),
+	"toAddress" : Mule::p('concurChartOfAccountEmailNotification.toAddress'),
+	"subject" : payload.subject,
+	"content" : payload.body,
+	"contentType": payload.contentType
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="cdfcc71f-a4f3-471e-9b18-4c37e13627fa" name="sendEmailNotificationFlow"/>
+	</flow>
+	<flow name="sendEmployeeProfileProcessingEmailNotificationFlow" doc:id="647c0c26-20e1-43c1-9ea8-a4472f4f5b8c" >
+		<vm:listener queueName="employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:name="Listen - employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:id="3a22cfc8-6cd6-42ab-8566-7ae34998f596" config-ref="VM_Config" timeout="30">
+			<reconnect count="5" />
+		</vm:listener>
+		<set-payload value='#[%dw 2.0&#10;output application/xml  &#10;---&#10;{&#10;  html: &#10;    body: {&#10;      h2: "Concur Employee Profile Creation - Status",&#10;      h3: "Summary",&#10;      (&#10;         if ((not isEmpty(payload.processedRecords)) or (not isEmpty(payload.failedRecords))) {table @("border": 1): {&#10;        tr: [&#10;          {&#10;            th: "Response Status",&#10;            td: payload.responseStatus&#10;          },&#10;          {&#10;            th: "Processed Employee Ids",&#10;            td: (payload.processedRecords.empId default []) joinBy " , "&#10;          },&#10;          {&#10;            th: "Failed Employee Ids",&#10;            td: (payload.failedRecords.empId default []) joinBy " , "&#10;          }&#10;        ]&#10;      }} else {&#10;          h3 : "No Records found for processing today"&#10;      }),&#10;     ( if (not isEmpty(payload.failedRecords)) {&#10;      h3: "Error Record Details",&#10;      table @("border": 1): {&#10;        tr: {&#10;          th: ["EMP ID", "Feed Record Number", " Error Message", "Field", "Value"]&#10;        },&#10;        tr: (payload.failedRecords map () -&gt; {&#10;          td @(rowspan: sizeOf($.errorMessages)): [&#10;            $.empId,&#10;            $.feedRecordNumber&#10;          ],&#10;          ($.errorMessages map (error, errorIndex) -&gt; do {&#10;              var column = {&#10;                td: [&#10;                  error.message,&#10;                  error.key,&#10;                  error.value&#10;                ]&#10;              }&#10;              ---&#10;              if (errorIndex == 0)&#10;                column&#10;              else&#10;&#10;                  tr: column&#10;&#10;            })&#10;        })&#10;      }} else {})&#10;    }&#10;&#10;}]' doc:name="Set Payload" doc:id="a7da8c66-46e3-46d8-8005-78271e6460fa" mimeType="text/plain"/>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="66b894b4-ec3c-437a-8a46-43ad2ef5f7c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('concurEmployeeProfileEmailNotification.fromAddress'),
+	"toAddress" : Mule::p('concurEmployeeProfileEmailNotification.toAddress'),
+	"subject" : Mule::p('concurEmployeeProfileEmailNotification.provisioningRequestSttausSubject'),
+	"content" : payload,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="50db5a92-33c6-4ec0-b8a3-ab387a56f91e" name="sendEmailNotificationFlow"/>
+	</flow>
+	<flow name="sendMileageEmailNotificationFlow" doc:id="55d99cc2-4d21-4ec3-bef5-4b995f7b0c24" >
+		<ee:transform doc:name="Prepare Email Body HTML Content" doc:id="f2cfeb49-0d8a-4c0e-81cf-817ec35ce7a0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+// output application/java
+var header = "<H3>Failed Send Mileage Records Are:</H3>"
+var tableHeader = "<THEAD><TR><TH>Employee No</TH><TH>Message</TH></TR></THEAD>"
+var tableBody = vars.nonProcessedEmployeeNumbersArray map ((employee, index) ->  "<TBODY><TR><TD><SPAN>" ++ (employee.EMPLOYEE_NO default '') ++ "</SPAN></TD><TD><SPAN>" ++ (employee.MESSAGE default '') ++ "</SPAN></TD></TR></TBODY>") joinBy   ""
+var tableHtml = "<TABLE border = 1>"  ++ tableHeader ++ "" ++ (tableBody default "") ++ "</TABLE>"
+---
+header ++ "<Br /><Br />" ++ tableHtml]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="be5af1d5-e127-45ec-b60e-bacf95d8bb8a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('sendMileageEmailNotification.fromAddress'),
+	"toAddress" : Mule::p('sendMileageEmailNotification.toAddress'),
+	"subject" : Mule::p('sendMileageEmailNotification.subject'),
+	"content" : payload,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="891784cb-8520-4033-9675-2eb67c3aa8fb" name="sendEmailNotificationFlow"/>
+	</flow>
+	<flow name="sendCostCenterAccountAnalysisReportEmailNotificationFlow" doc:id="60774d0f-518a-4edb-b00d-833a58f95d58">
+		<ee:transform doc:name="Prepare Email Body HTML Content" doc:id="e4d26f78-73c1-43d7-81e7-2ada89c6f920">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+var heading = "SBS GL Account Analysis Report - Cost Center Files Distribution Processing Summary:"
+var processStartDateTime = "Process Started  at (dd-MM-yyyy HH:mm:ss): " ++  (vars.processStartDateTime default '')
+var processFinishedDatetime = "Process Finished at (dd-MM-yyyy HH:mm:ss): " ++  (vars.processEndDateTime default '')
+var processedFilesCount = "Processed Files Count: " ++ ((vars.totalNumberOfFiles default 0) - sizeOf((vars.failedFiles default [])))
+var totalFilesCount = "Total Files Count: " ++ (vars.totalNumberOfFiles default 0)
+var exceptionString = if ( isEmpty(vars.failedFiles default []) ) "" else ("Exception: Following files/directories are either missing or not exists <BR />" ++ ((vars.failedFiles default []) joinBy ", <BR />"))
+var finalHtmlString = [heading, processStartDateTime, processFinishedDatetime, processedFilesCount, totalFilesCount, exceptionString] joinBy  "<BR /><BR />"
+---
+finalHtmlString
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="8b7b2330-a448-4129-967b-40ebbb1f27c3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('costCenterAccountAnalysisReport.emailNotification.fromAddress'),
+	"toAddress" : Mule::p('costCenterAccountAnalysisReport.emailNotification.toAddress'),
+	"subject" : Mule::p('costCenterAccountAnalysisReport.emailNotification.subject'),
+	"content" : payload,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="881fead1-8d7e-4d25-ba45-69e66af45a7e" name="sendEmailNotificationFlow" />
+	</flow>
+	<flow name="sendEmailNotificationFlow" doc:id="28e894fc-af05-465f-8c8e-b9d0b2830947">
+		<choice doc:name="Route based on sendEmail Notification value" doc:id="81ec42ff-3317-4114-98be-a7ba6441a71e" >
+			<when expression="#[Mule::p('app.emailNotifications.enabled')]">
+				<flow-ref doc:name="Call - sendEmailNotificationSubFlow" doc:id="6617380c-1b05-45dd-846f-639541d7da42" name="sendEmailNotificationSubFlow"/>
+			
+</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log sendEmailNotification was false" doc:id="555eb269-9a7b-4847-9a98-822289be1412" message='#["Email not sent - sendEmailNotification : " ++ (vars.sendEmailNotification default false)]' category="sendEmailNotificationFlow"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="sendCostCenterFsgReportEmailNotificationFlow" doc:id="342d769e-121d-474d-8189-85f321c67971" >
+		<ee:transform doc:name="Prepare Email Body HTML Content" doc:id="1c2a2b95-9202-47bb-8930-01a47202ca68" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+var heading = "FSG Report - Cost Centre Files Distribution Processing Summary: "
+var processStartDateTime = "Process Started  at (dd-MM-yyyy HH:mm:ss): " ++  (vars.processStartDateTime default '')
+var processFinishedDatetime = "Process Finished at (dd-MM-yyyy HH:mm:ss): " ++  (vars.processEndDateTime default '')
+var processedFilesCount = "Processed Files Count: " ++ ((vars.totalNumberOfFiles default 0) - sizeOf((vars.failedFiles default [])))
+var totalFilesCount = "Total Files Count: " ++ (vars.totalNumberOfFiles default 0)
+var exceptionString = if ( isEmpty(vars.failedFiles default []) ) "" else ("Exception: Following files/directories are either missing or not exists <BR />" ++ ((vars.failedFiles default []) joinBy ", <BR />"))
+var finalHtmlString = [heading, processStartDateTime, processFinishedDatetime, processedFilesCount, totalFilesCount, exceptionString] joinBy  "<BR /><BR />"
+---
+finalHtmlString
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="d284f771-3bfc-4912-aaa8-972eb1090923" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('costCenterFSGReport.emailNotification.fromAddress'),
+	"toAddress" : Mule::p('costCenterFSGReport.emailNotification.toAddress'),
+	"subject" : Mule::p('costCenterFSGReport.emailNotification.subject'),
+	"content" : payload,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="70ea357c-da01-4845-9a3b-1188b49a70cd" name="sendEmailNotificationFlow"/>
+	</flow>
+	<flow name="sendContentCreationSuccessEmailFlow" doc:id="252aa064-383c-4958-91ed-05727439ff8c" >
+		<vm:listener queueName="sendContentCreationSuccessEmailQueue" doc:name="Listen - sendContentCreationSuccessEmailQueue" doc:id="104a54f7-9c11-45e8-82bf-5d1bd974ebb7" config-ref="VM_Config" />
+		<ee:transform doc:name="Prepare Email Content"
+			doc:id="b31bbf31-ec1a-4799-af1b-3de1544b1dde">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable
+					variableName="contentRecordDetailsHtml"><![CDATA[%dw 2.0
+output application/json
+---
+"IBMS Finance  contentCreation " ++ 
+Mule::p("contentCreation.ICName") ++ 
+". Transfer to Oracle at: " ++
+(now() as String{format: "dd-MM-yy_HH-mm-ss"}) ++
+".<br /><br />The File is: " ++ 
+(payload.outputFilename default "") ++  
+"<br /><br />The File Path is: " ++
+Mule::p("contentCreation.ftpPath")
+]]></ee:set-variable>
+				<ee:set-variable variableName="category" ><![CDATA[payload.category]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<ee:transform
+			doc:name="Prepare Email Notification Payload"
+			doc:id="b04c0f12-a8b6-4ff8-89f6-abc95fbf4e52">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="emailDetails" ><![CDATA[%dw 2.0
+output application/java
+var emailDetails = {
+	"fromAddress" :  Mule::p('contentCreation.emailNotification.fromAddress'),
+	"toAddress" : Mule::p('contentCreation.emailNotification.toAddress'),
+	"subject" : Mule::p('contentCreation.emailNotification.defaultSubject'),
+	"content" : vars.contentRecordDetailsHtml,
+	"contentType": "text/html"
+}
+---
+write(emailDetails, "application/json")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Multipart email payload" doc:id="515f2228-fe48-4eaf-92a3-30e40e152a8b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import dw::module::Multipart   
+output multipart/form-data boundary="--------------------------attachments"
+---
+{
+  parts: {
+    emailDetails: {
+      headers: {
+          "Content-Disposition": {
+          name: "emailDetails",
+          subtype: "form-data"
+        },
+         "Content-Type": "application/json"
+      }, 
+      content: vars.emailDetails
+    },
+    attachment: {
+      headers: {
+        "Content-Disposition": {
+          name: "attachment1",
+          subtype: "form-data",
+          headers : "false",
+          filename: payload.outputFilename
+        },
+        "Content-Type": "text/csv"
+      },
+      content: payload.receivedPayload
+    }
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="fd41f4cd-cdb3-4a28-b042-ad7ac096cf07" mimeType="multipart/form-data"/>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="3aead3f9-4ffd-456e-b20b-295d9f8c1769" name="sendEmailNotificationFlow" />
+	</flow>
+	<flow name="sendContentCreationMissingContentValuesEmailFlow"
+		doc:id="1839ab64-4895-41c9-9390-cc70a4dced6c">
+		<vm:listener queueName="sendContentCreationMissingContentValuesEmailQueue" doc:name="Listen - sendContentCreationMissingContentValuesEmailQueue" doc:id="58c45d68-36ea-45cb-b8eb-24b5ae66575a" config-ref="VM_Config" />
+		<set-variable
+			value="#['${contentCreation.reTriggerUrl}']"
+			doc:name="Set Re-Trigger URL"
+			doc:id="ee27a5c6-240c-414c-8906-bd59a26d9b61"
+			variableName="retriggerURL" />
+		<ee:transform doc:name="Prepare Table Content"
+			doc:id="6b41940f-1ddb-483a-a29c-3c61a18b514f">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable
+					variableName="contentRecordDetailsHtml"><![CDATA[%dw 2.0
+output text/plain
+---
+(payload.failedRecords default []) map ((item, index) -> '<TR>' ++ (['<TD>' ++ (item.DEAL_CODE default  '') ++ '</TD>', '<TD>' ++ (item.DEAL_NAME default '') ++ '</TD>', '<TD>' ++ (item.SUB_TYPE default '') ++ '</TD>', '<TD>' ++ (item.BUS_UNIT default '') ++ '</TD>', '<TD><a href=\"' ++ vars.retriggerURL ++   item.DEAL_CODE ++ '\">Click</a></TD>' ] joinBy  "") ++ '</TR>') joinBy  ""]]></ee:set-variable>
+				<ee:set-variable variableName="category" ><![CDATA[payload.category]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template
+			doc:name="Parse Email Notificaiton Template"
+			doc:id="7966c425-b0b6-4804-9e37-15cc126f6fa6"
+			location="emailNotificationTemplate.html" />
+		<ee:transform
+			doc:name="Prepare Email Notification Payload"
+			doc:id="ed658581-54bb-4951-b4e3-f34474237777">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('contentCreation.emailNotification.fromAddress'),
+	"toAddress" : Mule::p('contentCreation.emailNotification.missingContentValueToAddress'),
+	"subject" : Mule::p('contentCreation.emailNotification.missingContentValueSubject'),
+	"content" : payload,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="4d917b4a-0598-4a58-99f5-553831c8e507" name="sendEmailNotificationFlow"/>
+	</flow>
+	
+	<flow name="sendContentCreationErrorEmailFlow"
+		doc:id="2c7b881a-cc68-4486-bdb5-a149fdb8ceab">
+		<vm:listener queueName="sendContentCreationErrorEmailQueue" doc:name="Listen - sendContentCreationErrorEmailQueue" doc:id="f999dc91-06cd-4002-b663-0b7b01c51d50" config-ref="VM_Config" />
+		<ee:transform
+			doc:name="Prepare Email Notification Payload"
+			doc:id="b488b76c-9aee-41fa-a30c-d61d31159cbe">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('contentCreation.emailNotification.fromAddress'),
+	"toAddress" : Mule::p('contentCreation.emailNotification.toAddress'),
+	"subject" : Mule::p('contentCreation.emailNotification.defaultSubject'),
+	"content" : 'IBMS Finance  contentCreation ' ++ Mule::p('contentCreation.ICName') ++ ' Failed to process file :' ++ payload.customErrorMessage,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="category" ><![CDATA[payload.category]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="5f0d3128-f6bf-40ed-b867-3fcbb884b04e" name="sendEmailNotificationFlow"/>
+	</flow>
+	<flow name="creditCardProgramDecryptionErrorEmailFlow" doc:id="434ce3e6-662c-42f7-a51b-8c4055b3ac38" >
+		<vm:listener queueName="creditCardProgramDecryptionEmailNotificationQueue" doc:name="Listen - creditCardProgramDecryptionEmailNotificationQueue" doc:id="6382f776-0ba6-4bb3-a55c-d20cf4c694a9" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0da19bb9-5b65-4286-b959-4874afe9bcbb" message="Send email for credit card program decryption module." />
+		<ee:transform doc:name="Prepare email notification content" doc:id="efe2e32d-f6d6-4d0a-afe6-22b32990577d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	fromAddress: payload.emailDetails.fromAddress default Mule::p('app.emailNotifications.fromAddress'),
+	toAddress: payload.emailDetails.toAddress default Mule::p('creditCardProgram.emailNotification.toAddress'),
+	subject: payload.emailDetails.subject default Mule::p('creditCardProgram.emailNotification.defaultSubject'),
+	content: payload.emailDetails.content,
+	contentType: payload.emailDetails.contentType
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="category" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.category default Mule::p('log.categories.creditCardProgramDecryption')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationSubFlow" doc:id="ddd5c8bc-05e7-4e1b-a08f-eceae5df5b8e" name="sendEmailNotificationSubFlow"/>
+	</flow>
+	<flow name="sendProcessSummaryForListItemsEmailNotificationFlow" doc:id="d86c4e8f-4ed4-417e-b698-abe569028b5b" >
+		<vm:listener doc:name="Listener" doc:id="773181e8-3d68-49a7-aca7-da15657d48e1" config-ref="VM_Config" queueName="processSummaryForListItems"/>
+		<set-variable value='#[%dw 2.0&#10;output application/xml&#10;var processedRecords =payload.processedRecords default []&#10;var failedRecords = payload.failedRecords default []&#10;fun categorizeRecords(records) =&#10;&#10;    ul: {&#10;	li: [("CREATE : " ++ (sizeOf(records[?(((($.operation == "create"))))]) default 0)),&#10;        ("UPDATE : " ++ (sizeOf(records[?(((($.operation == "update"))))]) default 0)),&#10;        ("DELETE : " ++ (sizeOf(records[?(((($.operation == "delete"))))]) default 0))]&#10;}&#10;fun mapTable(headers,records,category) = {&#10;	table @(border: 1, style: "width:100%"): {&#10;		"tr": {&#10;			th: headers&#10;		},&#10;		tr: records map () -&gt; &#10;                  td: if ( category == "failed" ) [$.operation,&#10;                    $.code,&#10;                    $.value,&#10;                    $.errorCode,&#10;                    $.errorMessage] else if ( category == "success" ) [$.operation,&#10;                    $.code,&#10;                    $.value] else []&#10;	}&#10;}&#10;output application/xml&#10;---&#10;"html": {&#10;	head: {&#10;		style: "table, th, td {  border: 1px solid black; border-collapse: collapse;}"&#10;	},&#10;	"body": {&#10;		h1: payload.heading,&#10;		(if ( (payload.recordsToBeProcessedCount != 0) ) {&#10;			h2 @(style: "color:MediumSeaGreen;"): "Total number of records processed : " ++ (sizeOf(processedRecords) default 0),&#10;			h2 @(style: "color:Tomato;"): "Total number of records failed : " ++ (sizeOf(failedRecords) default 0),&#10;			(if ( not isEmpty(processedRecords) ) ({&#10;				h4 @(style: "color:MediumSeaGreen;"): "Succeeded Records count under each operation are as follows ",&#10;				(categorizeRecords(processedRecords))&#10;			})&#10;          else&#10;            {&#10;			}),&#10;			(if ( not isEmpty(failedRecords) ) ({&#10;				h4 @(style: "color:Tomato;"): "Failed  Records count under each operation are as follows ",&#10;				(categorizeRecords(failedRecords)),&#10;				h3 @(style: "color:Tomato;"): "Failed Records Summary",&#10;				(mapTable(["Operation", "Code", "Description", "Error Code", "Error Message"],failedRecords,"failed")),&#10;			})&#10;          else&#10;            {&#10;			}),&#10;			(if ( not isEmpty(processedRecords) ) ({&#10;				h3 @(style: "color:MediumSeaGreen;"): "Processed Records Summary",&#10;				(mapTable(["Operation", "Code", "Description"],processedRecords,"success"))&#10;			})&#10;          else&#10;            {&#10;			})&#10;		}&#10;      else&#10;        {&#10;			h2: "No Records found for processing"&#10;		})&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="75b06eb9-8722-4c6a-89d9-38859a949d0d" variableName="emailContent" mimeType="text/plain"/>
+			<ee:transform doc:name="Set Email subject and content" doc:id="f49a5b53-7fbf-494c-8053-a38469b99087" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  payload.fromAddress,
+	"toAddress" : payload.toAddress,
+	"subject" : payload.subject,
+	"content" : vars.emailContent,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Send Email" doc:id="cdc1b9ba-3835-49af-b094-38a52c473611" name="sendEmailNotificationSubFlow"/>
+		</flow>
+</mule>

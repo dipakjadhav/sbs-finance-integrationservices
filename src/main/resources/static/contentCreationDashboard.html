@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="CoffeeCup HTML Editor (www.coffeecup.com)">
+    <meta name="dcterms.created" content="Wed, 05 Oct 2016 04:05:36 GMT">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <title> Oracle Content Creation - Dashboard </title>
+    
+    <!--[if IE]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+ 
+<script>
+
+/*
+  Validates and triggers the url based on the user selection
+  returns the status message
+*/
+
+
+function manageAction(element,instance) {
+
+//alert("manage action method invoked");
+
+// re-set Status message
+
+document.getElementById("status").innerHTML = "";
+
+
+/*
+  Define non-prod and prod url's as key-value pairs
+
+ */
+
+var map = {
+		
+						"contentcreation-local": "#[vars.contentCreationRelativeURL]"
+		  };
+ 
+  /*  
+  	  Get the id of the button triggered this method
+  */
+  
+  //alert("Elements id  : " + element.id); 
+  var eventname =   element.id;
+  
+  //alert("URL to be triggered is  : " + map[eventname]);
+ 
+  var theURL=map[eventname] ;
+  
+  /*
+  Check whether the url requires query parameter values 
+  append the values into the url
+*/
+    
+   switch(eventname) {
+    
+	case "contentcreation-local":
+      parentId = document.getElementById('in'+ eventname).value;
+	  //alert("parentId : " + parentId); 	  
+	  if(checkEmptyString(parentId))
+	  	  theURL = theURL+parentId;
+	   else
+	   	   theURL = "empty";	  	  
+      break;
+	  
+	 default:
+      		empty = "empty";
+			break;
+  
+  }
+	  
+  
+  if(!(theURL == "empty")) {
+  
+  		//alert("Computed URL to be triggered is  : " + theURL);
+		if(confirmStatus()) {
+				loadXMLDoc(theURL);		
+				txt = "Process Triggred Successfully... wait for the successful email notification, otherwise check with SBS Mulesoft Support team!";
+				document.getElementById("status").innerHTML = txt;
+		}
+		else {
+			txt = " You have Cancelled the process! ";
+			document.getElementById("status").innerHTML = txt; 
+		}
+  }
+  
+  else {
+  	    
+		txt = "The Given input parameter/value is wrong";
+		document.getElementById("status").innerHTML = txt;
+		//alert("The Given input parameter/value is wrong");
+	}
+
+    
+}
+
+
+/*
+  Invoke the given url
+  
+*/
+
+var xmlhttp;
+
+function loadXMLDoc(url)
+{
+   xmlhttp=null;
+if (window.XMLHttpRequest)
+  {// code for all new browsers
+      xmlhttp=new XMLHttpRequest();
+  }
+else if (window.ActiveXObject)
+  {// code for IE5 and IE6
+      xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+if (xmlhttp!=null)
+  {
+      xmlhttp.onreadystatechange=state_Change;      
+      xmlhttp.open("GET",url,true);
+      xmlhttp.send(null);
+  }
+else
+  {
+      alert("Your browser does not support XMLHTTP.");
+  }
+  
+  
+}
+
+/*
+  validate the http return status
+  alert with the status message
+*/
+
+function state_Change()
+{
+    if (xmlhttp.readyState==4)
+      {// 4 = "loaded"
+          if (xmlhttp.status==200)
+            {// 200 = OK
+             //xmlhttp.data and shtuff
+            // ...our code here...
+			
+			//alert(xmlhttp.responseText);
+			//xmlhttp.responseText
+			setResponseText('Process Completed');
+			
+        }
+  else
+        {
+            //alert(xmlhttp.responseText);
+			txt = 'Failed to Process : ' + xmlhttp.responseText;
+			setResponseText('Process Completed with Errors');
+        }
+  }
+    
+    
+}
+
+/* write response in the dashboard */
+
+function setResponseText(txt) {
+
+document.getElementById("status").innerHTML = txt;
+
+}
+
+/*
+  validate the given datestring follows the format of YYYYMMDD
+  returns true otherwise false
+*/
+
+function isValidDate(dateString) {
+  var regEx = /^\d{4}\d{2}\d{2}$/;
+  var whichday = dateString;
+  //alert ("date string is" + whichday.match(regEx) != null);
+  return whichday.match(regEx) != null;
+}
+
+/*
+  validate the given string is not empty or null
+  returns true otherwise false
+*/
+
+function checkEmptyString(inString) {
+		 return inString.trim();
+}
+
+/*
+  controls the switch between active and inactive tabs
+*/
+
+function openEnvironments(evt, instanceName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(instanceName).style.display = "block";
+    evt.currentTarget.className += " active";
+	
+	// re-set Status message
+
+	document.getElementById("status").innerHTML = "";
+
+}
+
+/*
+  Uses confirm dialog to get the confirmation of OK or Cancel
+  returns true otherwise false
+*/
+
+
+function confirmStatus() {
+    var txt;
+    var r = confirm("Do you want to continue ?\nEither OK or Cancel");
+    return r;
+}
+
+
+</script>
+
+<style>
+body {font-family: "Lato", sans-serif;}
+
+ul.tab {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+/* Float the list items side by side */
+ul.tab li {float: left;}
+
+/* Style the links inside the list items */
+ul.tab li a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+/* Change background color of links on hover */
+ul.tab li a:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+ul.tab li a:focus, .active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    -webkit-animation: fadeEffect 1s;
+    animation: fadeEffect 1s;
+}
+
+@-webkit-keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+}
+
+.right {
+    position: absolute;
+    right: 0px;
+    width: 300px;
+    
+}
+
+.center {
+    line-height: 200px;
+    height: 200px;
+    border: 3px solid green;
+    text-align: center;
+}
+
+/* If the text has multiple lines, add the following: */
+.center p {
+    line-height: 1.5;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+</style>
+
+<body>
+
+<h1>Oracle Content Creation - Dashboard</h1>
+
+
+<div class="container">  
+ 
+<div class="left">
+<p><label><b>1. Enter Deal Codes  & Press Confirm: </b> </label> 
+</p>
+<p>For a Single Deal : 12345 <br>
+   For Multiple Deals : 12345,78654,78655 <p>
+<p>
+<input id="incontentcreation-local" />
+<button id="contentcreation-local" onclick="manageAction(this,'local')">Confirm</button>
+</p>
+</div>
+
+</div>
+
+<div class="center"> <p id="status"></p> </div>
+
+<div id="footer" class="right">
+<h4>SBS Technology</h4>
+</div>
+  </body>
+</html>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto"
+	xmlns:smb="http://www.mulesoft.org/schema/mule/smb" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/smb http://www.mulesoft.org/schema/mule/smb/current/mule-smb.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<flow name="creditCardProgramConfigFlow" doc:id="ee2ff6d1-a92c-4182-8e3a-116b6119e2d5" >
+		<ee:transform doc:name="Set config values" doc:id="cb659acd-026a-4a1a-b0e6-c95960a6a02a">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="configValues"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	logCategory: Mule::p('log.categories.creditCardProgramDecryption'),
+	errorAlertToAddressDefault: Mule::p('creditCardProgram.emailNotification.toAddress')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="interfaceKey"><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p('creditCardProgram.interfaceKey')]]></ee:set-variable>
+				<ee:set-variable variableName="success"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="b7c1e785-c355-405f-a2d3-072210854bf2">
+			<flow-ref doc:name="Get config details from integration Source" doc:id="0b08709a-c817-4772-bf49-bc15fa14b45d" name="getInterfaceDetailsFromIntegrationSource" target="interfaceDetails" />
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="bf10afbb-9b2d-43e6-8ec3-d3109bf5bd17">
+					<set-variable value='#[output text&#10;---&#10;"Failed to retrieve $(vars.interfaceKey default "undefined interface") details from source table"]' doc:name="Set customErrorMessage" doc:id="069610cc-957a-4e05-9fad-6a57c48f5675" variableName="customErrorMessage" />
+					<logger level="ERROR" doc:name="ERROR - Log the error" doc:id="5a5cd75b-24df-46ab-bc8e-c13f1c51de44" message='#[output text&#10;---&#10;"$(vars.customErrorMessage). Cause: $(error.description)"]' category="creditCardProgramConfigFlow"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<set-variable value="#[vars.configValues ++ vars.interfaceDetails]" doc:name="Add interface details to configValues" doc:id="3196d467-58cf-431b-ab10-712577587f09" variableName="configValues" />
+		<flow-ref doc:name="Call - creditCardProgramDecryptionFlow" doc:id="55a7255f-05a7-4ebe-a86c-4a2bdb9fe8bb" name="creditCardProgramDecryptionFlow" />
+	</flow>
+	<flow name="creditCardProgramDecryptionFlow" doc:id="2916545b-dd27-4676-bfc4-7d6d730f55c6" >
+		<logger level="DEBUG" doc:name="DEBUG - Log start" doc:id="e1215ae3-f1fd-4e1c-ad77-002970f05685" message='&lt;&lt;#[vars.configValues.logCategory default "undefined"]&gt;&gt;START - Credit card program decryption module' category="creditCardProgramDecryptionFlow"/>
+		<try doc:name="Try" doc:id="353ea74c-7e4e-4cd9-8a42-fa908989a5bc" >
+			<smb:directory-list doc:name="Directory List" doc:id="3c3e9303-b94e-47e4-8076-3999d7fac31c" config-ref="Nutanix_Global_Share_SMB_Config" dirName='#[vars.configValues.sourcePath]' wildcard="#[vars.configValues.fileMask]" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a16f3233-5037-43b1-a861-4f5830a11087" >
+					<set-variable value='#[output text&#10;---&#10;"Unable to list contents of directory $(vars.configValues.fullSourcePath)"]' doc:name="Set customErrorMessage" doc:id="dec21d81-dbd9-4c0f-96fc-13d29c2fe880" variableName="customErrorMessage"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="DEBUG" doc:name="DEBUG - Files in directory" doc:id="203cbc1b-28b4-4667-806b-210a949954fc" message="&lt;&lt;#[vars.configValues.logCategory]&gt;&gt; #[sizeOf(payload) default 0] files to process in #[vars.configValues.sourcePath]" category="creditCardProgramDecryptionFlow"/>
+		<choice doc:name="If files are available to be processed" doc:id="e0661f93-4e8f-49e2-bc9e-db4ab0af633d" >
+			<when expression="#[not isEmpty(payload)]">
+				<foreach doc:name="For Each" doc:id="731ee118-fed3-4d9c-ba19-f10a19f38b2f" collection="#[payload.Filename]">
+			<try doc:name="Try" doc:id="e8dab1f9-b161-4357-b733-1c77fa7db652">
+				<ee:transform doc:name="set input and output file names" doc:id="3885e325-7987-408d-9d65-2408dcf69760">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="outputFileName"><![CDATA[%dw 2.0
+output application/java
+---
+payload replace ".pgp" with ""]]></ee:set-variable>
+					<ee:set-variable variableName="sourceFileName"><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				<try doc:name="Try" doc:id="5b004eab-ee87-4a5f-945f-a46aa8255ef9">
+					<smb:file-read doc:name="Read encrypted file" doc:id="d3c83b79-ee3d-4ecb-97a6-338ee0f1a6d4" config-ref="Nutanix_Global_Share_SMB_Config" fileName="#[vars.sourceFileName]" dirName="#[vars.configValues.sourcePath]" />
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a992cfd2-ad6f-47c2-b4b9-2705eeb59bcc">
+							<set-variable value='#[output text&#10;---&#10;"Could not read file $(vars.sourceFileName) from $(vars.configValues.sourcePath)"]' doc:name="Set customErrorMessage" doc:id="def3ce2f-0090-4149-aaf8-8bece1726251" variableName="customErrorMessage" />
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<logger level="INFO" doc:name="Log file to be decrypted" doc:id="d2308bd4-b36e-47e6-a87f-8aa8a2feb622" message="&lt;&lt;#[vars.configValues.logCategory]&gt;&gt; Decrypting #[vars.sourceFileName]" category="creditCardProgramDecryptionFlow" />
+				<try doc:name="Try" doc:id="8c306973-603f-4d1c-ae0d-b056750db337">
+					<crypto:pgp-decrypt doc:name="Decrypt the file content" doc:id="f25e34d0-01c4-498c-b138-7436e5608689" config-ref="CreditCardProgram_Decryt" />
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e8cbcba4-c464-4e24-b6bb-d1c365ee5a4d">
+							<set-variable value='#[output text&#10;---&#10;"Could not decrypt file $(vars.sourceFileName)"]' doc:name="Set customErrorMessage" doc:id="7263ea3c-46f6-40b1-bb97-8f0152c2f89d" variableName="customErrorMessage" />
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<logger level="DEBUG" doc:name="DEBUG - Decryption successful" doc:id="9fd7c7ce-f2e4-4a24-8302-1c5d1c883415" message="&lt;&lt;#[vars.configValues.logCategory]&gt;&gt; Decryption successful. Writing decrypted file #[vars.outputFileName] to #[vars.configValues.targetPath]" category="creditCardProgramDecryptionFlow" />
+				<try doc:name="Try" doc:id="d568d12b-0e52-4bbd-b43b-02cb5dee9031">
+					<smb:file-write doc:name="Write the decrypted file to the decrypted directory" doc:id="95386b1e-3793-4367-9e06-8cc8301eb7ee" config-ref="Nutanix_Global_Share_SMB_Config" fileName="#[vars.outputFileName]" dirName="#[vars.configValues.targetPath]" />
+					<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="21febc76-e78d-49cc-912a-519a326bae77">
+							<set-variable value='#[output text&#10;---&#10;"Failed to write decrypted file $(vars.outputFileName) to $(vars.configValues.targetPath)"]' doc:name="Set customErrorMessage" doc:id="9e4f98ba-adc5-42d9-9027-e371b0300e9d" variableName="customErrorMessage" />
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<choice doc:name="Archive source file?" doc:id="c054190e-cb94-4983-9982-0ceabdc06b84">
+				<when expression="#[not isEmpty(vars.configValues.sourceArchivePath)]">
+					<logger level="INFO" doc:name="Log archiving enabled" doc:id="85785a90-3b57-472e-8619-4029c28a4e80" message="Archive location set in config. Moving #[vars.sourceFileName] to #[vars.configValues.sourceArchivePath]" category="creditCardProgramDecryptionFlow" />
+						<try doc:name="Try" doc:id="7f982169-7a3e-4b11-846f-1615d7c24023">
+							<smb:file-move doc:name="Archive and delete encrypted source file" doc:id="7d5ff47e-9ffd-4ac1-8382-2c5c95b4380c" config-ref="Nutanix_Global_Share_SMB_Config" fileName="#[vars.sourceFileName]" dirName="#[vars.configValues.sourcePath]" destDir="#[vars.configValues.sourceArchivePath]" overwrite="true" autoDelete="true" />
+							<error-handler>
+								<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b71f0197-aaea-4419-b458-032d57a3c8a5">
+									<set-variable value='#[output text&#10;---&#10;"Failed to archive encrypted file $(vars.sourceFileName)"]' doc:name="Set customErrorMessage" doc:id="1ea47d70-4c18-405d-91a6-511d11b8ff43" variableName="customErrorMessage" />
+								</on-error-propagate>
+							</error-handler>
+						</try>
+				</when>
+				<otherwise>
+					<logger level="INFO" doc:name="Log archiving disabled" doc:id="3a4a335a-594c-4fe0-ac91-a777eefbdcb4" message="No archive location set. Deleting #[vars.sourceFileName] from #[vars.configValues.sourcePath]" category="creditCardProgramDecryptionFlow" />
+						<try doc:name="Try" doc:id="823857a8-69fa-4d81-8050-ea6070287b29">
+							<smb:file-delete doc:name="Delete the encryted source file" doc:id="f1908159-0a1a-43fd-9370-8b5746fc2c02" config-ref="Nutanix_Global_Share_SMB_Config" fileName="#[vars.sourceFileName]" dirName="#[vars.configValues.sourcePath]" />
+							<error-handler>
+								<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="39b816b7-9449-4e41-a3e5-31a104bc8cdf">
+									<set-variable value='#[output text&#10;---&#10;"Could not delete encrypted file $(vars.sourceFileName) from $(vars.configValues.sourcePath)"]' doc:name="Set customErrorMessage" doc:id="c37a63ad-d29c-4043-b3b5-1fa6ae9db8b6" variableName="customErrorMessage" />
+								</on-error-propagate>
+							</error-handler>
+						</try>
+				</otherwise>
+			</choice>
+				<set-variable value="#[output application/json&#10;---&#10;vars.success &lt;&lt; vars.outputFileName]" doc:name="Set success" doc:id="113c2e5c-c2e5-47de-91b8-aada5cf2ca7e" variableName="success" />
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a8374618-df57-43ec-8c43-b33c2c3bdf3d">
+						<set-variable value='#[output application/xml&#10;var errorType = error.errorType.namespace ++ ":" ++ error.errorType.identifier&#10;---&#10;{&#10;	html: {&#10;		body: {&#10;			h1 @(style: "color:red"): "Decryption process failed for file $(vars.sourceFileName)",&#10;			h2: "Error Details",&#10;			p: [vars.customErrorMessage, errorType, error.description] filter (not isEmpty($))&#10;		}&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="d694e1b6-089e-4663-9b3c-04cd2efdd5fe" variableName="emailContent" mimeType="text/plain" />
+						<ee:transform doc:name="Set emailDetails" doc:id="f39d5b58-6b2e-43e8-945e-e728221944f8">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable variableName="emailDetails"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	toAddress: vars.configValues.supportEmail,
+	subject: "$(vars.interfaceKey default "undefined interface") processing failed",
+	content: vars.emailContent,
+	contentType: "text/html"
+}]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<vm:publish queueName="creditCardProgramDecryptionEmailNotificationQueue" doc:name="Publish to creditCardProgram email queue" doc:id="f9756f21-a611-4a28-8ebb-9922cdd42d72" config-ref="VM_Config" sendCorrelationId="ALWAYS">
+							<vm:content><![CDATA[#[{
+	emailDetails: vars.emailDetails,
+	category: vars.configValues.logCategory
+}]]]></vm:content>
+						</vm:publish>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="DEBUG - No file to process" doc:id="b5cd97f8-c612-4bdb-88e0-8b64921c4cad" message="&lt;&lt;#[vars.configValues.logCategory]&gt;&gt; No files to process."/>
+			</otherwise>
+		</choice>
+		<choice doc:name="Send processing status if there are successful files" doc:id="dbc0b260-cd8e-4224-b666-754a977871ba" >
+			<when expression="#[not isEmpty(vars.success)]">
+				<set-variable value='#[output application/xml&#10;---&#10;{&#10;	html: {&#10;		body: {&#10;			h2: "Corporate card travel expenses statement decryption is complete",&#10;			p: "Decrypted files location: $(vars.configValues.fullTargetPath)",&#10;			p: vars.success&#10;		}&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="fe347630-6b32-4043-9a36-a2e68490d541" variableName="emailContent" mimeType="text/plain"/>
+				<ee:transform doc:name="Set emailDetails" doc:id="7bbaab25-3072-42c2-b383-dda046a0f5dd" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="emailDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	fromAddress: vars.configValues.emailFrom,
+	toAddress: vars.configValues.supportEmail,
+	subject: "$(vars.interfaceKey) - Decryption Complete",
+	content: vars.emailContent,
+	contentType: "text/html"
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<vm:publish queueName="creditCardProgramDecryptionEmailNotificationQueue" doc:name="Publish to creditCardProgram email queue" doc:id="e901fe8a-8da7-415b-bd1a-6de7daabe088" config-ref="VM_Config" sendCorrelationId="ALWAYS">
+					<vm:content ><![CDATA[#[{
+	emailDetails: vars.emailDetails,
+	category: vars.configValues.logCategory
+}]]]></vm:content>
+				</vm:publish>
+			</when>
+		</choice>
+		<logger level="DEBUG" doc:name="DEBUG - Log end of flow" doc:id="45c9f183-881d-476a-b231-0038483dafff" message="&lt;&lt;#[vars.configValues.logCategories]&gt;&gt; END - Credit card program decryption module" category="creditCardProgramDecryptionFlow"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="494de6e0-a076-4cf4-b3a4-189270d5f278" >
+				<set-variable value='#[output application/xml&#10;var errorType = error.errorType.namespace ++ ":" ++ error.errorType.identifier&#10;---&#10;{&#10;	html: {&#10;		body: {&#10;			h1 @(style: "color:red"): "$(vars.interfaceKey default "undefined interface") system error",&#10;			h2: "Error Details",&#10;			p: [vars.customErrorMessage, errorType, error.description] filter (not isEmpty($))&#10;		}&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="c5d61e30-4dd3-4ed1-80f3-ec03c11e93bf" variableName="emailContent" mimeType="text/plain" />
+				<ee:transform doc:name="Set emailDetails" doc:id="12f58b6a-4a18-411d-8c51-fb8045b308ab">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="emailDetails"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	toAddress: vars.configValues.errorAlertToAddressDefault,
+	subject: "$(vars.interfaceKey default "undefined interface") system error",
+	content: vars.emailContent,
+	contentType: "text/html"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				<vm:publish queueName="creditCardProgramDecryptionEmailNotificationQueue" doc:name="Publish to creditCardProgram email queue" doc:id="d89a8677-327f-4eae-9b4d-c0ae105a7bbe" config-ref="VM_Config" sendCorrelationId="ALWAYS">
+						<vm:content><![CDATA[#[{
+	emailDetails: vars.emailDetails,
+	category: vars.configValues.logCategory
+}]]]></vm:content>
+					</vm:publish>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

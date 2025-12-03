@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd">
+	
+	
+	<flow name="processDelegationOfAuthorityFlow" doc:id="daa0de4f-d5b7-48d2-b2ec-f5f8add06945">
+		<logger level="INFO" doc:name="Log - Start" doc:id="7f856c7f-a6f7-41b1-a52d-1a435324a97a" message="Started processing delegation of authority" category="processDelegationOfAuthorityFlow"/>
+		<set-variable value="#['100,0,welcome,UPDATE,EN,N,N']" doc:name="Set Headers" doc:id="de23f0e6-a077-4fc2-8323-ecd4eac1c877" variableName="header" mimeType="application/csv; header=false"/>
+		<flow-ref doc:name="Get Delegation of Authority2 details from Oracle and Transform into csv" doc:id="a2d7e05a-3257-405f-9844-a444b7ebfe6d" name="getDelegationOfAuthorityDetails" />
+		<ee:transform doc:name="Extract records from DB and set as payload" doc:id="572fa21a-2e2c-4ef1-aa18-4f1d4ebfc8bf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header = false
+
+
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	
+	TRANSACTION_TYPE:  if((payload01.TRANSACTION_TYPE default null) != null) payload01.TRANSACTION_TYPE as String else "",
+	APPROVAL_TYPE: payload01.APPROVAL_TYPE,
+	EMPLOYEE_ID: payload01.EMPLOYEE_ID,
+	SEGMENT1: payload01.SEGMENT1,
+	SEGMENT2: payload01.SEGMENT2,
+	SEGMENT3: payload01.SEGMENT3,
+	SEGMENT4: payload01.SEGMENT4,
+	SEGMENT5: payload01.SEGMENT5,
+	SEGMENT6: payload01.SEGMENT6,
+	SEGMENT7: payload01.SEGMENT7,
+	SEGMENT8: payload01.SEGMENT8,
+	SEGMENT9: payload01.SEGMENT9,
+	SEGMENT10: payload01.SEGMENT10,
+	EXCEPTION_APPR_AUTHORITY: payload01.EXCEPTION_APPR_AUTHORITY,
+	APPROVAL_LIMIT: if((payload01.APPROVAL_LIMIT default null) != null) payload01.APPROVAL_LIMIT as String else "",	
+	APPR_LIMIT_CURR_CODE: payload01.APPR_LIMIT_CURR_CODE
+
+}) 
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Add header to Payload" doc:id="a5445eae-f6bc-48df-8265-9c12b323a9b3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header=false
+---
+vars.header ++ payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="check payload is empty?" doc:id="bec2e7df-7f1c-4df6-91af-d5562b04c548">
+			<when expression="#[isEmpty(payload)]">
+				<logger level="INFO" doc:name="Log - No files to process" doc:id="3ddd014a-dbe7-48df-b505-fd853a9a435d" message="Payload is empty or no files to process" />
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;message : 'No files to Process'&#10;&#10;}]" doc:name="Set Empty Files Response" doc:id="e1c0e972-8e6e-48d7-9516-a93296a23700" variableName="response" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Set outputFilename" doc:id="78790d13-860d-44bb-bdb4-836a9c8a6624">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+						<ee:set-variable variableName="outputFilename" ><![CDATA[%dw 2.0
+output application/java
+---
+p('concurSftp.delegationOfAuthorityJobtype')  ++ "_" ++ p('concurSftp.sbsentitycode') ++ "_" ++ now() as String {format:"yyyyMMddHHmmss"}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<scatter-gather doc:name="Send Payload to Archive and Concur" doc:id="8bda1ff8-650e-4f92-aeb2-e1cf63b96560">
+					<route>
+						<set-variable value="#[p('oracleftp.delegatonOfAuthorityArchivePath') ++ vars.outputFilename ++ p('oracleftp.fileExtension')]" doc:name="Set target Filepath" doc:id="05edd29f-307a-4d37-aa04-a7f5d60ba60a" variableName="oracleFtpPath"/>
+						<flow-ref doc:name="Archive DOA2 File in Oracle Server" doc:id="6303c02c-d45a-4940-bb06-ac3adfa539d7" name="writeFileIntoOracleAppServer" />
+					</route>
+					<route>
+					    <set-variable value="#[p('concurSftp.outboundPath') ++ &quot;/&quot; ++  vars.outputFilename ++ p('concurSftp.fileExtension')]" doc:name="Set concurPath" doc:id="70e6737c-f3b9-47f6-95d8-e387e8896cfb" variableName="concurPath"/>
+						<flow-ref doc:name="Encrypt Csv Payload" doc:id="a46d9d56-cdaf-4b74-bf3a-d0896a5fdead" name="encryptCsvFileContent" />
+						<flow-ref doc:name="Send file to Concur" doc:id="650624af-2e27-466d-bd86-a73a91af31f0" name="writeFileToConcurSftpFlow"/>
+					</route>
+			
+</scatter-gather>
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;message: 'Delegation of Authority2 successfully processed'&#10;}]" doc:name="Set Success Response" doc:id="8970f0b7-bf29-435c-868e-9f4064d9bad9" variableName="response" />
+			</otherwise>
+		</choice>
+		<set-payload value="#[vars.response]" doc:name="Set Response Payload" doc:id="e5eabce2-3b29-4f43-84cc-e9e705ea55e3" />
+			<logger level="INFO" doc:name="Log - End" doc:id="0a396a6a-94e1-4e69-8473-f55cc9c1478a" message="Delegation of Authority2 process completed" category="processDelegationOfAuthorityFlow"/>
+		<error-handler >
+
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3d199c45-2e2f-4b69-8027-689d88619007" >
+
+                <flow-ref doc:name="Common Exception flow" doc:id="9e7bb395-2a63-437e-bcdf-715ecf8af80e" name="commonExceptionSubflow"/>
+
+            </on-error-propagate>
+
+        </error-handler>
+         
+</flow>
+	</mule>

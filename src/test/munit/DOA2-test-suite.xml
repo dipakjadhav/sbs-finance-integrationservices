@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="DOA2-test-suite.xml" />
+	<munit:test name="DOA2-test-suite-DOA2flowTest" doc:id="73d9f778-7135-4133-a611-4c33d785304c" description="Test" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock DB" doc:id="d3f059e1-f092-47d5-9764-4a5fdd0e0ac4" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="getDelegationOfAuthorityDetails" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('dbResponse.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="concur write file" doc:id="257f35a1-7422-43c3-998a-abe3f1becdca" processor="file:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send to concur" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="80e71ec5-8c79-4954-bc16-82c2310c4aef" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('genaricResponse.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="csv write file" doc:id="fe53580e-1c8a-4acb-95c8-8b38999a20df" processor="file:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="csv file" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="d7aaa2ed-5f26-48ac-be34-2ba378be254a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('genaricResponse.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="file:write" doc:id="3c9f2548-bdcb-41a1-849a-e2607a28fdab" processor="file:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Write file in FTP" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="af7b6d4c-c23d-4b6d-95ba-49ea448fd73a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('genaricResponse.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to DOA2flow" doc:id="4a17ea57-5d35-4e81-82b7-e48795608877" name="processDelegationOfAuthorityFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="d062c781-cb91-4763-84d3-bd98fdd15619" expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

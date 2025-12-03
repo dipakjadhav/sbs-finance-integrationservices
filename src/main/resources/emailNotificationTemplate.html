@@ -1,0 +1,40 @@
+<html>
+<head>
+<style>
+table {
+    'font-family: arial, sans-serif;
+    'border-collapse: collapse;
+    'width: 100%;
+}
+
+td, th {
+    'border 1px solid #dddddd;
+    'text-align: left;
+    'padding: 8px;
+}
+
+'tr:nth-child(even) {
+ '   background-color: #dddddd;
+'}
+</style>
+</head>
+<body>
+<p>
+Hello,<br/><br/>
+The following records were removed from today's IBMStoOracle interface run as a Budget Code or Contract Reference value has not been entered. Please add a Budget Code or Contract Reference value in IBMS for each of the Deals listed and then click the "Reprocess" link.
+</p><br/>
+<table border=1>
+<tr>
+<th>Deal Code</th>
+<th>Deal Name</th>
+<th>Deal Sub Type</th>
+<th>Business Units</th>
+<th>Reprocess</th>
+</tr>
+<tr>
+#[vars.contentRecordDetailsHtml]
+</tr>
+</table><br/><br/>
+
+<p>Thank you</p>
+</body></html>

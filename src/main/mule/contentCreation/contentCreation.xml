@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<flow name="contentCreationMainFlow"
+		doc:id="68a5df96-f073-47db-ba44-4c11fb567438">
+		<set-variable value='#["1" as Number]'
+			doc:name="Set Default Deal Code Updated Prior Day"
+			doc:id="6c9459b5-faf4-4479-be38-11a50c4f9eae"
+			variableName="dealCodeUpdatedPriorDay" />
+		<flow-ref doc:name="Call - adhocContentCreationFlow"
+			doc:id="8fabc96e-3d9a-45d4-8c99-94ca7afb6bbd"
+			name="adhocContentCreationFlow" />
+	</flow>
+	<flow name="serveDashbaordPageFlow"
+		doc:id="7dbe9f70-ce4b-46be-99ea-ffbfaa5c0ed9">
+		<ee:transform doc:name="Set content creationURL" doc:id="19411a28-1f0b-4c73-89e9-b6685ee6bdc6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="contentCreationRelativeURL" ><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p("app.context") ++ "/api/ibms/processDeals?dealcodes="]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template
+			doc:name="Load and Parse Dahboard HTML Resource"
+			doc:id="774e70d0-01c3-481a-be28-eb40b43885a6"
+			location="static/contentCreationDashboard.html" targetValue="#[payload]" />
+	</flow>
+	<flow name="adhocContentCreationFlow"
+		doc:id="a8fdb693-1e95-40e2-baa3-22751e58c347">
+		<ee:transform doc:name="Intialize variables" doc:id="dfa9b870-7bff-49b9-a6ed-b9626a7f9e3a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="category" ><![CDATA["processContentCreation"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log - process start" doc:id="f8c52bbd-cef2-4bd9-ba57-8d6d89fb689f" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; START - creation processing. ' ++ (now() as String {format: &quot;dd/MM/yyyy hh:mm:ss&quot;}) ++ &quot; with parameters dealcodes=&quot; ++ (attributes.queryParams['dealcodes'] default '') ++ &quot;, priorday=&quot; ++ (attributes.queryParams['priorday'] default '')]" category="adhocContentCreationFlow" />
+		<choice doc:name="Chek for query parameters"
+			doc:id="a39f5790-561a-4f21-8a23-42aaa84c2705">
+			<when
+				expression="#[not isEmpty(attributes.queryParams['dealcodes'])]">
+				<set-variable
+					value="#[attributes.queryParams['dealcodes']]"
+					doc:name="Set Deal Codes"
+					doc:id="687c90d5-3c41-4227-af3e-7b50aa7d5093"
+					variableName="receivedDealCodes" />
+				<flow-ref
+					doc:name="Call - getPurchasedContentByDealCodesFlow"
+					doc:id="abfb1989-0360-43de-9d04-becc5c4c81db"
+					name="getPurchasedContentByDealCodesFlow" />
+			</when>
+			<when
+				expression="#[not isEmpty(attributes.queryParams['priorday'])]">
+				<set-variable
+					value="#[attributes.queryParams['priorday'] as Number]"
+					doc:name="Set Deal Code Updated Prior Day"
+					doc:id="06c0fc48-1118-4c69-a20a-383f8e12ddc1"
+					variableName="dealCodeUpdatedPriorDay" />
+				<flow-ref doc:name="Call - getContentUpdatesFlow"
+					doc:id="8bf86e3a-388d-455c-b286-1cea98e24814"
+					name="getContentUpdatesFlow" />
+			</when>
+			<otherwise>
+				<set-variable value='#["1" as Number]'
+					doc:name="Set Default Deal Code Updated Prior Day"
+					doc:id="c406e03a-087f-4f7e-96ec-af9ad1d8ee27"
+					variableName="dealCodeUpdatedPriorDay" />
+				<flow-ref doc:name="Call - getContentUpdatesFlow"
+					doc:id="ec1d05d9-4dde-44c9-b977-ec7dc77a324b"
+					name="getContentUpdatesFlow" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="Call - contentCreationProcessFlow" doc:id="dd7e548f-16f6-4589-becf-1071d44f179a" name="contentCreationProcessFlow" />
+		<ee:transform doc:name="Set payload" doc:id="e70bed63-8df0-4f9d-adef-f4f0b4d64283" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": 200,
+	"message": "Process Completed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log - process completion" doc:id="2efb36f0-c0fe-476b-8be4-fcfb756063e3" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; END - Content creation processing ' ++ (now() as String {format: &quot;dd/MM/yyyy hh:mm:ss&quot;}) ++ &quot; with parameters dealcodes=&quot; ++ (vars.receivedDealCodes default '') ++ &quot;, priorday=&quot; ++ (vars.dealCodeUpdatedPriorDay default '')]" category="adhocContentCreationFlow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="af708de4-8560-490b-a492-566c9c7ef077" type="CONTENTCREATION: JOB_FAILED">
+				<ee:transform doc:name="Set customErrorMessage" doc:id="de189662-b9c9-469c-8be2-6a711c3548de">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="customErrorMessage"><![CDATA['No Matching Deals found Exception (' ++ error.errorType.identifier ++ '): ' ++ error.detailedDescription ++ ' For Parameters dealcodes = ' ++ (vars.receivedDealCodes default '') ++ ', priorday = ' ++ (vars.dealCodeUpdatedPriorDay default '') ]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="ERROR" doc:name="Log - error" doc:id="b6794247-3c71-4d78-a694-deeb9e0c1f2d" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt;' ++ vars.customErrorMessage]" category="adhocContentCreationFlow"/>
+				<vm:publish queueName="sendContentCreationErrorEmailQueue" doc:name="Publish to sendContentCreationErrorEmailQueue" doc:id="5b9955b1-c766-4f81-ad2c-18ea2f34042d" config-ref="VM_Config" >
+					<vm:content ><![CDATA[#[{
+	"customErrorMessage": vars.customErrorMessage,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b155908c-aeac-4834-95ee-5111c9311ef2" type="FTP:ACCESS_DENIED, FTP:CONNECTIVITY, FTP:RETRY_EXHAUSTED">
+				<ee:transform doc:name="Set customErrorMessage" doc:id="99f98b51-354e-4ec7-b2ee-1512ee635efc" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="customErrorMessage" ><![CDATA["FTP Connect Exception (" ++ error.errorType.identifier ++ "): " ++ error.detailedDescription]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="ERROR" doc:name="Log - error" doc:id="dd394228-d9bd-4d78-bc16-c8e9379532f6" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt;' ++ vars.customErrorMessage]" category="adhocContentCreationFlow" />
+				<vm:publish queueName="sendContentCreationErrorEmailQueue" doc:name="Publish to sendContentCreationErrorEmailQueue" doc:id="64ca225d-2c68-41ab-a287-5c843cc4ed2d" config-ref="VM_Config">
+					<vm:content ><![CDATA[#[{
+	"customErrorMessage": vars.customErrorMessage,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7897c8e3-c8cb-492d-9b9f-71dab3264b3c" type="FTP:FILE_ALREADY_EXISTS, FTP:FILE_LOCK, FTP:ILLEGAL_CONTENT, FTP:ILLEGAL_PATH">
+				<ee:transform doc:name="Set customErrorMessage" doc:id="58927fd9-58df-419d-824c-e4a4e0699ec1" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="customErrorMessage" ><![CDATA["File/FTP/SSH Write Exception (" ++ error.errorType.identifier ++ "): " ++ error.detailedDescription]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="ERROR" doc:name="Log - error" doc:id="536c2b90-892a-4377-bd27-655088a8c1a1" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt;' ++ vars.customErrorMessage]" category="adhocContentCreationFlow" />
+				<vm:publish queueName="sendContentCreationErrorEmailQueue" doc:name="Publish to sendContentCreationErrorEmailQueue" doc:id="a7ecda94-3c88-463b-91aa-61d9ef0a5237" config-ref="VM_Config" >
+					<vm:content ><![CDATA[#[{
+	"customErrorMessage": vars.customErrorMessage,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e136db56-6721-4592-9514-ee50904fba44" >
+				<ee:transform doc:name="Set customErrorMessage" doc:id="f0044539-c545-43ec-a40b-557cd9744fdb" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="customErrorMessage" ><![CDATA["Exception occurred. Type: " ++ error.errorType.identifier ++ ", description: " ++ error.description]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="ERROR" doc:name="Log - error" doc:id="984ee7a4-cf8b-4f7a-bb1a-96057b21950a" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt;' ++ vars.customErrorMessage]" category="adhocContentCreationFlow" />
+				<vm:publish queueName="sendContentCreationErrorEmailQueue" doc:name="Publish to sendContentCreationErrorEmailQueue" doc:id="fa138fd7-bfe8-4206-b048-1d075ccc10ec" config-ref="VM_Config" >
+					<vm:content ><![CDATA[#[{
+	"customErrorMessage": vars.customErrorMessage,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="contentCreationProcessFlow" doc:id="cfb78d33-1be6-4ff1-83eb-5df59e3acab6" >
+		<!-- <flow-ref doc:name="Call - getContentUpdatesFlow" doc:id="bc10ca88-2094-4238-a859-c3f4f70f1008" name="getContentUpdatesFlow"/> -->
+		<choice doc:name="Is Content found?" doc:id="141cc182-e610-4703-976b-abb3683a92d6" >
+			<when expression="#[isEmpty(payload)]">
+				<raise-error doc:name="Raise error when No data is found" doc:id="2335e980-6cd0-4ff2-b355-5dffb1693cac" type="CONTENTCREATION: JOB_FAILED" description="No Matching Records Found"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Call - transformContentAndSendToFinanceFlow" doc:id="e1dacbbb-cf84-4cd7-9cf9-f8acd7dc6b00" name="transformContentAndSendToFinanceFlow"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9f8b5c02-969b-4fc5-a898-bef6d824a05a" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="89f36a41-dd89-4017-b5f2-72a6e12145f3" message="&lt;&lt;#[vars.category default '']&gt;&gt;Exception occurred. Type: #[error.errorType.identifier], description: #[error.description]" category="contentCreationProcessFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="transformContentAndSendToFinanceFlow" doc:id="f1650a9a-b5ed-4ce3-a976-66f065f15734" >
+		<set-variable value="#[[]]" doc:name="Set Failed Records" doc:id="2f1efd80-71ee-4812-ac52-250b805faf57" variableName="failedRecords"/>
+		<ee:transform doc:name="Transform Result set to CSV" doc:id="06a69fd6-8849-4c4d-bee9-99980b966cce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv separator=",",quoteValues=true
+---
+(payload default []) filter (
+	($.BUDGET_INFO_CODE != null and $.CONTRACT_REFERENCE != null or ($.CONTRACT_REFERENCE == null  and  ($.D_APPRV == "News Complete" 
+	or  $.D_APPRV == "Sports Complete")))
+) 
+map ( (payload01 , indexOfPayload01) -> {
+	
+	DEAL_ID: payload01.DEAL_ID as String,
+	DEAL_CODE: payload01.DEAL_CODE,
+	CONTRACT_REFERENCE: payload01.CONTRACT_REFERENCE,
+	DEAL_NAME: payload01.DEAL_NAME,
+	DEAL_AKA: payload01.DEAL_AKA,
+	SUB_TYPE: payload01.SUB_TYPE,
+	SUB_TYPE_CODE: payload01.SUB_TYPE_CODE,
+	BUDGET_INFO: payload01.BUDGET_INFO,
+	BUDGET_INFO_CODE: payload01.BUDGET_INFO_CODE,
+	BUS_UNIT: payload01.BUS_UNIT,
+	BUS_UNIT_ID: payload01.BUS_UNIT_ID,
+	CONTENT_ID: payload01.CONTENT_ID,
+	CONTENT_NAME: payload01.CONTENT_NAME,
+	TITLE_AKA: payload01.TITLE_AKA,
+	T_PGENRE: payload01.T_PGENRE,
+	T_PGENRE_ID: payload01.T_PGENRE_ID as String,
+	T_SGENRE: payload01.T_SGENRE,
+	T_SGENRE_ID: payload01.T_SGENRE_ID as String  
+ } ) ]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/java
+---
+payload  filter (
+	not ($.BUDGET_INFO_CODE != null and $.CONTRACT_REFERENCE != null or  ($.CONTRACT_REFERENCE == null  and ( $.D_APPRV == "News Complete" 
+	or  $.D_APPRV == "Sports Complete")))
+) 
+map ( (payload01 , indexOfPayload01) -> {
+	
+	DEAL_ID: payload01.DEAL_ID as String,
+	DEAL_CODE: payload01.DEAL_CODE,
+	CONTRACT_REFERENCE: payload01.CONTRACT_REFERENCE,
+	DEAL_NAME: payload01.DEAL_NAME,
+	DEAL_AKA: payload01.DEAL_AKA,
+	SUB_TYPE: payload01.SUB_TYPE,
+	SUB_TYPE_CODE: payload01.SUB_TYPE_CODE,
+	BUDGET_INFO: payload01.BUDGET_INFO,
+	BUDGET_INFO_CODE: payload01.BUDGET_INFO_CODE,
+	BUS_UNIT: payload01.BUS_UNIT,
+	BUS_UNIT_ID: payload01.BUS_UNIT_ID,
+	CONTENT_ID: payload01.CONTENT_ID,
+	CONTENT_NAME: payload01.CONTENT_NAME,
+	TITLE_AKA: payload01.TITLE_AKA,
+	T_PGENRE: payload01.T_PGENRE,
+	T_PGENRE_ID: payload01.T_PGENRE_ID as String,
+	T_SGENRE: payload01.T_SGENRE,
+	T_SGENRE_ID: payload01.T_SGENRE_ID as String  
+ } ) ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Assign Payload Content" doc:id="3c5929b8-ca65-476c-9ee7-5cca0b6962e6" variableName="receivedPayload"/>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;sizeOf(payload)]' doc:name="Set Payload Length" doc:id="55a56215-9145-460e-9036-d787469da2d3" variableName="payloadlength"/>
+		<choice doc:name="Is  there a content exist?" doc:id="0a72702c-a946-4ead-b280-d08eb70c92a7" >
+			<when expression="#[(vars.payloadlength &lt;= 1) and (sizeOf(vars.failedRecords) &gt; 0)]">
+				<flow-ref doc:name="Call - handleFailedRecordsEmailNotificationFlow" doc:id="9c5fd45a-a9f5-4e2b-b1b1-09428423ece6" name="handleFailedRecordsEmailNotificationFlow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Call - sendFileToFinanceFlow" doc:id="2ca19236-30c1-421f-9e11-625990f8621b" name="sendFileToFinanceFlow"/>
+				<vm:publish queueName="sendContentCreationSuccessEmailQueue" doc:name="Publish to sendContentCreationSuccessEmailQueue" doc:id="8e7f83fb-b0dd-4782-8f8e-bfae6ad9efa6" config-ref="VM_Config">
+					<vm:content><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"outputFilename": vars.outputFilename,
+	"receivedPayload": vars.receivedPayload,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+				<flow-ref doc:name="Call - handleFailedRecordsEmailNotificationFlow" doc:id="7d19eba3-6d72-4f2f-a766-783a028f6c32" name="handleFailedRecordsEmailNotificationFlow"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="sendFileToFinanceFlow" doc:id="332e0016-ba43-4dce-840b-d5e6f292d0e5" >
+		<set-variable value="#['contentCreation_' ++ now() as String {format: &quot;ddMMyyyyhhmmss&quot;} ++ '.csv']" doc:name="Set Output Filename" doc:id="4925cc29-00f1-4e36-a68e-588f8a6356a6" variableName="outputFilename"/>
+		<flow-ref doc:name="Call - writeFileToFinanceFTPFlow" doc:id="edf34e51-aef8-4d2a-aa2b-dace3c5d81ce" name="writeFileToFinanceFTPFlow" />
+		<ee:transform doc:name="Delay" doc:id="081eeb9f-793b-431b-bf2b-f40f9e219cad" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="delay" ><![CDATA[%dw 2.0
+import * from dw::Runtime
+output application/json
+---
+{ "delay" : 500 } wait 500]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - callInvoiceAPIFlow" doc:id="84ee76ac-ea99-4a9b-9820-9ed72c43bbec" name="callInvoiceAPIFlow"/>
+	</flow>
+	<flow name="handleFailedRecordsEmailNotificationFlow" doc:id="400f2a65-2623-44f2-a74c-60cb1623d2bf" >
+		<choice doc:name="Is there any failed records?" doc:id="78e8fc3c-653c-4c21-893a-ce6fd32acdfe" >
+			<when expression="#[sizeOf(vars.failedRecords) == 0]">
+				<logger level="INFO" doc:name="Log - No failed Records to Process" doc:id="2b2a8fca-3053-42af-a06a-2c7ebf65d8eb" message="&lt;&lt;#[vars.category default '']&gt;&gt; No failed Records to Process" category="handleFailedRecordsEmailNotificationFlow"/>
+			</when>
+			<otherwise >
+<vm:publish queueName="sendContentCreationMissingContentValuesEmailQueue" doc:name="Publish to sendContentCreationMissingContentValuesEmailQueue" doc:id="a0b89191-914b-4393-a980-b858fa34cc0b" config-ref="VM_Config" >
+					<vm:content ><![CDATA[#[{
+	"failedRecords": vars.failedRecords,
+	"category": vars.category
+}]]]></vm:content>
+				</vm:publish>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

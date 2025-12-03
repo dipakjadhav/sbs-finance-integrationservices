@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="commonExceptionSubflow" doc:id="f69476de-5b59-46de-9209-190083536214" >
+		<ee:transform doc:name="Prepare email details" doc:id="0a466e8c-18a6-4463-bbc9-bf052d44a6b0" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="emailDetails" ><![CDATA[%dw 2.0
+output application/json
+var remoteAddress = vars.configValues.remoteAddress default ""
+
+var errorDetails = {
+	"errorType": error.errorType.asString default "",
+	"errorMessage": error.description  default "",
+	"errorDescription": error.detailedDescription default "",
+}	
+---
+{
+	"emailSubject": (vars.configValues.emailErrorSubject default "") ++ Mule::p('app.name') ++ " - " ++ Mule::p('env')++ " - " ++ (vars.configValues.processReference default ""),
+	"emailHeader": (vars.configValues.emailErrorSubject default "") ++ (vars.configValues.processReference default ""),
+	"emailProcessSummary": (vars.configValues.processReference default "") ++ 
+(if (!isEmpty(remoteAddress)) " requested from - " ++ remoteAddress else ""),
+	"emailProcessStatusDetail": vars.processStatus,
+	"errorMessageDetail": write(errorDetails, "application/json")
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0&#10;output application/xml&#10;---&#10;{&#10;		"html": {&#10;			"body": {&#10;				"h1": (vars.emailDetails.emailHeader default ""),&#10;				"h2": {&#10;					"u": "Process summary:"&#10;				},&#10;				"p": (vars.emailDetails.emailProcessSummary default ""),&#10;				"h2": {&#10;					"u": "Process status detail:"&#10;				},&#10;				"p": (vars.emailDetails.emailProcessStatusDetail default ""),&#10;				"h2" @(style: "color:red"): {&#10;					"u": "Error details:"&#10;				},&#10;				"p" @(style: "color:red"): (vars.emailDetails.errorMessageDetail default "")&#10;			}&#10;		}&#10;	}]' doc:name="Convert email details to xml" doc:id="419d03d0-e633-4f04-98d3-ba0de5fb40b6" variableName="emailDetailsXml" mimeType="application/xml" />
+		<set-variable value='#[%dw 2.0&#10;output text/plain&#10;---&#10;(vars.emailDetailsXml.^raw as String)]' doc:name="Convert email details to string" doc:id="5bf167a5-a15d-40ef-92af-6f878dce011b" variableName="emailDetailsText" mimeType="text/plain"/>
+		<ee:transform doc:name="Prepare Email Notification Payload" doc:id="e87301c6-59a3-4d29-b8fb-8f7f76e08968">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress": vars.configValues.emailFrom,
+	"toAddress": vars.configValues.emailErrorTo,
+	"subject": vars.emailDetails.emailSubject,
+	"contentType": "text/html",
+	"content": vars.emailDetailsText
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="c0f5ca11-67fe-44cd-9e9a-aba8960638b8" name="sendEmailNotificationFlow"/>
+	</sub-flow>
+</mule>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="getAccountAnalysisConfigFlow" doc:id="ced48d01-535e-4537-9bfe-c7b45e2f844d" >
+		<db:select doc:id="0105f1dc-11b4-4ce6-b319-3c173ff7766c" doc:name="Get account analysis config values by parent request id" config-ref="oracle-database-config">
+			<db:sql><![CDATA[select distinct c.OUTFILE_NAME, c.ARGUMENT10, c.ARGUMENT20 from apps.FND_CONCURRENT_REQUESTS c, apps.FND_CONCURRENT_REQUESTS p where c.priority_request_id = :priorityRequestID  and p.HAS_SUB_REQUEST = 'Y'   and p.IS_SUB_REQUEST = 'N'  and p.DESCRIPTION ='SBS GL Account Analysis Request Set'  and c.parent_request_id <> :priorityRequestID  and c.request_id <> :priorityRequestID order by 3]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	priorityRequestID: vars.priorityRequestID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Map payload to JSON" doc:id="5f1005d1-19e7-46ba-834b-199fa16b7b4d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json encoding="UTF-8"
+---
+payload 
+map ((payload01 , indexOfPayload01) -> {
+	'reportFileAbsolutePath': payload01.OUTFILE_NAME default "",
+	'monthToBeProcessed': if((not isEmpty(payload01.ARGUMENT10)) and not (payload01.ARGUMENT10 == "\u0000")) payload01.ARGUMENT10 else "",
+	'destinationCostCentre': if((not isEmpty(payload01.ARGUMENT20)) and not (payload01.ARGUMENT20 == "\u0000")) payload01.ARGUMENT20 else ""
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+</flow>
+<flow name="getFsgReportConfigFlow" doc:id="314c92ab-b044-4e5b-a69f-6a40c7cca361" >
+		<db:select doc:id="6b269402-eb6b-4798-8ddb-f94355bdfd92" doc:name="Get fsg report config values" config-ref="oracle-database-config">
+			<db:sql><![CDATA[select report_name, attribute1 path from apps.RG_REPORT_REQUESTS_V where attribute1 is not null]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	priorityRequestID: vars.priorityRequestID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Map payload to JSON" doc:id="7da67c42-1ed1-4dd3-8c22-beec2a0f4f16">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json encoding="UTF-8"
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	'reportFileName': payload01.REPORT_NAME default "",
+	'reportPath': if((not isEmpty(payload01.PATH)) and not (payload01.PATH == "\u0000")) payload01.PATH else ""
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+</flow>
+</mule>

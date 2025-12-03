@@ -1,0 +1,1 @@
+"update xxsbs.xxsbs_mileage_for_aurion SET STATUS='SUCCESS',LAST_UPDATED_BY='Mulesoft',LAST_UPDATE_DATE=sysdate where STATUS ='CREATE' and EMPLOYEE_NO IN (00001,00001,00002,00001,00002)"

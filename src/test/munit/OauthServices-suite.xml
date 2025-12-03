@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="OauthServices-suite.xml" />
+	<munit:test name="getAccessTokenFlow-test" doc:id="7d3e29fd-969b-4ea8-b3b1-fbe2f04364f5" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Get Bearer Token" doc:id="72fe7c01-d4c1-47fc-afa2-706720425c9d" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Refresh Bearer Token (Call AuthToken REST API)" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="18136b20-65f7-4370-b938-c2e0eca6288b" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://getAccessTokenFlowtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://getAccessTokenFlowtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://getAccessTokenFlowtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://getAccessTokenFlowtest\mock_variable_3.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="462b45fa-937e-431b-881e-25142ee4265c" >
+				<munit:attributes value="#[readUrl('classpath://getAccessTokenFlowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://getAccessTokenFlowtest\set-event_variable_.dwl')]" />
+					<munit:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="operationName" value="#[readUrl('classpath://getAccessTokenFlowtest\set-event_variable_3.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://getAccessTokenFlowtest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to getAccessTokenFlow" doc:id="73a6b23c-13cc-4307-ae5b-0ad73464da2a" name="getAccessTokenFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="66b45873-3763-45ff-8b7b-8fc0b6f9bbf8" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getAccessTokenFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert attributes" doc:id="d6c2a2d1-6f46-4f92-b703-078a248b9422" message="The attributes do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getAccessTokenFlowtest::assert_expression_attributes
+---
+assert_expression_attributes::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="0768ac16-e617-45e3-b276-9fd431fdb157" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import getAccessTokenFlowtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

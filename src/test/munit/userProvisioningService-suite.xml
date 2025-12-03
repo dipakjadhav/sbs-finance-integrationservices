@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="userProvisioningService-suite.xml" />
+	<munit:test name="processBatchForProvisioningRequestStatusFlow-create-success-test" doc:id="d14e7c0c-dfa4-409a-b6e2-bf1654c3919a" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - processRecordForProvisioningRequestStatusFlow" doc:id="bfc9b082-15ac-46bd-a468-9af42e11abce" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processRecordForProvisioningRequestStatusFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="processRecordForProvisioningRequestStatusFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_7.dwl')]" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="99c0022f-7bc0-4748-bc1e-6f6bb3d40197" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processBatchForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processBatchForProvisioningRequestStatusFlow" doc:id="e34a7371-082b-48e0-8142-354260c4d5ed" name="processBatchForProvisioningRequestStatusFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="706233e5-af76-40d0-a118-3790f7afe78f" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processBatchForProvisioningRequestStatusFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processRecordForProvisioningRequestStatusFlow-create-success-test" doc:id="879ef5ba-6c65-47aa-bc8d-c8ca69a1505d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - Get Detailed Provisioning Status" doc:id="1daddb4a-98da-4928-b8f4-af181d16cbba" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - Get Detailed Provisioning Status" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_7.dwl')]" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Get Concur Access Token" doc:id="93cbbc15-9538-48d4-95e8-224126cb068a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Concur Access Token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="bearerToken" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_10.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_11.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_12.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_14.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_15.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_16.dwl')]" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_17.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_18.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - captureProcessedConcurUserProvisioningRecordsFlow" doc:id="2f90eeaa-48f6-4594-ba1f-9f0984c5d464" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - captureProcessedConcurUserProvisioningRecordsFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="captureProcessedConcurUserProvisioningRecordsFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_19.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_20.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_21.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_22.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_23.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_24.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_25.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_26.dwl')]" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_27.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_28.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - updateEmployeeProfileRecordStatusFlow" doc:id="c352dba5-32f0-448c-827d-1481321455fc" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - updateEmployeeProfileRecordStatusFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="updateEmployeeProfileRecordStatusFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;{&#10;  generatedKeys: {},&#10;  affectedRows: 1&#10;}]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_29.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_30.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_31.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_32.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_33.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_34.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_35.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_36.dwl')]" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_37.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_38.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="f629ac2f-3172-46fc-ad59-b41bdcd1c12b" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_1.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_5.dwl')]" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processRecordForProvisioningRequestStatusFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processRecordForProvisioningRequestStatusFlow" doc:id="dd43aec5-cd99-4c1f-bc33-37c9b9a65f43" name="processRecordForProvisioningRequestStatusFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="4c2e643f-ba1b-4e2e-8917-051981d1fe79" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processRecordForProvisioningRequestStatusFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="captureProcessedConcurUserProvisioningRecordsFlow-create-success-test" doc:id="95f01b67-a47c-4a53-a458-ec4986fa4fac" >
+		<munit:behavior >
+			<munit-tools:spy doc:name="Spy Process Successful Records" doc:id="c0c767d4-5afa-46a3-91d4-a527c650b345" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Process Successful Records" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="89b5df23-b9f9-4f08-b1b3-189ded5c91f8" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="ac88455a-1d6f-4107-9f2f-df6c4b15100d" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="1e5b9877-21d3-43c0-b819-7b610284d784" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_1.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_7.dwl')]" />
+					<munit:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to captureProcessedConcurUserProvisioningRecordsFlow" doc:id="684a5ec6-200c-4d1d-9121-44fe4b3c6e5a" name="captureProcessedConcurUserProvisioningRecordsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="7ad1ceae-395f-4ded-9aee-17dda4d1eeb0" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureProcessedConcurUserProvisioningRecordsFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Process Successful Records" doc:id="928218e7-e836-4060-a74b-ca5e546cc732" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="c2eb2aa0-3df8-4e4c-ba89-9e1f4578a11d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="handleProvisioningRequestStatusEmailNotificationFlow-create-success-test" doc:id="d4bbcd13-2caa-4785-9773-aed1c9df2610" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Publish to - employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:id="dc70d23b-18ab-4c16-bf66-57fefd0b99f1" processor="vm:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="employeeProfileProvisioningRequestStatusEmailNotificationQueue" attributeName="queueName" />
+					<munit-tools:with-attribute whereValue="Publish to - employeeProfileProvisioningRequestStatusEmailNotificationQueue" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="emailPayload" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Set email payload" doc:id="60669b91-ee85-433d-9296-0d650904f47f" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Set email payload" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="921a7312-3968-4a0d-b9fa-878de3cc4cf0" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="6a2b8e2c-f988-41a8-b2aa-44ba19be3cf7" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="52c0c50b-ba96-43f3-9d39-802489dd1970" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to handleProvisioningRequestStatusEmailNotificationFlow" doc:id="3df73c25-e59e-4124-b694-468497b5b643" name="handleProvisioningRequestStatusEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="70248f54-6bab-4899-a484-17c974e1cf48" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProvisioningRequestStatusEmailNotificationFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Set email payload" doc:id="bd1f0d51-a2a0-4034-b239-f55b48c178f1" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="3032e110-caf0-45c3-9ed3-fb598b90d80f" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="captureFailedProvisioningResponseDetailsFlow-update-failure-test" doc:id="6c124af8-b5ad-46ce-ba89-6636e87ebe70" >
+		<munit:behavior >
+			<munit-tools:spy doc:name="Spy Map failed extentions with update user input fields" doc:id="00284022-6a99-4e54-aaf9-ff6cd4e3c27e" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Map failed extentions with update user input fields" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="ac6e1c6d-3c60-43ac-b541-969ff5b1d904" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="ad14b695-f84f-4106-af6f-502d3f1f97fd" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:spy doc:name="Spy Extract all errors with details" doc:id="11112064-461f-4016-99a5-aa5287f9e358" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Extract all errors with details" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="b22cc372-643a-4bcb-a945-9df775a3e6d7" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables2
+---
+spy_assert_variables2::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="4946cc4d-b49a-4a7f-964f-e6846e618b40" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables3
+---
+spy_assert_variables3::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:spy doc:name="Spy Capture - errorInputMappings into failedProvisioningRecords" doc:id="2204d232-82d6-42f1-897b-8799a035c88a" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Capture - errorInputMappings into failedProvisioningRecords" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="a29a9fe1-00f2-4ea8-aed1-b2d382dc10ae" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables4
+---
+spy_assert_variables4::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="21d86056-23fc-442a-bcdd-7d4328b1af19" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::spy_assert_variables5
+---
+spy_assert_variables5::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="bdc7fe2a-7d1f-4f5d-bd0a-ebd5c8be37b7" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_1.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_7.dwl')]" />
+					<munit:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://captureFailedProvisioningResponseDetailsFlowupdatefailuretest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to captureFailedProvisioningResponseDetailsFlow" doc:id="bdbc00b4-eaba-49fc-a682-8294d61ed609" name="captureFailedProvisioningResponseDetailsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="57c87157-970b-44b7-85ce-d739189e03f7" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureFailedProvisioningResponseDetailsFlowupdatefailuretest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Map failed extentions with update user input fields" doc:id="ae0e1a8e-1a64-487c-9c3c-c9eb52db6675" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="e16eee74-3628-44c9-95c9-db94037bf06b" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify Extract all errors with details" doc:id="4000d46d-8c2e-46c1-a645-6fe58f8bc9ad" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="7c8d9d89-18fd-4cf5-a3d3-ced0fe1b1b83" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify Capture - errorInputMappings into failedProvisioningRecords" doc:id="68322495-976e-40dd-9560-98b833a43cb2" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="fc382689-135e-4fc1-bbe0-2e86c68dde61" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="handleProvisioningRequestStatusEmailNotificationFlow-multiple-scenarios-test" doc:id="4fa934bb-0b9c-40c0-be83-627afeb03f24" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Publish to - employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:id="9cb7f21a-334e-4393-aeaa-9e9b757a4828" processor="vm:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="employeeProfileProvisioningRequestStatusEmailNotificationQueue" attributeName="queueName" />
+					<munit-tools:with-attribute whereValue="Publish to - employeeProfileProvisioningRequestStatusEmailNotificationQueue" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="errorInputMappings" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="allErrorsWithDetails" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_5.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="emailPayload" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_10.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\mock_variable_11.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="25300106-7d76-4e53-b480-f83f681c2400" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="processedRecords" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="errorInputMappings" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="allErrorsWithDetails" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest\set-event_variable_10.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to handleProvisioningRequestStatusEmailNotificationFlow" doc:id="e0c4f29c-8eb6-4783-b0e4-7c7ccd1b9d08" name="handleProvisioningRequestStatusEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="4dd940d5-95e9-4fd7-99e3-b4fcd594478a" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProvisioningRequestStatusEmailNotificationFlowmultiplescenariostest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="manageProvisioningRequestStatusFlow-create-success-test" doc:id="c314f5c1-07a1-4e77-adca-7755ce9a9c8e" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - processBatchForProvisioningRequestStatusFlow" doc:id="ba18fa56-4c01-43da-b85d-989c93caf520" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processBatchForProvisioningRequestStatusFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="processBatchForProvisioningRequestStatusFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="processedRecords" value="#[output application/java --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="userProvisioningRequestDetailedResponse" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="recordSubmittedToConcur" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="emailPayload" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="aab15fd9-ea90-4f9f-ba79-b55459c2b689" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://manageProvisioningRequestStatusFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to manageProvisioningRequestStatusFlow" doc:id="513dbcdc-5b25-40d2-9ae4-e7d76f1d49c6" name="manageProvisioningRequestStatusFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="c96ac17a-15ee-434b-81bb-192dbedfcae0" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import manageProvisioningRequestStatusFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

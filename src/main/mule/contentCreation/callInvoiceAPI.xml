@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="callInvoiceAPIFlow" doc:id="1b0c8465-5fd1-4517-a442-737b72650c33" >
+		<ee:transform doc:name="Initialize Variables" doc:id="64ce2374-7e7e-4c1c-b732-20cae2afed4e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="initVars" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	outputFilename: vars.outputFilename,
+	interfaceKey: p('contentCreation.key'),
+	status: p('contentCreation.status')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Set payload" doc:id="9ea70b5b-916d-462f-af27-393589252d6f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"bachid": "0",
+	"filename": vars.initVars.outputFilename,
+	"mulesoftstatus":vars.initVars.status,
+	"mulesofterror":"No Error",
+	"interfacekey":vars.initVars.interfaceKey,
+	"batchcount":"0"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log - Http Request" doc:id="c52efdbd-d05a-4102-b257-f55650f2abde" category="callInvoiceAPIFlow" message="&lt;&lt;#[ vars.category default '']&gt;&gt; CallInterface API request payloade: #[payload]" />
+		<http:request method="POST" doc:name="Call Invoice API" doc:id="5a03e4ac-122f-4970-afbb-fde8451219fc" path="/callinterface" config-ref="sbs-finance-integrationservices-httpRequestConfig" responseTimeout="2147483640">
+			<reconnect />
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"category" : vars.category
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="Log - Http Response Status" doc:id="0aae76be-a0f5-4504-bf31-9482a47804de" message="&lt;&lt;#[vars.category default '']&gt;&gt; CallInterface API response payload: #[payload]" category="callInvoiceAPIFlow" />
+	</flow>
+</mule>

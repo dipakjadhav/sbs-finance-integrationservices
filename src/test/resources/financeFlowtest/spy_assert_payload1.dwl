@@ -1,0 +1,4 @@
+%dw 2.0
+import * from dw::test::Asserts
+---
+payload must equalTo("-----BEGIN PGP MESSAGE-----\r\nVersion: BCPG v1.67\r\n\r\nhQEMA+/w3boklp1XAQgAr1LjExIJxYI5MX8IylYqMvvPibTIqbGpeVMO6N4HBps4\r\nXqlJILyFwXs4kvaIqLJODgZf2vrIPXXD2lGRldjaIuSA3TqvWkuUGRfkadVnboXi\r\nESpCaYTivmc5Sq8Oq3juax/QL51EBFF1L6OyLKrY4N+Dnnp5vFdIHBinENw/iKUx\r\n4/RmGJQr2RzuGAcmwmyP5wDdd0YylcpgauCcWJj25GR20Bjvk3CZ5ucMhEyFHRUB\r\noImLryVL4uk4zccahZG3IJLSHY6sHt3t8PyPxDR9gTTM35WYZD/ver1tyJyyclC/\r\nSFaCjwgXXdtmvcgB9kWVm1JGtedhgUGYc2NZ502uutJqAWgq8+wfSuMbT3QoCocG\r\nKQbBnQX5ZBRKcchudiduWfvNnB3Hfd2p9Tca6SYXkF9em4yQgAeSuR9xvXf+VkZv\r\n04JGKcHd0fiQtzh+Cn4mXK81Fj7UwI8VaLnRrrh+k2PWTN5OIR1TDAROoQ==\r\n=UWGJ\r\n-----END PGP MESSAGE-----\r\n")

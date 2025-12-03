@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:smb="http://www.mulesoft.org/schema/mule/smb"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/smb http://www.mulesoft.org/schema/mule/smb/current/mule-smb.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="serveCostCenterReportDistributionDashbaordPageFlow"
+		doc:id="8ad68786-c891-4c13-b985-4e9b23b8c1f6">
+		<ee:transform doc:name="Set content creationURL" doc:id="8056cdf0-3277-46c3-8dcf-8143acf61f2f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="costCenterAccountAnalysisReportRelativeURL" ><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p("app.context") ++ "/api/costCenter/processAccountAnalysisReport?priorityRequestID="]]></ee:set-variable>
+				<ee:set-variable variableName="costCenterFsgReportRelativeURL" ><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p("app.context") ++ "/api/costCenter/processFsgReport"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template
+			doc:name="Load and Parse Dahboard HTML Resource"
+			doc:id="c3be162b-e7a2-4061-a573-cdba4d957b7b"
+			location="static/costCentreReport.html" targetValue="#[payload]" />
+	</flow>
+	<flow name="copyAccountAnalysisFilesFlow" doc:id="9e5aa2bc-cded-4167-bc6e-d9d1d99837d3" >
+		<foreach doc:name="Read and copy file one by one" doc:id="b5009b7c-5009-44ad-90f9-3ee060a3ba54" collection="#[flatten(vars.configMap.*records) default []]">
+			<try doc:name="Try" doc:id="f68835a9-4a2e-41f4-bfc4-6d45d7b444ae" >
+				<set-variable value="#[payload]" doc:name="Set configMapItem" doc:id="98187929-c1d7-4b6b-aebe-f2627e09f40f" variableName="configMapItem" />
+				<logger level="INFO" doc:name="Log - Before FTP Read" doc:id="ead5b170-b3b7-43ec-9e3d-577f7cfe9b08" message="Before FTP Read" category="copyAccountAnalysisFilesFlow"/>
+				<ftp:read doc:name="Read from source path" doc:id="77a085c6-a658-4c8c-8889-a45e156f7331" config-ref="oracle-ftp-config" path="#[vars.configMapItem.sourceFilePath]" >
+					<ee:repeatable-file-store-stream inMemorySize="2048" />
+					<reconnect frequency="${ftp.oracle.reconnectionFrequencyMS}" count="${ftp.oracle.reconnectionAttempts}" blocking="false"/>
+				</ftp:read>
+				<logger level="INFO" doc:name="Log - After FTP Read" doc:id="705ed982-c291-4440-ae43-1c5b55ac76d9" message="After FTP Read" category="copyAccountAnalysisFilesFlow" />
+				<logger level="INFO" doc:name="Log - Before SMB Write " doc:id="7bec0fdb-9e8e-4998-bca0-a858b1a27ffd" message="Before SMB Write " category="copyAccountAnalysisFilesFlow" />
+				<choice doc:name="Choose connector type" doc:id="0fe88e5b-40ae-435f-8a39-fe5e64fe4289" >
+					<when expression="#[Mule::p('smb.useJavaComponent')]">
+						<java:new doc:name="Create new instance of SMBFileHandlerMS" doc:id="b84fa103-746a-4d4e-b655-c528c6a31b50" class="com.sbs.util.SMBFileHandlerMS" constructor="SMBFileHandlerMS()" target="smbFileHandlerMSObj"/>
+						<java:invoke doc:name="Invoking method - writeToSMB" doc:id="83c6ea8a-2a2b-4cf8-bdcc-69818ceaa440" instance="#[vars.smbFileHandlerMSObj]" class="com.sbs.util.SMBFileHandlerMS" method='writeToSMB(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.io.InputStream)'>
+							<java:args ><![CDATA[#[{ arg0: Mule::p('smb.oracle.host'), arg1: Mule::p('smb.oracle.sharedDirectory'), arg2: Mule::p('smb.oracle.username'), arg3: Mule::p('secure::smb.oracle.password'), arg4: Mule::p('smb.oracle.domain'), arg5: ((vars.configMapItem.targetDirectory default "") ++ "/" ++ (vars.configMapItem.targetFileName default "")), arg6: payload }]]]></java:args>
+						</java:invoke>
+					</when>
+					<otherwise >
+						<smb:file-write doc:name="Write report file to target directory" doc:id="7a1a820f-147c-4e71-b0f0-673ec3088257" config-ref="SMB_Connector_Config-CostCenter" fileName="#[vars.configMapItem.targetFileName]" dirName="#[vars.configMapItem.targetDirectory]">
+				<reconnect frequency="${smb.oracle.reconnectionFrequencyMS}" count="${smb.oracle.reconnectionAttempts}" blocking="false" />
+			</smb:file-write>
+					</otherwise>
+				</choice>
+				<logger level="INFO" doc:name="Log - After SMB Write" doc:id="bbcd5224-0ab2-4fae-ba18-1edc6d4f8d8b" message="After SMB Write" category="copyAccountAnalysisFilesFlow" />
+				<logger level="INFO" doc:name="Log - done processing/downloading report file " doc:id="91fd0478-2e8d-47f0-8c12-f09b1ede2fda" message='#[%dw 2.0&#10;output application/json&#10;---&#10;(vars.counter default 0) ++ ") Done processing/downloading report file #[vars.configMapItem.sourceFilePath] to " ++ Mule::p("costCenterAccountAnalysisReport.target.workingDirectory") ++ vars.configMapItem.targetDirectory ++ " as " ++ vars.configMapItem.targetFileName]' category="copyAccountAnalysisFilesFlow" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5e616716-650d-4540-b8bd-15202da9f8bc" >
+						<logger level="ERROR" doc:name="Log - exception occured" doc:id="21bfdf21-813e-4534-aeb1-f0dc7e7f7c14" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.configMapItem]" category="copyAccountAnalysisFilesFlow" />
+						<ee:transform doc:name="Capture failed files" doc:id="108ec068-0bac-4dd5-b8e4-2c2820ff08b1" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="failedFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.failedFiles default []) << vars.configMapItem.sourceFilePath]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+	</flow>
+	<flow name="getListOfAccountAnalysisReportTargetDirectoriesFlow" doc:id="b27d2f37-30e9-48d9-ad41-6c1894f66115" >
+		<try doc:name="Try" doc:id="c6cfd80e-cafa-49e3-b7f9-bdfe5c7438d1" >
+			<logger level="INFO" doc:name="Log - Before SMB List" doc:id="5a54badc-3b49-473b-ae62-bbc88add2c6a" message="Before SMB List" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+			<choice doc:name="Choose Connector Type" doc:id="b6051bcb-5edb-46c1-9c12-31494332a92f" >
+				<when expression="#[Mule::p('smb.useJavaComponent')]">
+					<java:new constructor="SMBFileHandlerMS()" doc:name="Create new instance of SMBFileHandlerMS" doc:id="f720d94c-2e2a-4757-93c1-c984b841507e" class="com.sbs.util.SMBFileHandlerMS" target="smbFileHandlerMSObj" />
+					<java:invoke method="listFiles(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)" doc:name="Invoke method - listFiles" doc:id="497fcf2c-bb21-4cd4-8e6b-3ac7c421531b" instance="#[vars.smbFileHandlerMSObj]" class="com.sbs.util.SMBFileHandlerMS" >
+						<java:args ><![CDATA[#[{ arg0: Mule::p('smb.oracle.host'), arg1: Mule::p('smb.oracle.sharedDirectory'), arg2: Mule::p('smb.oracle.username'), arg3: Mule::p('secure::smb.oracle.password'), arg4: Mule::p('smb.oracle.domain'), arg5: Mule::p('costCenterAccountAnalysisReport.target.workingDirectory')}]]]></java:args>
+					</java:invoke>
+					<logger level="INFO" doc:name="Log - After SMB List" doc:id="8abc0f36-1588-47df-8b95-01af0c092d37" message="After SMB List" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+					<ee:transform doc:name="Set targetDirectories" doc:id="e8c8cfe4-5dda-40dc-88f1-199229b550b1" >
+						<ee:message />
+						<ee:variables >
+							<ee:set-variable variableName="targetDirectories" ><![CDATA[%dw 2.0
+output application/json
+---
+payload default []]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<otherwise >
+					<smb:directory-list doc:name="Find target directories" doc:id="fda198d2-5f91-467e-bef6-ffd52b560b04" config-ref="SMB_Connector_Config-CostCenter" dirName="${costCenterAccountAnalysisReport.target.workingDirectory}" wildcard="*">
+			<reconnect frequency="${smb.oracle.reconnectionFrequencyMS}" count="${smb.oracle.reconnectionAttempts}" blocking="false" />
+		</smb:directory-list>
+					<logger level="INFO" doc:name="Log - After SMB List" doc:id="440e184f-909a-4b14-94a4-25ea1c0fb7ed" message="After SMB List" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+					<ee:transform doc:name="Set targetDirectories" doc:id="d411d7fd-3bb8-4f16-90dd-bf99f5471e42">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="targetDirectories"><![CDATA[%dw 2.0
+output application/json
+---
+(payload default []).Filename]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				</otherwise>
+			</choice>
+			<logger level="INFO" doc:name="Log - number of directories found" doc:id="24accdc9-79ab-4af7-b03f-d005aa120887" message="Found #[sizeOf(vars.targetDirectories)] target directories" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="292b698c-3151-462d-a61c-1745adf92ee0" >
+					<logger level="ERROR" doc:name="Log - exception occured" doc:id="9bb996b0-0877-422b-b10d-533186e54a99" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.configMapItem.basePath]" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="getListOfAccountAnalysisSourceFilesFlow" doc:id="984f87a1-92eb-4649-9734-b420770c5598" >
+		<foreach doc:name="For Each" doc:id="fae0df58-418b-4da8-aa53-899e02d3d446" collection="#[vars.configMap]">
+			<try doc:name="Try" doc:id="41c46986-2d57-4237-b8c2-04006537f86f" >
+				<set-variable value="#[payload]" doc:name="Set configMapItem" doc:id="e0f20224-089a-483f-bb5b-8d9ec01bb8cd" variableName="configMapItem" />
+				<logger level="INFO" doc:name="Log - Before FTP List" doc:id="49bbcabd-4cac-486e-b80f-872b18fa4785" category="getListOfAccountAnalysisSourceFilesFlow" message="Before FTP List"/>
+				<ftp:list doc:name="List all report files matching with the given concolidated file name pattern from source directory" doc:id="297c2d37-b46f-4383-bc62-7c9ec9c0646e" config-ref="oracle-ftp-config" directoryPath="#[vars.configMapItem.basePath]">
+					<reconnect frequency="${ftp.oracle.reconnectionFrequencyMS}" count="${ftp.oracle.reconnectionAttempts}" blocking="false" />
+			<ftp:matcher timeUnit="MILLISECONDS" directories="EXCLUDE" symLinks="EXCLUDE"  filenamePattern='#["{" ++ vars.configMapItem.fileNamePatterns ++ "}"]'/>
+		</ftp:list>
+				<logger level="INFO" doc:name="Log - After FTP List" doc:id="dba49a14-a046-4a46-b203-740586accb93" category="getListOfAccountAnalysisSourceFilesFlow" message="After FTP List. Files found: #[sizeOf(payload)]"/>
+				<ee:transform doc:name="Extract file details" doc:id="bbb33f82-9aba-4f19-a9fb-e6c2d287225c">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+						<ee:set-variable variableName="sourceFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.sourceFiles default []) ++ (payload map((item, index)-> { name: item.attributes.name, path: item.attributes.path }))]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a85b8183-8fde-44a9-b243-7a0af10f58dc" >
+						<logger level="ERROR" doc:name="Log - exception occured" doc:id="3a8e8ee2-1fe3-4e8e-990f-dd7f33991539" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.configMapItem.basePath]" category="getListOfAccountAnalysisSourceFilesFlow" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="bd9ea4aa-c369-49da-a639-7ae195c31783" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sourceFiles" ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+vars.sourceFiles[ 0 to 4&#93;&#93;&#93;></ee:set-variable>
+			</ee:variables>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Log - number of directories found" doc:id="9f2352eb-d73b-4918-871c-baea3d905889" category="getListOfAccountAnalysisSourceFilesFlow" message="Found #[sizeOf(vars.sourceFiles)] source files" />
+	</flow>
+	<flow name="processAccountAnalysisReportRecordsFlow" doc:id="ee50f7a1-166f-433f-89ff-e7a7174b00ae" >
+		<vm:listener doc:name="Listen - process cost center account analysis report distribution queue" doc:id="9ab096ee-a073-4f17-93df-35b41fe0fcc2" config-ref="VM_Config" queueName="processCostCenterAccountAnalysisReportDistributionQueue"/>
+		<logger level="INFO" doc:name="Log - Account Analysis Report Distribution Process Triggered" doc:id="8195cfb0-94e1-4990-a41d-e4e91c976019" message="Account Analysis Report Distribution Process Triggered" category="processAccountAnalysisReportRecordsFlow" />
+		<set-variable value="#[payload]" doc:name="Set configs" doc:id="55da1435-787c-432d-9ed6-59143516a8c2" variableName="configs"/>
+		<ee:transform doc:name="Initialize process variables" doc:id="85f88d14-657b-4fa9-ad10-4531fabb6657">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="processStartDateTime" ><![CDATA[%dw 2.0
+output application/java
+---
+now() as String {format:'dd-MM-yyyy HH:mm:ss'}]]></ee:set-variable>
+				<ee:set-variable variableName="totalNumberOfFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+0]]></ee:set-variable>
+				<ee:set-variable variableName="failedFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="targetDirectories" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="sourceFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Group config records by base path (configMap)" doc:id="1d564bbf-bec1-4aff-859b-e8617114db68" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="configMap" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json 
+fun getFileNamePatterns (record) = (('.xls,.etext' splitBy ",") map ((extention, index) -> ("XXSBS_GLACTANL_XML_" ++ ((((substring(record.reportFileAbsolutePath, (record.reportFileAbsolutePath lastIndexOf "/") + 1, sizeOf(record.reportFileAbsolutePath))) splitBy ".out")[0]) replace  "o" with "") ++ "_1") ++ extention) joinBy  ", ") 
+
+fun conputeFileNamePattern(value, key) = {
+    "basePath": key,
+    "records": value map((item, index) -> {
+        "reportFileAbsolutePath": item.reportFileAbsolutePath,
+        "monthToBeProcessed": item.monthToBeProcessed,
+        "destinationCostCentre": item.destinationCostCentre,
+        "fileNamePattern": getFileNamePatterns(item)
+      })
+
+}
+fun updateConsolidatedFileNamePatterns(item) = do{
+    var newItem = {
+        basePath: item.basePath,
+        records: item.records,
+        fileNamePatterns: item.records map ((item, index) -> item.fileNamePattern) joinBy ","
+    }
+    ---
+    newItem
+}
+---
+((vars.configs groupBy ((substring(($.reportFileAbsolutePath default ""), 0, ($.reportFileAbsolutePath default "") lastIndexOf "/")) ++ "/")) 
+pluck ((value, key, index) -> conputeFileNamePattern(value, key))) map ((item, index) -> updateConsolidatedFileNamePatterns(item))
+ ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - getListOfAccountAnalysisReportTargetDirectoriesFlow" doc:id="c4d92c41-2a4d-4799-8ecb-820464dfd4c1" name="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+		<flow-ref doc:name="Call - getListOfAccountAnalysisSourceFilesFlow" doc:id="acb4d031-e961-4d85-b457-1fbbab99cd39" name="getListOfAccountAnalysisSourceFilesFlow" />
+		<ee:transform doc:name="Map source file paths ad taregt directories" doc:id="491040f2-16b1-4785-a2e7-2f6f7691f317" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="configMap" ><![CDATA[%dw 2.0
+output application/json
+ var targetWorkingDirectory = Mule::p('costCenterAccountAnalysisReport.target.workingDirectory')
+//var targetWorkingDirectory = 'FINPAGE/Z_DEV/'
+
+fun findTargetDirectory(destinationCostCentre) = do {
+var matchedDirectory = if(isEmpty(destinationCostCentre)) ["dump"] else vars.targetDirectories filter ((item, index) -> item contains  destinationCostCentre)
+---
+targetWorkingDirectory ++ if(not isEmpty(matchedDirectory)) matchedDirectory[0] else "dump"
+}
+
+fun findSourceFilePath(fileNamePatterns) = do {
+var matchedFile = (fileNamePatterns 
+map (filename) -> vars.sourceFiles filter ((file) -> lower(trim(file.path)) endsWith  lower(trim(filename))))
+---
+if((not isEmpty(matchedFile)) and (not isEmpty(matchedFile[0])))matchedFile[0][0] else null
+}
+
+fun mapSourceFiles(record) = do{
+var sourceFile = findSourceFilePath(((record.fileNamePattern splitBy ",")  map ((item, index) -> trim(item)) distinctBy (value) -> lower(value)))
+var sourceReportFileExtention = if(not isEmpty(sourceFile.name)) (sourceFile.name splitBy ".")[1] else ""
+---
+	{
+		"reportFileAbsolutePath": record.reportFileAbsolutePath,
+		"monthToBeProcessed": record.monthToBeProcessed,
+		"destinationCostCentre": record.destinationCostCentre,
+		"fileNamePattern": record.fileNamePattern,
+		"sourceFilePath": sourceFile.path,
+		"targetDirectory": findTargetDirectory(record.destinationCostCentre),
+		"targetFileName": "SBS GL Account Analysis" ++ "_" ++ (record.destinationCostCentre default "") ++ "_" ++ (record.monthToBeProcessed default "") ++ "_" ++ (now() as String {format: 'ddMMyyyyHHmmss'}) ++ "." ++ (if(lower(sourceReportFileExtention) == "etext") "csv" else sourceReportFileExtention)
+	}
+}
+fun add(item) = {"basePath": item.basePath,
+"records": item.records map ((item, index) -> mapSourceFiles(item))}
+---
+(vars.configMap map ((item, index) -> add(item)))
+map ((item, index) -> {
+    "basePath": item.basePath,
+    "records": item.records filter ((item, index) -> not isEmpty(item.sourceFilePath))
+} )]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - copyAccountAnalysisFilesFlow" doc:id="a10c2408-ad68-4986-bcf9-553719794ecd" name="copyAccountAnalysisFilesFlow"/>
+		<ee:transform doc:name="Set process end time" doc:id="af49a587-98c1-43b6-9bf2-4fd4901ea5b1">
+								<ee:message>
+								</ee:message>
+								<ee:variables>
+				<ee:set-variable variableName="processEndDateTime" ><![CDATA[%dw 2.0
+output application/json
+---
+now() as String {format:'dd-MM-yyyy HH:mm:ss'}]]></ee:set-variable>
+				<ee:set-variable variableName="totalNumberOfFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+sizeOf(flatten(vars.configMap.*records))]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+		<flow-ref doc:name="Call - sendCostCenterAccountAnalysisReportEmailNotificationFlow" doc:id="f91e1a88-e13c-4993-8c0e-ab6b0738df70" name="sendCostCenterAccountAnalysisReportEmailNotificationFlow"/>
+		<logger level="INFO" doc:name="Log - Process Completed Successfully" doc:id="2514cdef-027e-4323-9097-b72cd4395896" message="Process Completed Successfully" category="processAccountAnalysisReportRecordsFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fa8c0c23-c3a1-4dda-83ae-36592a13b9df" >
+				<logger level="ERROR" doc:name="Log - error occurred" doc:id="9d11b467-a3c8-4fe1-be3f-90df40176e59" message="Exception occurred. Type: #[error.errorType], description: #[error.description]" category="processAccountAnalysisReportRecordsFlow" />
+				<ee:transform doc:name="Capture error details" doc:id="33c08fe6-0a5a-4add-83d3-c7cdd813bb12" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="errorMessageDetail" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorType": error.errorType.asString,
+	"errorMessage": if ( isEmpty(error.description) ) "Exception occurred processing CostCenter - Account Analysis Report Distribution request" else error.description,
+	"emailSubject": Mule::p('costCenterAccountAnalysisReport.emailNotification.subject') ++ (": Exception Occurred"),
+	"sendEmailNotificationTo": Mule::p('costCenterAccountAnalysisReport.emailNotification.toAddress'),
+}
+
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Call - commonExceptionHandlerSubFlow" doc:id="5edd3a08-e2ef-4c58-98a7-7005363262c4" name="commonExceptionHandlerSubFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="accountAnalysisReportDistributionMainFlow" doc:id="b5f9fa3b-a3fb-4bc3-bd4e-d270855cc985" >
+		<set-variable value="#[attributes.queryParams['priorityRequestID']]" doc:name="Set priorityRequestID" doc:id="216a698c-ced3-4d7f-a0fb-3068c834a0a3" variableName="priorityRequestID"/>
+		<logger level="INFO" doc:name="Log - request received" doc:id="d0c45aff-e749-4d52-b46f-2a744bf36ca9" message="Request received for #[vars.priorityRequestID]" category="accountAnalysisReportDistributionMainFlow"/>
+		<flow-ref doc:name="Call - getAccountAnalysisConfigFlow" doc:id="00faee2b-5ce7-4f9c-88d3-21b8bfe98817" name="getAccountAnalysisConfigFlow" />
+		<choice doc:name="Is there any record found to process?" doc:id="a7ee5097-c8d5-4f44-8efc-7eb2ed072e09" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<vm:publish doc:name="Publish- process cost center account analysis report distribution queue" doc:id="99ac6326-faaa-4415-a5f6-56dabf014249" config-ref="VM_Config" queueName="processCostCenterAccountAnalysisReportDistributionQueue" />
+				<logger level="INFO" doc:name="Log - Account Analysis Report Distribution Process Triggered" doc:id="d9a1ff83-281e-425a-a34e-76d98dfab03d" message="Account Analysis Report Distribution Process Triggered" category="accountAnalysisReportDistributionMainFlow"/>
+				<ee:transform doc:name="Set API response" doc:id="11365b9f-4611-4ebd-8af2-3f6ce45bb578">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"Account Analysis Report Distribution Process Triggered"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - No records to process" doc:id="51631cfb-f128-407f-abc7-46ca14b30daf" message="No records to process" category="accountAnalysisReportDistributionMainFlow"/>
+				<ee:transform doc:name="Set API response" doc:id="347b96e3-a124-463f-8ab1-baf340e7e409">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	message: "No Records To Process"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5b97fcba-026e-4e5a-b121-6daa47fc46c5" >
+				<logger level="ERROR" doc:name="Log - error occurred" doc:id="668c92ad-2350-407c-9f2a-e4c75a4820bc" message="Exception occurred: #[error.description]" category="accountAnalysisReportDistributionMainFlow"/>
+				<raise-error doc:name="Raise error" doc:id="6026d106-3708-4dcb-b6d6-ee29abf8950d" type="CUSTOM:BAD_REQUEST" description="Failed to process request"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

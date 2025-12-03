@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd">
+	<flow name="writeFileToFinanceFTPFlow" doc:id="e4b674ef-c03b-40d0-a314-41594e49fc58" >
+		<ftp:write doc:id="6bb96a47-74ff-49e7-8589-dfdf53ba5cc2" doc:name="Write to Finance" config-ref="oracle-ftp-config" path="#[Mule::p('contentCreation.ftpPath') ++ vars.outputFilename]">
+			<reconnect frequency="120000" count="5" />
+		</ftp:write>
+		<logger level="INFO" doc:name="Log - success" doc:id="0280c01d-f112-4199-a98d-fe6784eb1b27" message="&lt;&lt;#[vars.category default '']&gt;&gt; File written to finance successfully. File: #[vars.outputFilename] to #[Mule::p('contentCreation.ftpPath')]" category="writeFileToFinanceFTPFlow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c1d12306-285d-4909-9bed-2da56eb984f5" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="5279b63c-d941-4f3d-9fd3-1eb01417d11d" message="&lt;&lt;#[vars.category default '']&gt;&gt; Exception occurred calling 'Write to Finance' with file: #[vars.outputFilename] to #[Mule::p('contentCreation.ftpPath')]. Type: #[error.errorType.identifier], description: #[error.description]" category="writeFileToFinanceFTPFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getPurchasedContentByDealCodesFlow"
+		doc:id="4231a265-da60-42c9-9852-ccbbe1ae81d6">
+		<ee:transform doc:name="Prepare SQL query" doc:id="d84ee0f7-2be5-438e-bfa9-506b27e4c777" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+"SELECT DISTINCT inf.d_id deal_id, inf.d_apprv, inf.d_code deal_code, inf.d_conref contract_reference, inf.d_name deal_name, inf.deal_aka, inf.d_sub sub_type, inf.d_sub sub_type_code, inf.d_budget budget_info, inf.d_budget_code budget_info_code, inf.bus_unit bus_unit, inf.content_id, inf.content_name, inf.title_aka, inf.t_pgenre, inf.t_pgenre_id, inf.t_sgenre, inf.t_sgenre_id FROM (SELECT p.PURCHASE_ID p_id, d.DEAL_ID d_id, d.DEAL_CODE d_code, d.BROADCASTER_REFERENCE_1 d_conref, (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'APPRV' AND tl.table_code = D.APPROVAL_STAT) d_apprv, (SELECT b.description FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget, (SELECT b.budget_code FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget_code,        (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub, (SELECT tl.table_code FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub_code, d.DEAL_NAME d_name, (SELECT g2.genre_name  FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre, (SELECT g2.genre_id FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre_id,        (SELECT g.genre_name FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre, (SELECT g.genre_id FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre_id, t.programme_name t_name, CASE WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN 'S' || (SELECT min(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID) WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN 'T' || t.title_id WHEN d.DEAL_TYPE = 'M' THEN 'M' || t.title_id END AS content_id, CASE WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN upper((SELECT sn.season_name FROM season sn WHERE sn.season_id = (SELECT MIN(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID))) WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN upper(d.deal_name) WHEN d.DEAL_TYPE = 'M' THEN upper(d.deal_name) END AS content_name, (SELECT LISTAGG( (SELECT '[' || cg.channel_group_id || ']' || cg.descrip FROM channel_group cg WHERE cg.channel_group_id = aa.bus_unit), ';') WITHIN GROUP (ORDER BY aa.bus_unit) FROM (SELECT DISTINCT arm.deal_id, arm.business_unit bus_unit FROM armm_purch_bsunit arm) aa WHERE aa.deal_id = p.deal_id) bus_unit, (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'TI' AND aka.object_id = p.TITLE_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) title_aka, (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'DL' AND aka.object_id = d.DEAL_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) deal_aka, p.AVAIL_START_DATE start_date, p.AVAIL_END_DATE end_date, d.APPROVAL_STAT apprv FROM deal d JOIN purchase p ON p.deal_id = d.deal_id JOIN armm_purch_bsunit apb ON apb.PURCHASE_ID = p.PURCHASE_ID JOIN title t ON t.title_id = p.title_id AND p.EPISODE_NO IN (1,0) AND p.MARKED_AS_DELETED = 0 ) inf WHERE inf.d_code IN ("++ (vars.receivedDealCodes default '') ++ ")"]]></ee:set-payload>
+
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sqlQueryString" ><![CDATA[%dw 2.0
+output application/java
+---
+"SELECT DISTINCT inf.d_id deal_id, inf.d_apprv, inf.d_code deal_code, inf.d_conref contract_reference, inf.d_name deal_name, inf.deal_aka, inf.d_sub sub_type, inf.d_sub sub_type_code, inf.d_budget budget_info, inf.d_budget_code budget_info_code, inf.bus_unit bus_unit, inf.content_id, inf.content_name, inf.title_aka, inf.t_pgenre, inf.t_pgenre_id, inf.t_sgenre, inf.t_sgenre_id FROM (SELECT p.PURCHASE_ID p_id, d.DEAL_ID d_id, d.DEAL_CODE d_code, d.BROADCASTER_REFERENCE_1 d_conref, (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'APPRV' AND tl.table_code = D.APPROVAL_STAT) d_apprv, (SELECT b.description FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget, (SELECT b.budget_code FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget_code,        (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub, (SELECT tl.table_code FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub_code, d.DEAL_NAME d_name, (SELECT g2.genre_name  FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre, (SELECT g2.genre_id FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre_id,        (SELECT g.genre_name FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre, (SELECT g.genre_id FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre_id, t.programme_name t_name, CASE WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN 'S' || (SELECT min(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID) WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN 'T' || t.title_id WHEN d.DEAL_TYPE = 'M' THEN 'M' || t.title_id END AS content_id, CASE WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN upper((SELECT sn.season_name FROM season sn WHERE sn.season_id = (SELECT MIN(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID))) WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN upper(d.deal_name) WHEN d.DEAL_TYPE = 'M' THEN upper(d.deal_name) END AS content_name, (SELECT LISTAGG( (SELECT '[' || cg.channel_group_id || ']' || cg.descrip FROM channel_group cg WHERE cg.channel_group_id = aa.bus_unit), ';') WITHIN GROUP (ORDER BY aa.bus_unit) FROM (SELECT DISTINCT arm.deal_id, arm.business_unit bus_unit FROM armm_purch_bsunit arm) aa WHERE aa.deal_id = p.deal_id) bus_unit, (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'TI' AND aka.object_id = p.TITLE_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) title_aka, (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'DL' AND aka.object_id = d.DEAL_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) deal_aka, p.AVAIL_START_DATE start_date, p.AVAIL_END_DATE end_date, d.APPROVAL_STAT apprv FROM deal d JOIN purchase p ON p.deal_id = d.deal_id JOIN armm_purch_bsunit apb ON apb.PURCHASE_ID = p.PURCHASE_ID JOIN title t ON t.title_id = p.title_id AND p.EPISODE_NO IN (1,0) AND p.MARKED_AS_DELETED = 0 ) inf WHERE inf.d_code IN ("++ (vars.receivedDealCodes default '') ++ ")"]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<db:select doc:name="Get Purchased Content details by Deal Code" doc:id="2045989d-c10c-4615-a08a-21fb8715a1a1" config-ref="ibms-database-config">
+			<db:sql ><![CDATA[#[payload]]]></db:sql>
+		</db:select>
+		<logger level="INFO"
+			doc:name="Log - Successful Query Execution"
+			doc:id="42ce6e49-b96f-4acc-bfc0-a0a93b5fcc96"
+			message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; Query executed successfully. Number of records: ' ++ sizeOf(payload) ++ &quot; for deal codes: &quot; ++ (vars.receivedDealCodes default '')]"
+			category="getPurchasedContentByDealCodesFlow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f487cf5a-2bb6-464f-890a-b508acb50fb1" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="9dbd2f9e-bf7c-4e18-809a-f22bfc3932fa" message="&lt;&lt;#[vars.category default '']&gt;&gt;Exception occurred calling 'Get Purchased Content details by Deal Code' with deal codes: #[vars.receivedDealCodes default '']. Type: #[error.errorType.identifier], description: #[error.description]" category="getPurchasedContentByDealCodesFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getContentUpdatesFlow" doc:id="430da464-188c-439e-8348-e130fea1cb00">
+		<db:select doc:id="cbe245db-f446-4c31-9ca7-4d955e765bf5" doc:name="Get New or Re-purchased content" config-ref="ibms-database-config">
+			<db:sql><![CDATA[SELECT DISTINCT
+
+--  atr.audit_id, -- for debug purposes
+--  inf.p_id, -- for debug purposes
+  inf.d_id deal_id, -- deal id for debug purposes
+  inf.d_apprv, -- deal approval status for debug purposes
+  inf.d_code deal_code, -- deal code
+  inf.d_conref contract_reference, -- contract ref
+  inf.d_name deal_name, -- deal name
+  inf.deal_aka, -- the primary AKA Title from the deal
+  inf.d_sub sub_type, -- deal sub
+  inf.d_sub_code sub_type_code, -- deal sub
+  inf.d_budget budget_info, -- budget info
+  inf.d_budget_code budget_info_code, -- budget info
+  inf.bus_unit bus_unit, -- aggregated list of business units assigned to windows under the deal
+  inf.content_id, -- content id (generated ID using the title or season id depending on the type of content)
+  inf.content_name, -- content name
+  inf.title_aka, -- the primary AKA Title from the movie/single/first episode
+  inf.t_pgenre, -- title genre
+  inf.t_pgenre_id, -- title genre  
+  inf.t_sgenre, -- title sub_genre
+  inf.t_sgenre_id -- title sub_genre
+
+FROM audit_trail atr 
+JOIN audit_item ai ON atr.audit_id = ai.audit_id 
+JOIN (SELECT
+        p.PURCHASE_ID p_id,
+        d.DEAL_ID d_id,
+        d.DEAL_CODE d_code,
+        d.BROADCASTER_REFERENCE_1 d_conref,
+        (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'APPRV' AND tl.table_code = D.APPROVAL_STAT) d_apprv,
+        (SELECT b.description FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget,
+        (SELECT b.budget_code FROM budget b WHERE b.budget_id = d.BUDGET_ID) d_budget_code,		
+        (SELECT tl.table_description FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub,
+        (SELECT tl.table_code FROM table_line tl WHERE tl.table_id = 'DLSUB' AND tl.table_code = D.DEAL_SUB) d_sub_code,
+        d.DEAL_NAME d_name,
+        (SELECT g2.genre_name  FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre,
+        (SELECT g2.genre_id FROM genre g1 JOIN genre g2 ON g2.genre_id = g1.parent_genre_id WHERE g1.genre_id = t.genre_id) t_pgenre_id,		
+        (SELECT g.genre_name FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre,
+        (SELECT g.genre_id FROM genre g WHERE g.genre_id = T.genre_id) t_sgenre_id,
+        t.programme_name t_name,
+          CASE
+              WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN 'S' || (SELECT MIN(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID)
+              WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN 'T' || t.title_id
+              WHEN d.DEAL_TYPE = 'M' THEN 'M' || t.title_id
+          END AS content_id,
+          CASE
+              WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES > 1 THEN upper((SELECT sn.season_name FROM season sn WHERE sn.season_id = (SELECT MIN(st.season_id) FROM season_title st WHERE st.title_id = p.TITLE_ID)))
+              WHEN d.DEAL_TYPE = 'S' AND d.NO_OF_PROGRAMMES = 1 THEN upper(d.deal_name)
+              WHEN d.DEAL_TYPE = 'M' THEN upper(d.deal_name)
+          END AS content_name,
+	  (SELECT 
+		  LISTAGG(
+			  (SELECT '[' || cg.channel_group_id || ']' || cg.descrip FROM channel_group cg WHERE cg.channel_group_id = aa.bus_unit), ';')
+			  WITHIN GROUP (ORDER BY aa.bus_unit) 
+			  FROM (SELECT DISTINCT arm.deal_id, arm.business_unit bus_unit FROM armm_purch_bsunit arm) aa 
+			  WHERE aa.deal_id = p.deal_id) bus_unit,
+          (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'TI' AND aka.object_id = p.TITLE_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) title_aka,
+          (SELECT aka.aka FROM object_aka aka WHERE aka.object_type = 'DL' AND aka.object_id = d.DEAL_ID AND aka.PRIMARY = 1 AND ROWNUM = 1) deal_aka
+        
+      FROM deal d
+      JOIN purchase p ON p.deal_id = d.deal_id
+      JOIN armm_purch_bsunit apb ON apb.PURCHASE_ID = p.PURCHASE_ID
+      JOIN title t ON t.title_id = p.title_id
+      AND p.EPISODE_NO IN (1,0)
+      AND p.MARKED_AS_DELETED = 0
+      ) inf ON inf.d_id = atr.object_id
+
+WHERE atr.audit_date = (SELECT TO_CHAR(SYSDATE - :daysCount, 'YYYYMMDD') FROM dual) -- include only content where the deal approval status was updated on the specified date
+AND  ai.audit_item_type = 'DLAPST' -- check updates to the deal approval status only
+AND (SELECT tl.numeric_1 FROM table_line tl WHERE tl.table_id = 'APPRV' AND tl.table_description = ai.new_audit_value) LIKE '%05' -- include only content where the updated value was a deal approval status in the "Approved" group
+AND NOT EXISTS (SELECT *
+				FROM audit_trail atr2 
+				JOIN audit_item ai2 ON atr2.audit_id = ai2.audit_id 
+				WHERE atr2.audit_date < (SELECT TO_CHAR(SYSDATE - :daysCount, 'YYYYMMDD') FROM dual)
+				AND  ai2.audit_item_type = 'DLAPST'
+				AND atr2.object_id = atr.object_id
+				AND (SELECT tl.numeric_1 FROM table_line tl WHERE tl.table_id = 'APPRV' AND tl.table_description = ai2.new_audit_value) LIKE '%05') -- exclude content which has previously had a deal approval status assigned where the status was in the  "Approved" group.  This is intended to stop data being resent if it changes from one approved status to another approved status.
+AND substr(inf.bus_unit,2,4) IN ( 2074,--	Acq SBS One
+								  2076,--	Commissioned Content
+								  2077,--	SBS Sport
+								  2078,--	SBS News
+								  2079,--	World Movies
+								  2081,--	Acq SBS Two
+								  2096,--	NITV
+								  2258,--	Food Network
+								  2357,--	NITV Commissioned
+								  2358,--	NITV INACA
+								  2359,--	NITV Internal Production
+								  2472,--	SBS Worldmovies (SBS4)
+								  2477,--	SBS Worldmovies SVOD (SBS4)
+								  2437-- SBS Food
+								  ) -- include only purchases which have these business units assigned.  If any other BU is assigned to a purchase (or no BU has been asssigned) it will be excluded from the extract.]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+"daysCount": vars.dealCodeUpdatedPriorDay
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log - Successful Query Execution" doc:id="e19e342d-2a8d-48b6-90b4-717d8f00dc0f" message="#['&lt;&lt;' ++ (vars.category default '') ++ '&gt;&gt; Query executed successfully. Number of records: ' ++ sizeOf(payload) ++ ' for dealCodeUpdatedPriorDay: ' ++ vars.dealCodeUpdatedPriorDay]" category="getcontentupdatesFlow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b5e590f0-fb37-4afb-a5e8-f434341b08ca" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="966834af-eb7a-4658-99f1-09441d1aa2b7" message="&lt;&lt;#[vars.category default '']&gt;&gt; Exception occurred calling 'Get New or Re-purchased content' with dealCodeUpdatedPriorDay: #[vars.dealCodeUpdatedPriorDay]. Type: #[error.errorType.identifier], description: #[error.description]" category="getContentUpdatesFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

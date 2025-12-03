@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd">
+	
+	
+
+	<flow name="processAccountStringFlow" doc:id="aca0b433-7903-416a-9f77-fe926f146d71">
+		<logger level="INFO" doc:name="Log - Start" doc:id="d9ef24c9-1228-4b94-b663-b49dae75ae78" message="Started processing accountStringFile" category="processAccountStringFlow"/>
+		<flow-ref doc:name="Get AccoutString from Oracle " doc:id="b9bff219-2d60-4b57-b2fb-13e21c8a2c40" name="getAccountStringDetails" />
+		<ee:transform doc:name="Extract Records from DB and set as payload" doc:id="96fefa0e-691c-4118-9a6c-8ca0f1e83bf0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv header=false
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	
+	Type: payload01.TYPE,
+	ID1: payload01.ID1,
+	ID2: payload01.ID2,
+	ID3: payload01.ID3,
+	ID4: payload01.ID4,
+	ID5: payload01.ID5,
+	ID6: payload01.ID6,
+	ID7: payload01.ID7,
+	(DATE_1: payload01.DATE_1 as String) if(payload01.DATE_1 != null),
+	(DATE_2: payload01.DATE_2 as String) if(payload01.DATE_2 != null),
+	AMOUNT_1: payload01.AMOUNT_1,
+	AMOUNT_2: payload01.AMOUNT_2,
+	CURR_CODE: payload01.CURR_CODE,
+	FLAG_1: payload01.FLAG_1,
+	FLAG_2: payload01.FLAG_2
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Check payload is empty?" doc:id="692f50fa-ef8a-491a-afd6-f86849136fe2">
+			<when expression="#[isEmpty(payload)]">
+				<logger level="INFO" doc:name="Log - No Files to process" doc:id="b6986d47-ced2-4f8e-9c45-9e018f2b8d06" message="Payload is empty or no files to process" category="processAccountStringFlow"/>
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;message : 'No files to Process'&#10;&#10;}]" doc:name="Set Empty Files Response" doc:id="644e6f71-4c23-420b-ba5d-32072d7a9c9c" variableName="response" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Set outputFilename" doc:id="a6695460-8839-4734-be04-0e00884e9bf4">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+						<ee:set-variable variableName="outputFilename" ><![CDATA[%dw 2.0
+output application/java
+---
+p('concurSftp.accountStringJobtype') ++ "_" ++ p('concurSftp.sbsentitycode') ++ "_" ++ now() as String {format:"yyyyMMddHHmmss"} ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<scatter-gather doc:name="Send Payload to Archive and Concur" doc:id="c7bc0e4b-5333-47ad-9412-426c0fbcfdf9">
+					<route>
+						<set-variable value="#[p('oracleftp.processAccountStringArchivePath') ++ vars.outputFilename ++ p('oracleftp.fileExtension')]" doc:name="Set target Filepath" doc:id="a5621cf5-66d8-4f14-9ae8-a9d59c85593c" variableName="oracleFtpPath"/>
+						<flow-ref doc:name="Archive AccountString File in App Server" doc:id="0e98c5d5-2d79-417b-96cc-7cb16bff6991" name="writeFileIntoOracleAppServer" />
+					</route>
+					<route>
+					    <set-variable value="#[p('concurSftp.outboundPath') ++ &quot;/&quot; ++ vars.outputFilename ++ p('concurSftp.fileExtension')]" doc:name="Set concurPath" doc:id="52ecfeb5-ba7f-4788-aa9a-55f1cdab7673" variableName="concurPath"/>
+						<flow-ref doc:name="Encrypt Csv Payload" doc:id="610b97e6-86a2-458c-a472-f6233674a087" name="encryptCsvFileContent" />
+						<flow-ref doc:name="Send file to Concur" doc:id="0e76be49-51f9-4bf4-9c61-eca3b00f8695" name="writeFileToConcurSftpFlow"/>
+					</route>
+			
+</scatter-gather>
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;message: 'Account string file Successfully processed'&#10;}]" doc:name="Set Success Response" doc:id="7283e61f-0bd3-430b-a317-8e95d5a3f18a" variableName="response" />
+			</otherwise>
+		</choice>
+		<set-payload value="#[vars.response]" doc:name="Set Response Payload" doc:id="84631db1-85f9-42da-94b8-367cf9725b49" />
+			<logger level="INFO" doc:name="Log - End" doc:id="965b1341-b212-48bb-84a5-0a39db861028" message="Account string file processing completed successfully" category="processAccountStringFlow"/>
+		<error-handler >
+
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="581ca974-4acc-44f3-bea5-a5f74592afd0" >
+
+                <flow-ref doc:name="Common Exception flow" doc:id="32d7a9a6-e3b9-4622-bc50-831f3401a8e3" name="commonExceptionSubflow"/>
+
+            </on-error-propagate>
+
+        </error-handler>
+         
+</flow>
+</mule>

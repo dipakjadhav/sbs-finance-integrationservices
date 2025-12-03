@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+    <http:listener-config name="sbs-finance-integrationservices-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${https.private.port}" protocol="HTTPS" readTimeout="1800000">
+            <tls:context>
+                <tls:key-store type="jks" path="${https.keystore.file}" alias="mule" keyPassword="${secure::https.keystore.pass}" password="${secure::https.keystore.pass}" />
+            </tls:context>
+        </http:listener-connection>
+        <http:listener-interceptors>
+            <http:cors-interceptor>
+                <http:origins>
+                    <http:public-resource />
+                </http:origins>
+            </http:cors-interceptor>
+        </http:listener-interceptors>
+    </http:listener-config>
+    <apikit:config name="sbs-finance-integrationservices-config" api="resource::b92a3212-1dbd-4b55-beda-b44c8dbd3a14:sbs-finance-integrationservices:1.0.21:raml:zip:sbs-finance-integrationservices.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="sbs-finance-integrationservices-main">
+        <http:listener config-ref="sbs-finance-integrationservices-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.headers['X-Correlation-Id']]" doc:name="Set correlationId" doc:id="16152ca4-4820-4a01-9cac-f7cc9f1ee6aa" variableName="correlationId" />
+        <!-- [STUDIO:"Validate API autentication Key"] <flow-ref doc:name="Validate 
+			API autentication Key" doc:id="5b5f5b82-1802-4c74-b56a-2b3c1205c7ba" name="validateApiKeyFlow" 
+			/> [STUDIO] -->
+        <apikit:router config-ref="sbs-finance-integrationservices-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e7d86906-c165-4b85-be65-8967ca3d2879" type="SBS:NOT_AUTHORIZED">
+                <ee:transform doc:name="Transform Message" doc:id="eedfbc8d-fed6-4e9e-9e25-7d87c78fea84">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: " API Authentication Key  not authorized"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[401]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="37ca03d8-d192-489a-96f8-451bd1e391f8" type="ANY">
+				<logger level="ERROR" doc:name="Log error" doc:id="49490d58-4192-48da-8bae-cc371794f0c6" message="Exception occurred. Type: #[error.errorType], description: #[error.description]" category="sbs-finance-integrationservices-main" />
+				<flow-ref doc:name="Call - commonExceptionSubflow" doc:id="50be460a-e2bf-45ee-bb7a-386304f40069" name="commonExceptionSubflow"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="sbs-finance-integrationservices-console">
+        <http:listener config-ref="sbs-finance-integrationservices-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="sbs-finance-integrationservices-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delete:\concur\projectTask:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="a5860c38-661c-4230-9d7e-6b78db03a807" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"deleteProjectTasksProcessReference": Mule::p('log.categories.concurDeleteProjectTasks')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="0c060bd7-0e48-40df-8be3-15c52db7d3bb" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.deleteProjectTasksProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - projectTaskMainFlow" doc:id="7b8b139f-9258-41cf-809e-f64a4c2a1ed0" name="projectTaskMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\concur\list:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="get:\concur\list:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="get:\concur\listItem:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="get:\concur\listItem:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="get:\ibms\processContentCreation:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="get:\ibms\processContentCreation:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="post:\oracleAPPS\archiveFile:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="post:\oracleAPPS\archiveFile:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="post:\ibms\processContentCreation:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="post:\ibms\processContentCreation:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="post:\concur\projectTask:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="24db3a59-68a1-40f2-b2d5-76dae303f65f" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"createProjectTasksProcessReference": Mule::p('log.categories.concurCreateProjectTasks')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="2111a62a-12f0-4562-b0f9-ea32e0a3ba65" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.createProjectTasksProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - projectTaskMainFlow" doc:id="c32267eb-b234-40a8-b405-926cf2ae3180" name="projectTaskMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="post:\concur\sendEncryptedFile:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="post:\concur\sendEncryptedFile:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="post:\concur\users:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="post:\concur\users:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="put:\concur\chartOfAccounts:sbs-finance-integrationservices-config">
+		<ee:transform doc:name="Initialize flow variables" doc:id="1b417e31-4990-42d2-8878-a091a13d9865" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"updateChartOfAccountProcessReference": Mule::p('log.categories.concurUpdateChartOfAccounts')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="c577041c-f511-42c8-90fe-16f10230c46f" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.updateChartOfAccountProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - chartOfAccountMainFlow" doc:id="6701c744-6835-454e-ba4b-8b281764f89a" name="chartOfAccountMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="delete:\concur\chartOfAccounts:sbs-finance-integrationservices-config">
+		<ee:transform doc:name="Initialize flow variables" doc:id="498403cd-7b9d-4204-943a-920b0748a0b9" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"deleteChartOfAccountProcessReference": Mule::p('log.categories.concurDeleteChartOfAccounts')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="076cb501-cc3d-49fb-8865-bce5bba1455b" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.deleteChartOfAccountProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - chartOfAccountMainFlow" doc:id="ccc4d5bc-e8ad-4869-a726-c583a7872cb4" name="chartOfAccountMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\concur\processAS:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Process AccountString Flow" doc:id="722fdbe6-d93b-46ea-9a02-4c653d3492f3" name="processAccountStringFlow" />
+    </flow>
+    <flow name="get:\concur\processDOA:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Process DelegationOfAuthority2 Flow" doc:id="b10d685b-a01f-41b7-9bf9-d180be16f25f" name="processDelegationOfAuthorityFlow" />
+    </flow>
+    <flow name="get:\concur\processSAE:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Standard accounting extract" doc:id="d0cb9ade-6415-4838-ac9a-6f30b3acc962" name="standardAccountingExtractMainFlow" />
+    </flow>
+    <flow name="post:\concur\chartOfAccounts:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="9c9138ac-84d1-4413-ae10-604b5ce0960a">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="configValues"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"createChartOfAccountProcessReference": Mule::p('log.categories.concurCreateChartOfAccounts')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata"><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="2c3714db-ea9c-4567-897c-7a44af038910" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.createChartOfAccountProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - chartOfAccountMainFlow" doc:id="bcd09f9a-4101-4db4-8d7a-ce31650b2075" name="chartOfAccountMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\aurion\processEM:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="get:\aurion\processEM:sbs-finance-integrationservices-config" />
+        <flow-ref doc:name="Call - sendMileageMainFlow" doc:id="3706904e-bde8-449e-b2ba-90697caf5350" name="sendMileageMainFlow" />
+    </flow>
+    <flow name="get:\ibms\processDeals:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Call - adhocContentCreationFlow" doc:id="c2ae7844-dbd2-453e-b4c4-7a3a7ddd5412" name="adhocContentCreationFlow" />
+    </flow>
+    <flow name="post:\ibms\processDeals:sbs-finance-integrationservices-config">
+        <logger level="INFO" message="post:\ibms\processDeals:sbs-finance-integrationservices-config" />
+    </flow>
+    <flow name="delete:\concur\projects:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="31a16c1d-ae74-4d08-9d6e-afef0d21124d" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"deleteProjectsProcessReference": Mule::p('log.categories.concurDeleteProjects')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="96e6e088-441d-44d1-9764-15ae4d0e587a" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.deleteProjectsProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call -projectMainFlow" doc:id="fb1d4c35-78c7-4f34-9f62-0d210fce7ead" name="projectMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="post:\concur\projects:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="3b0a1e2a-9d28-4550-a211-90269223b1c2" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"createProjectsProcessReference": Mule::p('log.categories.concurCreateProjects')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="4ed3a52a-42da-4c18-8992-ac2b07d7c7d1" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.createProjectsProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - projectMainFlow" doc:id="7ef4227b-1cdc-4241-bce2-b426630cdefd" name="projectMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\hbt:sbs-finance-integrationservices-config">
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Set Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: " API is running"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\concur\processEmp:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="8da06f7c-d995-4347-8061-148f3673ac32" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"employeeProfileProcessReference": Mule::p('log.categories.concurEmployeeProfile'),
+	"employeeProfileProvisioningStatusProcessReference": Mule::p('log.categories.concurEmployeeProfileUserProvisioningRequestStatus'),
+	"companyId": Mule::p('api.concur.companyId'),
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="bca9957f-69a5-4c6f-9258-7dc8db1f8351" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.employeeProfileProcessReference ++ "&gt;&gt;"]'>
+			<flow-ref doc:name="Call - createOrUpdateUserProfileFlow" doc:id="8661adb2-d1f6-4c50-996b-d2e9230ac3aa" name="processEmployeesProfileFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\concur\processPrj:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="09259a00-ea88-46b3-a013-80628d0f047b" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"processProjectsProcessReference": Mule::p('log.categories.concurProcessProjects')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="9d7b1fa7-a511-43c6-a1c6-d4590f9da419" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.processProjectsProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call - projectMainFlow" doc:id="370d14ae-011e-4ab2-b24c-d64539ab11a4" name="projectMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\concur\processPt:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="bc45be4a-f513-4313-9fd5-4e0cab534e83" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="configValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"processProjectTasksProcessReference": Mule::p('log.categories.concurProcessProjectTasks')
+}]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+var requestedUser = if ( attributes.remoteAddress != null ) attributes.remoteAddress else 'unknown'
+---
+{
+	"requestedUser": requestedUser replace '/' with ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="45d803c4-c1db-4279-8bdc-d5d7824ba22a" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.processProjectTasksProcessReference ++ "&gt;&gt;"]' >
+			<flow-ref doc:name="Call Project task flow" doc:id="93f5e535-c353-4391-ab6f-f487043b07fb" name="projectTaskMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\concur\processCA:sbs-finance-integrationservices-config">
+		<vm:publish doc:name="Trigger COA process" doc:id="7725aa4d-4dba-4094-ad6e-6b7068db5b71" config-ref="VM_Config" queueName="processCA"/>
+		<ee:transform doc:name="Set Response" doc:id="dd00c310-047c-4f7f-a982-685d7c9cd4b9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : "Chart of Account processing has been successfully triggered."
+
+
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+    <flow name="get:\ibms\processDealsUi:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Call - serveDashbaordPageFlow" doc:id="baa6350c-a631-4910-9c51-a929129da96b" name="serveDashbaordPageFlow" />
+    </flow>
+    <flow name="get:\costCenter\processReportsUi:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Call - serveCostCenterReportDistributionDashbaordPageFlow" doc:id="ef423f5b-6dc8-45ea-8ba9-b23ded55ee12" name="serveCostCenterReportDistributionDashbaordPageFlow" />
+    </flow>
+    <flow name="post:\callinterface:application\json:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Call - submitInterfaceDetailsFlow" doc:id="9a89956d-84fc-4d32-b3bb-983008386d06" name="submitInterfaceDetailsFlow" />
+    </flow>
+    <flow name="get:\costCenter\processAccountAnalysisReport:sbs-finance-integrationservices-config">
+		<ee:transform doc:name="Initialize flow variables" doc:id="b4cf4283-2a52-4d4f-846c-83a5ec66b808">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="configValues"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"costCenterAccountAnalysisReportGenerationProcessReference": Mule::p('log.categories.costCenterAccountAnalysisReportGeneration')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="8a4a5bce-4dfb-410d-87a2-bbb9d55172f0" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.costCenterAccountAnalysisReportGenerationProcessReference ++ "&gt;&gt;"]'>
+			<flow-ref doc:name="Call - accountAnalysisReportDistributionMainFlow" doc:id="7a3fc3fb-d399-4c22-81a0-29e31cb0ea08" name="accountAnalysisReportDistributionMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\costCenter\processFsgReport:sbs-finance-integrationservices-config">
+        <ee:transform doc:name="Initialize flow variables" doc:id="993d64f9-891e-4469-aaa2-529d1b98bbc1">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="configValues"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"costCenterFSGReportGenerationProcessReference": Mule::p('log.categories.costCenterFSGReportGeneration')
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="a8ebffe3-833d-422c-80ec-41310034bf3e" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.costCenterFSGReportGenerationProcessReference ++ "&gt;&gt;"]'>
+			<flow-ref doc:name="Call - fsgReportDistributionMainFlow" doc:id="667c2203-45b4-4648-8d78-69fe3794dc4b" name="fsgReportDistributionMainFlow" />
+		</tracing:with-correlation-id>
+    </flow>
+    <flow name="get:\aurion\processED:sbs-finance-integrationservices-config">
+        <flow-ref doc:name="Process Employee Profile" doc:id="206c574a-13d2-423c-9dff-2446474feac8" name="financeEmployeeProfileFlow" />
+    </flow>
+</mule>

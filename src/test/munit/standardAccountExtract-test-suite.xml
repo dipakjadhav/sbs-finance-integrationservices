@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="standardAccountingExtract-test-suite.xml" />
+	<munit:test name="standardAccountingExtract-test-suite-standardAccountingExtractMainFlowTest" doc:id="2112f23e-5253-447f-a96a-cf154ddbd8f8" description="Test" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="5edae9f4-b54a-4028-93ab-175553650ff0" processor="sftp:list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List SAE files" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="841c72e6-3045-4270-8bdc-858d59966d5e" processor="sftp:read">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Read SAE Files" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('testfile_encrypted.pgp')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="a727fd76-47a4-425f-994e-8c3ce0691d23" processor="sftp:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Purge the SAE File in Concur" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('generic_response.json')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="89a81a7b-d529-41c4-873a-8fffb90a0ae7" processor="ftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Send SAE file to Oracle" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('generic_response.json')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="25aa8c88-47fd-48b8-aa37-7f2d5f15dac6" processor="ftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ArchiveinOracle" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('generic_response.json')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="8de48c36-a924-446c-9229-82a6f1f01143" processor="smb:file-write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Archive SAE file to oracle share" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('generic_response.json')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="b590e322-1b39-459c-871a-0ff2def0e4c5" processor="crypto:pgp-decrypt">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Pgp decrypt" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('decryptsamplefile.txt')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to standardAccountingExtractMainFlow" doc:id="df248bc5-67e3-43bc-ae98-8ee43043a3f4" name="standardAccountingExtractMainFlow"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="standardAccountingExtract-test-suite-standardAccountingExtractMainFlowTest1" doc:id="b62267fc-48c1-4cef-a3c6-f7fcec1e6e24" description="Test" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="e8febfca-3abf-482b-a6ee-54b96a8a5eb8" processor="sftp:list">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="List SAE files" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="067b17fb-5fd8-418c-9157-b93403ee010e" processor="sftp:read">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Read SAE Files" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="d6203490-fc43-4d86-973e-3181d2370051" processor="sftp:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Purge the SAE File in Concur" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="64e90a7e-a369-4dae-bfa1-44e99cbf24ef" processor="ftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Send SAE file to Oracle" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="cdef1856-863f-4e99-9361-bffd5e28879d" processor="ftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ArchiveinOracle" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="94c530e3-fa1e-4745-96f7-13ef44243643" processor="smb:file-write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Archive SAE file to oracle share" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to standardAccountingExtractMainFlow" doc:id="1ccbb2ed-4e28-4d53-bd0c-1c97a88e6892" name="standardAccountingExtractMainFlow"/>
+		</munit:execution>
+	</munit:test>
+
+</mule>

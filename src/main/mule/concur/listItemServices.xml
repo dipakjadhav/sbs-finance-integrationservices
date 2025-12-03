@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="createListItemFlow" doc:id="a78692fb-2887-4f16-9848-453a053f1529" >
+		<logger level="INFO" doc:name="Log - Concur request" doc:id="80f5f64a-1c49-4f14-b55a-b830c8fad165" category="createListItemFlow" message="Create listItem request payload: #[vars.requestPayload]"/>
+		<http:request method="POST" doc:name="Call - Create concur listItem API" doc:id="627ca740-d434-48d3-b7f7-4a2bcebce7e5" config-ref="sapConcurHttpRequestConfig" path='#["/list/v4/items"]' target="createListItemResponsePayload">
+			<http:body ><![CDATA[#[vars.requestPayload]]]></http:body>
+		</http:request>
+		<logger level="INFO" doc:name="Log - Concur response" doc:id="341fe70b-82e6-49ce-957a-ba110424f5fe" category="createListItemFlow" message="Create listItem response payload: #[vars.createListItemResponsePayload]"/>
+		<flow-ref doc:name="Call - captureProcessedConcurListItemRecordsFlow" doc:id="abd04141-a57b-4302-a609-09f34fef1030" name="captureProcessedConcurListItemRecordsFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="88ffa116-2104-4cfb-8c4f-2b36c30052b6" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="4f22a35a-8372-4cd1-a176-72b609b0b4f2" category="createListItemFlow" message="Exception occurred creating concur listItem. Type: #[error.errorType.identifier], description: #[error.description]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="updateListItemFlow" doc:id="ffcc32b1-565a-4eb5-a57a-0e56135dc5ce" >
+		<logger level="INFO" doc:name="Log - Concur request" doc:id="cc27c4ed-146d-4114-839d-d1722f2fa1ba" category="updateListItemFlow" message=" Update listItem request payload: #[vars.requestPayload]"/>
+		<flow-ref doc:name="Call - getListItemFlow" doc:id="32ce24b6-48c0-4e83-ae97-c696c94eef51" name="getListItemFlow"/>
+		<choice doc:name="Choice" doc:id="0d4a2d3c-396b-47de-b2fc-6e4103886855" >
+			<when expression="#[sizeOf(vars.getConcurListItemResponse.content) &gt; 0]">
+				<http:request method="PUT" doc:name="Call - Update concur listItem API" doc:id="628ae226-1039-423c-9915-fe31ac770e92" config-ref="sapConcurHttpRequestConfig" path='#["/list/v4/items/" ++ (vars.getConcurListItemResponse.content[0].id default "")&#10;/*	/list/v4/items/{list_item_id} 	*/]' target="updateListItemResponsePayload">
+			<http:body><![CDATA[#[vars.requestPayload]]]></http:body>
+		</http:request>
+				<logger level="INFO" doc:name="Log - Concur response" doc:id="80837484-3dab-4bf9-be01-7c92e5a4e2ce" category="updateListItemFlow" message=" Update listItem response payload: #[vars.updateListItemResponsePayload]" />
+				<flow-ref doc:name="Call - captureProcessedConcurListItemRecordsFlow" doc:id="531c4f67-5c26-4312-9a49-b3a051023385" name="captureProcessedConcurListItemRecordsFlow" />
+			</when>
+			<otherwise >
+							<logger level="INFO" doc:name="Log - User not found on concur" doc:id="0fe9305a-5a46-44da-9a47-0a6d05283061" category="updateEmployeeProfileFlow" message="ListItem not found on concur" />
+					<flow-ref doc:name="Call - captureFailedConcurListItemRecordsFlow" doc:id="f333558d-d250-428c-b37e-18410ef07184" name="captureFailedConcurListItemRecordsFlow" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1aa7a494-0395-4f91-ae14-b380bea71bd5" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="0fc13cdc-0b76-40fa-8c51-7eac7fb2171b" category="updateListItemFlow" message="Exception occurred updating concur listItem. Type: #[error.errorType.identifier], description: #[error.description]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="deleteListItemFlow" doc:id="66d5db42-b51f-4f24-8f3b-bfbc12f3bbb1" >
+		<logger level="INFO" doc:name="Log - Concur request" doc:id="500cdd65-2e5e-4bfa-b45b-64b7a8c87bd2" category="deleteListItemFlow" message="Delete listItem request payload: #[vars.requestPayload]"/>
+		<flow-ref doc:name="Call - getListItemFlow" doc:id="e13334c9-c0ce-4a6a-9498-8f3b2fc370af" name="getListItemFlow"/>
+		<choice doc:name="Choice" doc:id="506da9ca-51fd-4226-a70e-d7420553e543" >
+			<when expression="#[sizeOf(vars.getConcurListItemResponse.content) &gt; 0]">
+				<http:request method="DELETE" doc:name="Call - Delete concur listItem API" doc:id="732c9b3d-027b-4059-a3bb-b3cfa07cbb4e" config-ref="sapConcurHttpRequestConfig" path='#["/list/v4/lists/" ++ (vars.requestPayload.listId default "") ++ "/items/" ++ (vars.getConcurListItemResponse.content[0].id default "")&#10;/* /list/v4/lists/{list_id}/items/{list_item_id} */]' target="deleteListItemResponsePayload">
+		</http:request>
+				<logger level="INFO" doc:name="Log - Concur response" doc:id="85f67af9-40de-4906-977b-b5ac57769961" category="deleteListItemFlow" message="Delete listItem response payload: #[vars.deleteListItemResponsePayload]" />
+				<flow-ref doc:name="Call - captureProcessedConcurListItemRecordsFlow" doc:id="ec140560-b74d-45ca-9ec7-92ee3cd4ce96" name="captureProcessedConcurListItemRecordsFlow" />
+			</when>
+			<otherwise >
+							<logger level="INFO" doc:name="Log - User not found on concur" doc:id="75c2a2e2-f237-490f-8697-db8101e8e23c" category="deleteListItemFlow" message="ListItem not found on concur" />
+					<flow-ref doc:name="Call - captureFailedConcurListItemRecordsFlow" doc:id="d410fdae-2ec5-428e-b98b-3f1d4b85bc55" name="captureFailedConcurListItemRecordsFlow" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d0da70b2-4b6a-4d8b-ab85-bf8b1750e56b" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="ccf048fb-d614-4547-af23-b49bc0168f1e" category="deleteListItemFlow" message="Exception occurred deleting concur listItem. Type: #[error.errorType.identifier], description: #[error.description]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getListItemFlow" doc:id="b79d31be-9381-45bb-9bc9-b1916c06f02f" >
+		<choice doc:name="Check if the listItem is firstLevel or not" doc:id="47f2d078-93cd-4ef1-b766-c3b1ad9d62e5" >
+			<when expression="#[isEmpty(vars.requestPayload.parentCode)]">
+				<logger level="INFO" doc:name="Log - get first level ListItem by listId" doc:id="26968ec2-d19b-41d3-bf8a-ad122c84b223" category="getListItemFlow" message="#['get first level ListItem by listId: ' ++ (vars.requestPayload.listId default &quot;&quot;)]"/>
+				<ee:transform doc:name="Set requestPath to get first level ListItem" doc:id="7258ef9e-073c-4f66-9f8a-291cae646aa4">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="requestPath"><![CDATA[%dw 2.0
+output application/java
+---
+"/list/v4/lists/" ++ (vars.requestPayload.listId default "") ++ "/children?shortCode=" ++ (vars.requestPayload.shortCode default "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<flow-ref doc:name="Call - getListItemSubFlow" doc:id="b96a8dfe-6cd6-4bb2-997c-e7087bfb481e" name="getListItemSubFlow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - get first level ListItem by listId" doc:id="1d0d37b8-a659-4f39-9652-287799310113" message="#['get first level ListItem by listId: ' ++ (vars.requestPayload.listId default &quot;&quot;)]" category="getListItemFlow" />
+				<ee:transform doc:name="Set requestPath to get first level ListItem" doc:id="85c3a1a0-8fb3-4ced-b870-c644711ecbb9">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="requestPath"><![CDATA[%dw 2.0
+output application/java
+---
+"/list/v4/lists/" ++ (vars.requestPayload.listId default "") ++ "/children?shortCode=" ++ (vars.requestPayload.parentCode default "")]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Call - getListItemSubFlow" doc:id="602f690d-81fc-4f4d-aaf2-ca5d0836ec20" name="getListItemSubFlow" />
+				<logger level="INFO" doc:name="Log - get first level ListItem by listId" doc:id="1e68fb31-db35-4edd-a2df-1bcf6645174f" message="#['get first level ListItem by listId: ' ++ (vars.getConcurListItemResponse.content[0].id default &quot;&quot;) ++ &quot; and short code: &quot; ++ (vars.requestPayload.shortCode default &quot;&quot;)]" category="getListItemFlow" />
+				<ee:transform doc:name="Set requestPath to get second or next level ListItem" doc:id="5b75f948-5a10-4518-bb49-f2d476d882a1">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="requestPath"><![CDATA[%dw 2.0
+output application/java
+---
+"/list/v4/items/" ++ (vars.getConcurListItemResponse.content[0].id default "") ++ "/children?shortCode=" ++ (vars.requestPayload.shortCode default "")
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Call - getListItemSubFlow" doc:id="51dc773f-8468-4dc2-85b0-fe9ed78360a8" name="getListItemSubFlow" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b91ed9fc-04c1-4a77-a3e8-cd3a63eb192a" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="23912be1-b18c-484c-bc88-6119b2288fae" category="createListItemFlow" message="Exception occurred creating concur listItem. Type: #[error.errorType.identifier], description: #[error.description]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="createListItemBulkFlow" doc:id="4264701e-bfd3-42a6-8bbe-c48ccf009af7" >
+						
+		<until-successful maxRetries="${api.concur.maxRetries}" doc:name="Until Successful" doc:id="e2b3fb67-faa5-4e33-9ba8-d67e39b56c08" millisBetweenRetries="${api.concur.milliSecondsBetweenRetries}">
+			<try doc:name="Try" doc:id="609b9fc2-3f7a-4589-921d-0368a3c6bec1" >
+				<http:request method="POST" doc:name="Bulk Create ListItems in Concur" doc:id="a39e05e6-2df7-486f-b173-1384ace44e01" config-ref="sapConcurHttpRequestConfig" path="/list/v4/lists/{listId}/bulk">
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+--- 
+{
+  "requests": payload
+ }]]]></http:body>
+				<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"listId" :  vars.listId 
+}]]]></http:uri-params>
+			</http:request>
+				<error-handler ref="bulkImportErrorHandler" />
+			</try>
+			</until-successful>
+	</flow>
+	<flow name="updateListItemBulkFlow" doc:id="923e3cad-e3bb-4eaa-8d3e-e72bb795842f" >
+						
+		<until-successful maxRetries="${api.concur.maxRetries}" doc:name="Until Successful" doc:id="bf42a5ab-32a6-45da-a71d-e7f11764d558" millisBetweenRetries="${api.concur.milliSecondsBetweenRetries}">
+			<try doc:name="Try" doc:id="52a6fe33-a0c5-4cf1-836c-c4f95bac61f5" >
+				<http:request method="PATCH" doc:name="Bulk Update ListItems in Concur" doc:id="e0396f14-cf45-4ff8-87af-66168d519be8" config-ref="sapConcurHttpRequestConfig" path="/list/v4/lists/{listId}/bulk">
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+--- 
+{
+  "requests": payload
+ }]]]></http:body>
+				<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"listId" :  vars.listId 
+}]]]></http:uri-params>
+			</http:request>
+				<error-handler ref="bulkImportErrorHandler" />
+			</try>
+			</until-successful>
+	</flow>
+	<flow name="deleteListItemBulkFlow" doc:id="6a1a948c-ebeb-40a9-bf0d-4130de932d3e" >
+						
+		<until-successful maxRetries="${api.concur.maxRetries}" doc:name="Until Successful" doc:id="316d0488-23ab-498f-ad7c-128cff4d0f46" millisBetweenRetries="${api.concur.milliSecondsBetweenRetries}">
+			<try doc:name="Try" doc:id="7b03fa60-8baf-4dd0-bba5-4306d402e285" >
+				<http:request method="PATCH" doc:name="Bulk Delete ListItems in Concur" doc:id="4dee75fa-e8e4-4c6a-8fa3-49bba51e0496" config-ref="sapConcurHttpRequestConfig" path="/list/v4/lists/{listId}/bulk">
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+--- 
+{
+  "requests": payload
+ }]]]></http:body>
+				<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"listId" :  vars.listId 
+}]]]></http:uri-params>
+			</http:request>
+				<error-handler ref="bulkImportErrorHandler" />
+			</try>
+			</until-successful>
+	</flow>
+	<sub-flow name="getListItemSubFlow" doc:id="a396b2ab-3848-4087-b65b-c80582acde9d" >
+		<http:request method="GET" doc:name="Call - Get concur listItem API" doc:id="f00aebc6-a1f3-4115-a3a3-c698761b64f2" config-ref="sapConcurHttpRequestConfig" path="#[vars.requestPath]" target="getConcurListItemResponse">
+		</http:request>
+	</sub-flow>
+</mule>

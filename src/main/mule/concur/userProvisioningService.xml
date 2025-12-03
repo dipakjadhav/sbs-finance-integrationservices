@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd">
+	<flow name="manageProvisioningRequestStatusFlow" doc:id="0ab60837-cc09-47ca-9b98-f1617e4658fc">
+		<vm:listener doc:name="Listen to - manageProvisioningRequestStatusQueue" doc:id="c05b8c49-cd83-4233-9a06-d72459d217c2" config-ref="VM_Config" queueName="provisioningRequestStatusQueue" timeout="30">
+			<reconnect count="5" />
+		</vm:listener>
+		<logger level="INFO" doc:name="Log - provisioning process started" doc:id="fd17b5f7-1195-4c03-b27c-e3ecbed6fabf" message="START - Manage provisioning request status process started" category="manageProvisioningRequestStatusFlow" />
+		<ee:transform doc:name="Initialize flow variables" doc:id="8e672f3c-cd6b-4b52-a502-d29f3da3f884">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="configValues"><![CDATA[%dw 2.0
+output application/json
+---
+payload.configValues default {}]]></ee:set-variable>
+				<ee:set-variable variableName="processedRecords"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords"><![CDATA[%dw 2.0
+output application/json
+---
+payload.failedRecords default []]]></ee:set-variable>
+				<ee:set-variable variableName="recordsSubmittedToConcur"><![CDATA[%dw 2.0
+output application/json
+---
+payload.recordsSubmittedToConcur default []]]></ee:set-variable>
+				<ee:set-variable variableName="processMetadata" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.processMetadata default {}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - processBatchForProvisioningRequestStatusFlow" doc:id="8376b82f-f6c6-435b-8d3f-bae6a3948ce7" name="processBatchForProvisioningRequestStatusFlow" />
+		<logger level="INFO" doc:name="Log - end of provisioning process" doc:id="4bbafa4b-1f3d-4783-802f-1beb7838573e" message="END - Manage provisioning request status process completed" category="manageProvisioningRequestStatusFlow" />
+	
+</flow>
+	<flow name="processBatchForProvisioningRequestStatusFlow" doc:id="d10fa16a-8f91-46c1-a392-5f6cca276481">
+		<logger level="INFO" doc:name="Log - number of records found" doc:id="15b447ba-594d-47fc-a483-50e4d34704b5" category="processBatchForProvisioningRequestStatusFlow" message="#[sizeOf(vars.recordsSubmittedToConcur)] records found for processing"/>
+		<foreach doc:name="For Each" doc:id="14692f6b-55cc-441f-8d36-725212efb443" collection="#[vars.recordsSubmittedToConcur]">
+			<flow-ref doc:name="Call - processRecordForProvisioningRequestStatusFlow" doc:id="3ef09bfe-8dd3-413f-9d99-5d25e0e01b1d" name="processRecordForProvisioningRequestStatusFlow" />
+		
+</foreach>
+		<choice doc:name="Check for records for processing" doc:id="0aadde95-0a9f-4787-b6be-db6158b3c66e" >
+			<when expression="#[(not isEmpty(vars.recordsSubmittedToConcur)) or (not isEmpty(vars.failedRecords))]" >
+				<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="6f8a955b-daa3-4d01-8cf0-9aea958786d6" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.employeeProfileProvisioningStatusProcessReference ++ "&gt;&gt;"]' >
+					<flow-ref doc:name="Call - handleProvisioningRequestStatusEmailNotificationFlow" doc:id="16d1d0a5-640e-4eea-99cf-dd0e1996ba90" name="handleProvisioningRequestStatusEmailNotificationFlow" />
+				</tracing:with-correlation-id>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - no records to notify" doc:id="bf75fa96-4674-4e8b-93be-3e56faff259b" message="No records to notify" category="processBatchForProvisioningRequestStatusFlow" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Set API response" doc:id="4f15d116-2e63-4dae-995f-3f3cd2594fb9">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if ( not isEmpty(vars.recordsSubmittedToConcur) ) 'Processed Provisioning Request Status'
+else
+'No Provisioning Request Status to Process']]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[200]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<logger level="INFO" doc:name="Log - done processing records" doc:id="40246110-77a8-4d38-a5bd-3c73c10772ff" message="Done processing #[sizeOf(vars.recordsSubmittedToConcur default [])] records" category="processBatchForProvisioningRequestStatusFlow" />
+	
+</flow>
+	<flow name="processRecordForProvisioningRequestStatusFlow" doc:id="d196fd56-0274-4f79-98f4-b4d33fe1acdd">
+		<set-variable value="#[payload]" doc:name="Set recordSubmittedToConcur" doc:id="e415345a-0b20-4aa3-8327-a46ee7cb7b6d" variableName="recordSubmittedToConcur"/>
+		<until-successful maxRetries="5" doc:name="Until Successful" doc:id="943bd071-0c0b-45c2-b054-7b8821bbe039">
+					<flow-ref doc:name="Get Concur Access Token" doc:id="136daa1b-3773-48e9-9b1f-c70cc989bcae" name="getAccessTokenFlow" target="bearerToken"/>
+			<http:request method="GET" doc:name="Call - Get Detailed Provisioning Status" doc:id="53f8ff66-ab58-4ee2-b7ed-b25f618666cf" config-ref="concurAPIHttpRequestConfig" path="${api.concur.userProvisioningStatusEndPoint}" target="userProvisioningRequestDetailedResponse">
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.bearerToken default ""),
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+							<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"provisionId" : vars.recordSubmittedToConcur.provisionId
+}]]]></http:uri-params>
+							<http:query-params><![CDATA[#[output application/java
+---
+{
+	"attributes" : "operations"
+}]]]></http:query-params>
+						</http:request>
+			<choice doc:name="Throw error if operations are pending" doc:id="19495d32-e1fc-4a8d-81f2-4a8523887b74" >
+				<when expression="#[vars.userProvisioningRequestDetailedResponse.operationsCount.pending != 0]">
+					<raise-error doc:name="Raise error" doc:id="4eafc511-5a8c-4851-a3cb-985f056f196f" type="SBS:APP" description="Concur user provisioning is still in progress..."/>
+				</when>
+			</choice>
+			<!-- [STUDIO:"Mocked - Call - Get Detailed Provisioning Status"]<ee:transform doc:name="Mocked - Call - Get Detailed Provisioning Status" doc:id="9aa134f9-e345-4b20-8f93-024362247c73">
+							<ee:message>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="userProvisioningRequestDetailedResponse"><![CDATA[%dw 2.0
+output application/json
+var userId =  uuid()
+var corrId = userId
+var successResult = {
+    "itemsPerPage": 1,
+    "meta": {
+        "location": "https://us2.api.concursolutions.com/profile/v4/provisions/c5331844-04d1-418a-a5ae-85228c15904b/status",
+        "companyId": vars.configValues.companyId,
+        "created": now(),
+        "lastModified": now(),
+        "provisionType": "User",
+        "resourceType": "ProvisionRequest",
+        "correlationId": corrId,
+        "completed": now()
+    },
+    "operationsCount": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "pending": 0
+    },
+    "totalResults": 1,
+    "schemas": [
+        "urn:ietf:params:scim:schemas:extension:concur:2.0:Provision:Status"
+    &#93;,
+    "status": {
+        "completed": true,
+        "success": true
+    },
+    "id": userId,
+    "operations": [
+        {
+            "id": "1",
+            "status": {
+                "completed": true,
+                "success": true,
+                "code": "200"
+            },
+            "resource": {
+                "id": userId,
+                "type": "User"
+            },
+            "extensions": [
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:WorkflowPreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:UserPreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:ApproverLimit",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:Payroll",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:core:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:InvoicePreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:Delegate",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:travel:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                }
+            &#93;
+        }
+    &#93;,
+    "startIndex": 1
+}
+var failureResult = {
+    "itemsPerPage": 1,
+    "meta": {
+        "location": "https://us2.api.concursolutions.com/profile/v4/provisions/c5331844-04d1-418a-a5ae-85228c15904b/status",
+        "companyId": vars.configValues.companyId,
+        "created": now(),
+        "lastModified": now(),
+        "provisionType": "User",
+        "resourceType": "ProvisionRequest",
+        "correlationId": corrId,
+        "completed": now()
+    },
+    "operationsCount": {
+        "total": 1,
+        "success": 0,
+        "failed": 1,
+        "pending": 0
+    },
+    "totalResults": 1,
+    "schemas": [
+        "urn:ietf:params:scim:schemas:extension:concur:2.0:Provision:Status"
+    &#93;,
+    "status": {
+        "completed": true,
+        "success": false
+    },
+    "id": userId,
+    "operations": [
+        {
+            "id": "1",
+            "status": {
+                "completed": true,
+                "success": false,
+                "code": "207"
+            },
+            "resource": {
+                "id": userId,
+                "type": "User"
+            },
+            "extensions": [
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:WorkflowPreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:Role",
+                    "status": {
+                        "completed": true,
+                        "success": false,
+                        "code": "404",
+                        "result": "error"
+                    },
+                    "messages": [
+                        {
+                            "code": "INVALID_USER",
+                            "message": "Employee does not exist",
+                            "schemaPath": "urn:ietf:params:scim:schemas:extension:spend:2.0:Role",
+                            "type": "error"
+                        }
+                    &#93;
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:UserPreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:Approver",
+                    "status": {
+                        "completed": true,
+                        "success": false,
+                        "code": "404",
+                        "result": "error"
+                    },
+                    "messages": [
+                        {
+                            "code": "INVALID_USER",
+                            "message": "Employee does not exist",
+                            "schemaPath": "urn:ietf:params:scim:schemas:extension:spend:2.0:Approver",
+                            "type": "error"
+                        }
+                    &#93;
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:ApproverLimit",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:Payroll",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:core:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:InvoicePreference",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": false,
+                        "code": "500",
+                        "result": "error"
+                    },
+                    "messages": [
+                        {
+                            "code": "INVALID_VALUE",
+                            "message": "Invalid List Item",
+                            "schemaPath": "urn:ietf:params:scim:schemas:extension:spend:2.0:User:customData[id eq \"custom1\"&#93;.value",
+                            "type": "error"
+                        }
+                    &#93;
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:spend:2.0:Delegate",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "no-op"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                },
+                {
+                    "name": "urn:ietf:params:scim:schemas:extension:travel:2.0:User",
+                    "status": {
+                        "completed": true,
+                        "success": true,
+                        "code": "200",
+                        "result": "success"
+                    }
+                }
+            &#93;
+        }
+    &#93;,
+    "startIndex": 1
+}
+&#45;&#45;-
+if(((vars.recordSubmittedToConcur.provisionId default "") endsWith('12345')) or ((vars.recordSubmittedToConcur.provisionId default "") endsWith('67890'))) successResult else failureResult&#93;&#93;></ee:set-variable>
+							</ee:variables>
+						</ee:transform> [STUDIO] -->
+			
+</until-successful>
+		<choice doc:name="Check for failed operations" doc:id="496c0906-74e3-476b-a1f7-436c3daed7aa">
+					<when expression="#[vars.userProvisioningRequestDetailedResponse.operationsCount.failed &gt; 0]">
+				<flow-ref doc:name="Call - captureFailedProvisioningResponseDetailsFlow" doc:id="8e39369d-ade0-4e35-9b27-bb8b4334b7b1" name="captureFailedProvisioningResponseDetailsFlow" />
+					
+</when>
+					<otherwise>
+						<logger level="INFO" doc:name="Log - provisioning success" doc:id="81e68549-cfcc-47e0-9875-2252f8e15118" message="Provisioning completed successfully for {empId: #[vars.recordSubmittedToConcur.empId], feedRecordNumber: #[vars.recordSubmittedToConcur.feedRecordNumber], recordStatus: #[vars.recordSubmittedToConcur.recordStatus], provisionId: #[vars.recordSubmittedToConcur.provisionId]}" category="processRecordForProvisioningRequestStatusFlow" />
+						<flow-ref doc:name="Call - captureProcessedConcurUserProvisioningRecordsFlow" doc:id="6ea7d8ef-a442-4d01-86fa-6ef77d4ac8a3" name="captureProcessedConcurUserProvisioningRecordsFlow" />
+						<flow-ref doc:name="Call - updateEmployeeProfileRecordStatusFlow" doc:id="3bed350d-b305-452c-9283-f1ce591f5e61" name="updateEmployeeProfileRecordStatusFlow" />
+					</otherwise>
+				</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="91f7d530-3290-4341-9d70-9c333aec0de2" type="MULE:RETRY_EXHAUSTED">
+						<logger level="INFO" doc:name="Log - error" doc:id="b78cc8bc-cb03-4460-9701-f13d4cb2ccf2" category="processRecordForProvisioningRequestStatusFlow" message="Exhausted maximum provisioning retries for {empId: #[vars.recordSubmittedToConcur.empId], feedRecordNumber: #[vars.recordSubmittedToConcur.feedRecordNumber], recordStatus: #[vars.recordSubmittedToConcur.recordStatus], provisionId: #[vars.recordSubmittedToConcur.provisionId]}. Exception: #[error.errorMessage]"/>
+					</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="29dbb58b-6fb7-47de-93a9-173ed7a2aec4" type="ANY">
+						<logger level="INFO" doc:name="Log - error" doc:id="4fe14205-a517-4e43-96d0-3dacf990d18d" category="processRecordForProvisioningRequestStatusFlow" message="Exception occurred while processing for {empId: #[vars.recordSubmittedToConcur.empId], feedRecordNumber: #[vars.recordSubmittedToConcur.feedRecordNumber], recordStatus: #[vars.recordSubmittedToConcur.recordStatus], provisionId: #[vars.recordSubmittedToConcur.provisionId]}. Exception: #[error.errorMessage]"/>
+					</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="captureFailedProvisioningResponseDetailsFlow" doc:id="50a962cb-a1be-451b-a4fb-7a024b6cd6e3" >
+		<ee:transform doc:name="Extract all errors with details" doc:id="7c8d9d89-18fd-4cf5-a3d3-ced0fe1b1b83" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="allErrorsWithDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+(flatten((vars.userProvisioningRequestDetailedResponse..extensions)) filter ((extension, index) -> extension.status.code != "200")) map((extension, index) ->
+{
+    "employeeNumber": vars.recordSubmittedToConcur.empId, 
+    "feedRecordNumber": vars.recordSubmittedToConcur.feedRecordNumber, 
+    "provisionId": vars.recordSubmittedToConcur.provisionId,
+    "status": extension.status.code,
+    "messages": extension.messages
+})]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		 <!-- <logger level="INFO" doc:name="Log - error messages" doc:id="6dc1628f-a86c-4539-875d-f90c29eb8065" message="#[&quot;Errors with details are: &quot; ++ write((vars.allErrorsWithDetails default []), 'application/json', {indent: false})]]]" category="captureFailedProvisioningResponseDetailsFlow"/> -->
+		<choice doc:name="Choice for operation (Create/Update)" doc:id="bc5032e8-cab3-46e6-bf87-4374e8e86287">
+							<when expression="#[upper(vars.recordSubmittedToConcur.recordStatus default &quot;&quot;) == 'CREATE']">
+								<ee:transform doc:name="Map failed extentions with create user input fields" doc:id="b1bb0eea-5895-4a46-b904-a800008581ce">
+							<ee:message>
+							</ee:message>
+									<ee:variables>
+						<ee:set-variable resource="dwl/concurUserProvisioningRequestStatus/mapFailedExtentionsWithInputFieldsForCreateOperation.dwl" variableName="errorInputMappings" />
+									
+</ee:variables>
+						</ee:transform>
+							</when>
+							<when expression="#[(upper(vars.recordSubmittedToConcur.recordStatus default &quot;&quot;) == 'UPDATE') or (upper(vars.recordSubmittedToConcur.recordStatus default &quot;&quot;) == 'DELETE')]">
+								<ee:transform doc:name="Map failed extentions with update user input fields" doc:id="e16eee74-3628-44c9-95c9-db94037bf06b">
+							<ee:message>
+							</ee:message>
+									<ee:variables>
+						<ee:set-variable resource="dwl/concurUserProvisioningRequestStatus/mapFailedExtentionsWithInputFieldsForUpdateOperation.dwl" variableName="errorInputMappings" />
+									
+</ee:variables>
+						</ee:transform>
+							</when>
+							<otherwise>
+								<logger level="INFO" doc:name='Log - ignoring invalid RECORD_STATUS' doc:id="ea7aef13-d913-4c41-88e7-81ee9ef017d8" category="captureFailedProvisioningResponseDetailsFlow" message='Ignoring Invalid RECORD_STATUS for: {empId: #[vars.recordSubmittedToConcur.EMPID], feedRecordNumber: #[vars.recordSubmittedToConcur.FEEDRECORDNUMBER], recordStatus: #[vars.recordSubmittedToConcur.recordStatus]}'/>
+							</otherwise>
+						</choice>
+		<ee:transform doc:name="Capture - errorInputMappings into failedProvisioningRecords" doc:id="fc382689-135e-4fc1-bbe0-2e86c68dde61">
+							<ee:message>
+							</ee:message>
+							<ee:variables>
+				<ee:set-variable resource="dwl/concurUserProvisioningRequestStatus/captureFailedProvisioningRecords.dwl" variableName="failedRecords" />
+							
+</ee:variables>
+						</ee:transform>
+	</flow>
+	<flow name="handleProvisioningRequestStatusEmailNotificationFlow" doc:id="5cfcffa3-e3ee-4c57-a2bc-d052b4a38434" >
+		<ee:transform doc:name="Set email payload" doc:id="3032e110-caf0-45c3-9ed3-fb598b90d80f" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable resource="dwl/concurUserProvisioningRequestStatus/prepareEmailPayload.dwl" variableName="emailPayload" />
+			</ee:variables>
+		</ee:transform>
+		<vm:publish queueName="employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:name="Publish to - employeeProfileProvisioningRequestStatusEmailNotificationQueue" doc:id="64c42852-e061-46ae-97e5-218db3bd7e4a" config-ref="VM_Config" sendCorrelationId="AUTO">
+			<vm:content><![CDATA[#[vars.emailPayload]]]></vm:content>
+		</vm:publish>
+	</flow>
+	<sub-flow name="captureProcessedConcurUserProvisioningRecordsFlow" doc:id="d0fea240-d410-4a24-bac7-d65b84a84f37" >
+		<logger level="INFO" doc:name="Log - Record processed successfully" doc:id="b841407d-5c4d-473d-8078-ff38c3dc43f8" message='Record processed successfully { empId: #[vars.recordSubmittedToConcur.empId], feedRecordNumber: #[vars.recordSubmittedToConcur.feedRecordNumber], recordStatus: #[vars.recordSubmittedToConcur.recordStatus], provisionId:: #[vars.recordSubmittedToConcur.provisionId]}' category="captureProcessedConcurUserProvisioningRecordsFlow" />
+		<ee:transform doc:name="Process Successful Records" doc:id="c2eb2aa0-3df8-4e4c-ba89-9e1f4578a11d">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+				<ee:set-variable resource="dwl/concurUserProvisioningRequestStatus/captureProcessedProvisioningRecords.dwl" variableName="processedRecords" />
+						
+</ee:variables>
+					</ee:transform>
+	</sub-flow>
+
+</mule>

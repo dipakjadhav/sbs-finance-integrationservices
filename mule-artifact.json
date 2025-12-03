@@ -1,0 +1,15 @@
+{
+	"minMuleVersion": "4.6.8",
+	"secureProperties": [
+		"encryption.key"
+	],
+	"logging.level.org.mule.extension.smb": "INFO",
+	"classLoaderModelLoaderDescriptor": {
+		"id": "mule",
+		"attributes": {
+			"exportedPackages": [
+				"com.sbs.util"
+			]
+		}
+	}
+}

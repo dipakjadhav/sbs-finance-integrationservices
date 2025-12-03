@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="projectsServices-suite.xml" />
+	<munit:test name="projectMainFlow-norecords-test" doc:id="57471e34-dbd4-4a5e-a05e-6d1421f043cf" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - processProjectsFlow" doc:id="f711edf2-2935-43a7-8280-3b5ecb16a65f" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processProjectsFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://projectMainFlownorecordstest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://projectMainFlownorecordstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://projectMainFlownorecordstest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://projectMainFlownorecordstest\mock_variable_2.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://projectMainFlownorecordstest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="responseStatus" value="#[output application/java --- readUrl('classpath://projectMainFlownorecordstest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="490acd79-5c65-4854-a168-abd93eec0b72" >
+				<munit:attributes value="#[readUrl('classpath://projectMainFlownorecordstest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to projectMainFlow" doc:id="7742ed19-3b5f-492c-b834-9a025b676a6c" name="projectMainFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="3577f4ec-769f-4b2c-8b13-bc0e54f8a6b2" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import projectMainFlownorecordstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="f5e77774-d36b-45aa-860e-7904415064c5" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import projectMainFlownorecordstest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processProjectsFlow-norecords-test" doc:id="2d6abcd0-e2dd-468e-a9c4-2cba9b81bcf2" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - getProjectNameRecords" doc:id="18a10747-1af1-4329-b326-3cd589ebf32b" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getProjectNameRecords" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://processProjectsFlownorecordstest\mock_payload.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processProjectsFlownorecordstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processProjectsFlownorecordstest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - processListFlow" doc:id="5b8d656d-329d-4bf6-a7ce-5cd7cb1895e3" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processListFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://processProjectsFlownorecordstest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processProjectsFlownorecordstest\mock_variable_2.dwl')]" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://processProjectsFlownorecordstest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://processProjectsFlownorecordstest\mock_variable_4.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processProjectsFlownorecordstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="af566022-d4c1-4100-9e0f-6f3845a3392c" >
+				<munit:attributes value="#[readUrl('classpath://processProjectsFlownorecordstest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processProjectsFlow" doc:id="9a0d3b9a-b610-4ace-acc5-e1424288f665" name="processProjectsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="4c211832-b7b6-4e6e-81e4-32a5e7b3eb91" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processProjectsFlownorecordstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="e0e19d49-0301-46c9-872a-348c1e1335d9" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processProjectsFlownorecordstest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="projectMainFlow-processnames-createrecord-test" doc:id="1684c6b5-870a-49e8-bdc5-9e2e72b8bf05" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - processProjectsFlow" doc:id="7a1b9c73-b2d0-4236-8eaa-d7e7ffc04cf4" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processProjectsFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestMethod" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_3.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - performOperationOnProjectFlow" doc:id="f2b51efa-68c0-4dbc-bce8-89a7b3fc262e" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - performOperationOnProjectFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_5.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failureTableContent" value="#[output text/plain --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_7.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_8.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_9.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_10.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_11.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_12.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="responseStatus" value="#[output application/json --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_14.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="successTableContent" value="#[output text/plain --- readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\mock_variable_15.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="4ef4322f-586b-48a5-9f3f-5904e4d37d49" >
+				<munit:attributes value="#[readUrl('classpath://projectMainFlowprocessnamescreaterecordtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to projectMainFlow" doc:id="1fd8b2c8-545a-4e3d-863a-5b80ff53ba17" name="projectMainFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="7800cdfe-9a8c-4740-a260-64bbbd1d969f" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import projectMainFlowprocessnamescreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="0656182a-806f-4c12-99a0-4c4649783e24" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import projectMainFlowprocessnamescreaterecordtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processProjectsFlow-createrecord-test" doc:id="4a5dc3e2-73e4-492a-a664-daeb07b4536c" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - getProjectNameRecords" doc:id="155e6596-f383-40f3-8db7-9169a7764151" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getProjectNameRecords" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://processProjectsFlowcreaterecordtest\mock_payload.dwl')]" mediaType="application/java " encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - processListFlow" doc:id="14e35b15-177d-436e-8639-9d19a8ff9209" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - processListFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://processProjectsFlowcreaterecordtest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processProjectsFlowcreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="httpStatus" value="#[output application/java --- readUrl('classpath://processProjectsFlowcreaterecordtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestMethod" value="#[output application/java --- readUrl('classpath://processProjectsFlowcreaterecordtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://processProjectsFlowcreaterecordtest\mock_variable_3.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processProjectsFlowcreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="bec0e348-2916-4c54-98d5-70b9bf0108ca" >
+				<munit:attributes value="#[readUrl('classpath://processProjectsFlowcreaterecordtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processProjectsFlowcreaterecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processProjectsFlowcreaterecordtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processProjectsFlow" doc:id="d666659a-8413-4fbd-81bf-e65cb2167cec" name="processProjectsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="4de3652c-e21c-4140-b936-b683c6be42f7" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processProjectsFlowcreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="6d323164-9074-4066-b25c-71b89d2262ed" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processProjectsFlowcreaterecordtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="performOperationOnProjectFlow-createrecord-test" doc:id="a2cac924-1971-4369-aa66-d4b87b57e903" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - performOperationOnListOfProjectRecordsFlow" doc:id="fa1cd441-da4a-42b4-8164-cb73ab520c22" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - performOperationOnListOfProjectRecordsFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failureTableContent" value="#[output text/plain --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_5.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="responseStatus" value="#[output application/json --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="successTableContent" value="#[output text/plain --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_10.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - fetchAllProjectRecordsByOperationNameFlow" doc:id="07e51915-0891-42d5-970e-2748bbaecb5d" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - fetchAllProjectRecordsByOperationNameFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_payload1.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_11.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_12.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_13.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_14.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_15.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_16.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_17.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - getAccessTokenFlow" doc:id="322754a1-bef4-4ba9-b820-617a3fc37b80" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getAccessTokenFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:attributes value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_18.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_19.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_20.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_21.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_22.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_23.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\mock_variable_24.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="4a36ca9e-ec1e-4d7a-9359-637e82e5b32a" >
+				<munit:attributes value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\set-event_variable_1.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectFlowcreaterecordtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to performOperationOnProjectFlow" doc:id="cab6ce30-fc10-4988-b06a-ec32363f04fd" name="performOperationOnProjectFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="a0695312-3dc6-4fa4-8764-2758c0a24abc" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import performOperationOnProjectFlowcreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="performOperationOnListOfProjectRecordsFlow-createrecord-test" doc:id="c4d42e92-9458-4f4c-bbaa-2e2f55100d50" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - handleEmailNotificationFlow" doc:id="3f00b540-a87e-46e6-9e8c-374c8ecd73d7" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - handleEmailNotificationFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failureTableContent" value="#[output text/plain --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_5.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="successTableContent" value="#[output text/plain --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_9.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - performOperationOnProjectListItemFlow" doc:id="213ef32f-c6e7-42be-a6ce-e844a086abee" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - performOperationOnProjectListItemFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_payload1.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_10.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_11.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_12.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_13.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_14.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_15.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_16.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_17.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_18.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\mock_variable_19.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="d615424d-4614-41e1-ac14-c037268d2562" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="operationName" value="#[readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_3.dwl')]" encoding="UTF-8" />
+					<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnListOfProjectRecordsFlowcreaterecordtest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to performOperationOnListOfProjectRecordsFlow" doc:id="7bd3e210-326f-411b-8ffe-7d9de2701f22" name="performOperationOnListOfProjectRecordsFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="651cf1c6-a797-4800-aa70-c6595444fd40" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import performOperationOnListOfProjectRecordsFlowcreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="performOperationOnProjectListItemFlow-create-test" doc:id="c682006d-80d1-446f-af0a-1899bd81a518" ignore="true">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - createProjectListItemFlow" doc:id="3a8cdc27-1559-4c80-9fba-44d84eefdbad" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - createProjectListItemFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java  --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_payload.dwl')]" mediaType="application/java " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_2.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_5.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\mock_variable_9.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="976a8e2f-671e-4d31-9af0-b75a09401ba4" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_.dwl')]" />
+					<munit:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_2.dwl')]" />
+					<munit:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="operationName" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_4.dwl')]" encoding="UTF-8" />
+					<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://performOperationOnProjectListItemFlowcreatetest\set-event_variable_8.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to performOperationOnProjectListItemFlow" doc:id="988bfbcb-f47f-496b-9432-998b57fe30a0" name="performOperationOnProjectListItemFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="344179fd-c7ed-4d4c-b5dc-d40a8c00f15c" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import performOperationOnProjectListItemFlowcreatetest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="ad2db1e2-23af-4c75-aa1e-2a4332d03ece" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import performOperationOnProjectListItemFlowcreatetest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="handleProjectEmailNotificationFlow-createrecord-test" doc:id="3f22f5e7-5591-4198-9be6-572a17c848e0" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Publish to sendConcurChartOfAccountEmailNotificationQueue" doc:id="226da539-c771-4de5-8cb6-cdf54e6314cf" processor="vm:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Publish to sendConcurChartOfAccountEmailNotificationQueue" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failureTableContent" value="#[output text/plain --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_2.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="operationName" value="#[readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_5.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="initVars" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="successTableContent" value="#[output text/plain --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\mock_variable_9.dwl')]" mediaType="text/plain" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="82a174ca-d8a0-401f-9126-d1d8d3a0725d" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="successfullyProcessedRecords" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="failedRecords" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="requestRecord" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="operationName" value="#[readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_4.dwl')]" encoding="UTF-8" />
+					<munit:variable key="initVars" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="bearerToken" value="#[output application/json --- readUrl('classpath://handleProjectEmailNotificationFlowcreaterecordtest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to handleProjectEmailNotificationFlow" doc:id="a41a1e2c-3b1f-4834-9d65-2b40821b3f1f" name="handleProjectEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="00c2d0e7-4e41-49cd-aa72-81b09d1b1e97" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProjectEmailNotificationFlowcreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="190fb499-cfa5-4d69-b6fb-884236b25147" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import handleProjectEmailNotificationFlowcreaterecordtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

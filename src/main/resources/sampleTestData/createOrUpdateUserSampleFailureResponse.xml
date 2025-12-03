@@ -1,0 +1,12 @@
+<user-batch-result xmlns="http://www.concursolutions.com/api/user/2011/02" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+  <records-succeeded>0</records-succeeded>
+  <records-failed>1</records-failed>
+  <errors>
+    <error>
+      <EmployeeID>10944</EmployeeID>
+      <FeedRecordNumber>11246</FeedRecordNumber>
+      <message>Invalid list item for field 'Custom8', value '0', list '*Activity' </message>
+    </error>
+  </errors>
+  <UsersDetails />
+</user-batch-result>

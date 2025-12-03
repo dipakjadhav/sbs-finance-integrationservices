@@ -1,0 +1,12 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:uniface:applic:services:EV397_AURION_WS">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:CALLFUNCTION3 soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+         <P_TOKEN xsi:type="xsd:string">#[vars.P_TOKEN]</P_TOKEN>
+         <P_FUNCTION xsi:type="xsd:string">#[vars.initVars.call3function]</P_FUNCTION>
+         <P_DELIMITER xsi:type="xsd:string">#[vars.initVars.call3delimiter]</P_DELIMITER>
+         <P_WRAPPER xsi:type="xsd:string">#[vars.initVars.call3wrapper]</P_WRAPPER>
+         <P_PARAMETERS xsi:type="xsd:string">#[vars.P_PARAMETERS]</P_PARAMETERS>
+      </urn:CALLFUNCTION3>
+   </soapenv:Body>
+</soapenv:Envelope>

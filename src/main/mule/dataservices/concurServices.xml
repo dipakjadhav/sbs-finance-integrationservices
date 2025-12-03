@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="getAccountStringDetails" doc:id="dc844ac1-166a-4fcd-b3b4-f1c71b73f858" >
+		<db:select doc:name="Select Project tasks" doc:id="1fa907c4-3ccf-411d-9457-f44a15566252" config-ref="oracle-database-config">
+			<db:sql><![CDATA[select TYPE,ID1,ID2,ID3,ID4,ID5,ID6,ID7,DATE_1,DATE_2,AMOUNT_1,AMOUNT_2,CURR_CODE,FLAG_1,FLAG_2 from XXSBS.XXSBS_PROJ_TASK_FINAL_FTP order by 1 desc,2,3]]></db:sql>
+		</db:select>
+		
+	
+</sub-flow>
+<sub-flow name="getDelegationOfAuthorityDetails" doc:id="76ccec02-0a22-495e-a27d-a7d1e1198b1d" >
+		<db:select doc:name="Select Delegation Of Authority2 details" doc:id="698037e7-6903-497e-95a8-8e815bc1dacc" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select TRANSACTION_TYPE,APPROVAL_TYPE,EMPLOYEE_ID,SEGMENT1,SEGMENT2,SEGMENT3,SEGMENT4,SEGMENT5,SEGMENT6,SEGMENT7,SEGMENT8,SEGMENT9,SEGMENT10,EXCEPTION_APPR_AUTHORITY,APPROVAL_LIMIT,APPR_LIMIT_CURR_CODE from xxsbs.xxsbs_doa2_for_concur]]></db:sql>
+		</db:select>
+		
+	
+</sub-flow>
+
+<flow name="getCoaRecords" doc:id="209a0e15-78f7-4459-807d-92eae73566d2" >
+		<db:select doc:name="Get CoA Name" doc:id="28f784d1-ccda-47cd-b538-49d1e7702be7" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select distinct segment_name, record_status from xxsbs.xxsbs_coa_for_concur where  status is null and record_status IN('CREATE', 'UPDATE', 'DELETE' ) and segment_name != 'Account' order by segment_name, (CASE record_status WHEN 'CREATE' THEN 1 WHEN 'UPDATE' THEN 2 WHEN 'DELETE' THEN 3 ELSE 4 END)]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log - operations to perform" doc:id="20708b48-8257-425d-b61a-48ebbb57e0fb" message='Operations to perform: #[ write(payload, "application/json")]' category="getCoaRecords"/>
+	</flow>
+	<flow name="getProjectTaskNameRecords" doc:id="ec819417-8baa-4b7e-853d-b73fad20323d" >
+		<db:select doc:name="Get Project Task Names" doc:id="597bc4e4-1444-450f-8dfc-fc55d7d194fd" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select distinct record_status from xxsbs.xxsbs_proj_task_for_concur_api where status is null and ( record_status = 'CREATE' or record_status = 'DELETE')]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log - operations to perform" doc:id="22b5deac-43c4-4004-aafa-c79d54dcfcae" message='Operations to perform: #[ write(payload, "application/json")]' category="getProjectTaskNameRecords" />
+	</flow>
+	<flow name="getProjectNameRecords" doc:id="23f359b3-2af2-47f6-b0f2-fda3a4e9234c" >
+		<db:select doc:name="Get Project Names" doc:id="0a77b434-e33b-424e-9984-ae2cbc840553" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select distinct record_status from xxsbs.xxsbs_project_for_concur where  status is null and ( record_status = 'CREATE' or record_status = 'DELETE')]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log - operations to perform" doc:id="bcb27083-4c3d-427d-9e79-764672575107" message='Operations to perform: #[ write(payload, "application/json")]' category="getProjectNameRecords" />
+	</flow>
+	<flow name="fetchAllCoaRecordsFlow" doc:id="818c8d8a-2dc4-4444-88b1-f6abb9ca1b8e" >
+		<db:select doc:name="Fetch CoA records" doc:id="3a44e983-edbf-4f97-a57c-60aa5f2976d6" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select segment_name, record_status,code, description
+from xxsbs.xxsbs_coa_for_concur where  status is NULL
+and record_status IN('CREATE', 'UPDATE', 'DELETE' ) and segment_name != 'Account' 
+order by segment_name ]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log - number of records to process" doc:id="770ebd2d-3e5d-475e-bd1d-2adef982e762" message="Number of records to process: #[sizeOf(payload)]" category="fetchAllCoaRecordsByOperationNameFlow" />
+	</flow>
+<flow name="updateCoaRecordStatusFlow" doc:id="f880270c-6d18-4014-80ab-3159cefb1c40" >
+<db:update doc:name="Update CoA Record Status" doc:id="a44209c6-2a33-4019-8c62-0418ae6c84c2" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[update xxsbs.xxsbs_coa_for_concur set status='SUCCESS', last_update_date=sysdate, last_updated_by='Mulesoft' where segment_name =:segment_name and record_status = :record_status and code = :code and description = :description]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	segment_name:  vars.receivedRecord.SEGMENT_NAME,
+	record_status: vars.receivedRecord.RECORD_STATUS,
+	code: vars.receivedRecord.CODE,
+	description: vars.receivedRecord.DESCRIPTION,
+}]]]></db:input-parameters>
+		</db:update>
+		<logger level="INFO" doc:name="Log - record status updated" doc:id="5ae84420-249b-43c7-a0b2-57babb88a1f6" message="Status for processed records have been updated. Result: #[payload]" category="updateCoaRecordStatusFlow" />
+	</flow>
+	<flow name="bulkUpdateCoaRecordStatusFlow" doc:id="54a69c04-35e1-49ce-a076-acbd673fa08b" >
+<until-successful maxRetries="${db.oracle.maxRetries}" doc:name="Until Successful" doc:id="dd7db314-acae-4c3f-8d89-405afc260360" millisBetweenRetries="${db.oracle.milliSecondsBetweenRetries}">
+			<db:bulk-update doc:name="Bulk update COA Record status " doc:id="ef2d2ade-425d-4002-bb66-3b7169bd0569" config-ref="oracle-database-config">
+			<db:bulk-input-parameters><![CDATA[#[vars.statusUpdateRequest]]]></db:bulk-input-parameters>
+			<db:sql><![CDATA[update xxsbs.xxsbs_coa_for_concur set status='SUCCESS', last_update_date=sysdate, last_updated_by='Mulesoft' where segment_name =:segment_name and record_status = :record_status and code = :code and description = :description]]></db:sql>
+		</db:bulk-update>
+		</until-successful>
+		<logger level="INFO" doc:name="Log - record status updated" doc:id="6515a381-639f-4315-899d-8258c14adc89" message="Status for processed records have been updated. Result: #[payload]" category="updateCoaRecordStatusFlow" />
+	</flow>
+	<flow name="fetchAllProjectRecordsByOperationNameFlow" doc:id="d1e02aff-940e-4189-8a0c-218a29797d27" >
+		<db:select doc:name="Fetch Project Records" doc:id="bd4db23a-c57e-4fbc-8e88-4927653ab44b" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select project, proj_name, record_status from  xxsbs.xxsbs_project_for_concur where status is null and record_status = :record_status]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	record_status: vars.operationName
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log - number of records to process" doc:id="087435e4-4122-44c0-beb1-03a34daacf1e" message="Number of records to process: #[sizeOf(payload)]" category="fetchAllProjectRecordsByOperationNameFlow" />
+	</flow>
+	<flow name="updateProjectRecordStatusFlow" doc:id="a39cf2ea-3bac-40b9-afcc-c28c71f34107" >
+<db:update doc:name="Update Project Record Status" doc:id="8cbb8cf0-53ba-4e4a-94b3-5b4246c7cd49" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[update xxsbs.xxsbs_project_for_concur set status = 'SUCCESS', last_update_date = sysdate, last_updated_by = 'Mulesoft' where status is null and record_status = :record_status
+and project = :project and proj_name = :proj_name]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	project: vars.receivedRecord.PROJECT,
+	proj_name: vars.receivedRecord.PROJ_NAME,
+	record_status: vars.receivedRecord.RECORD_STATUS
+}]]]></db:input-parameters>
+		</db:update>
+		<logger level="INFO" doc:name="Log - record status updated" doc:id="7756dc6f-aa08-422f-8a7e-dfa0d0aee542" message="Status for processed records have been updated. Result: #[payload]" category="updateProjectRecordStatusFlow" />
+	</flow>
+	<flow name="fetchAllProjectTaskRecordsByOperationNameFlow" doc:id="987dc0dc-1bb2-4da3-a920-65a07e75fb09" >
+		<db:select doc:name="Fetch Project Task Records" doc:id="f1481b1c-574f-4937-b778-8de988701dc7" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select project, proj_name, task, task_name, record_status from xxsbs.xxsbs_proj_task_for_concur_api where record_status = :record_status and status is NULL]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	record_status: vars.operationName
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log - number of records to process" doc:id="471a7a41-6684-4c2a-b5f1-4fe9cac53755" message="Number of records to process: #[sizeOf(payload)]" category="fetchAllProjectRecordsByOperationNameFlow" />
+	</flow>
+	
+	<flow name="updateProjectTaskRecordStatusFlow" doc:id="d7f639b5-c959-47c0-8437-7f63e07b8d8b" >
+<db:update doc:name="Update Project Task Record Status" doc:id="fdef8145-43b2-4bf1-8380-cd57f3914d00" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[update xxsbs.xxsbs_proj_task_for_concur_api set status='SUCCESS', last_update_date=sysdate, last_updated_by='Mulesoft' where status is null and record_status = :record_status
+and project = :project and proj_name = :proj_name and task =  :task and task_name = :task_name]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	project: vars.receivedRecord.PROJECT,
+	proj_name: vars.receivedRecord.PROJ_NAME,
+	task: vars.receivedRecord.TASK,
+	task_name: vars.receivedRecord.TASK_NAME,
+	record_status: vars.receivedRecord.RECORD_STATUS
+}]]]></db:input-parameters>
+		</db:update>
+		<logger level="INFO" doc:name="Log - record status updated" doc:id="d37c2da0-bcd1-4ca9-b854-a541a8c1055b" message="Status for processed records have been updated. Result: #[payload]" category="updateProjectTaskRecordStatusFlow" />
+	</flow>
+	<flow name="fetchAllEmployeeProfileRecordsToProcessFlow" doc:id="ce3b0b6c-c879-406b-8579-d931f64d24ec" >
+		<db:select doc:name="Get Employee Data from Oracle" doc:id="2bd6ccac-cd62-4b3a-86a9-4b6931962139" config-ref="oracle-database-config" target="employeeProfileDatabaseRecords">
+			<db:sql><![CDATA[select EMPID,FEEDRECORDNUMBER,LOGINID,LOCALENAME,ACTIVE,PASSWORD,FIRSTNAME,LASTNAME,EMAILADDRESS,CUSTOM1,CUSTOM3,CUSTOM5,CUSTOM6,CUSTOM7,CUSTOM8,CUSTOM9,CUSTOM10,CUSTOM21,CTRYCODE,CRNKEY,ISTESTEMP,EXPENSEUSER,EXPENSEAPPROVER,EXPENSEAPPROVEREMPLOYEEID,LEDGERKEY,LEDGERNAME,PROCESS_STATUS,RECORD_STATUS from xxsbs.xxsbs_emp_for_concur where record_status in ('CREATE', 'UPDATE', 'DELETE') and process_status is null]]></db:sql>
+		</db:select>
+		<!-- [STUDIO:"Get Employee Data from Oracle  - Test Users"]<db:select doc:name="Get Employee Data from Oracle  - Test Users" doc:id="8530c7e9-ea51-4220-b3f1-4fec31df1a43" config-ref="oracle-database-config" target="employeeProfileDatabaseRecords">
+			<db:sql><![CDATA[select EMPID,FEEDRECORDNUMBER,LOGINID,LOCALENAME,ACTIVE,PASSWORD,FIRSTNAME,LASTNAME,EMAILADDRESS,CUSTOM1,CUSTOM3,CUSTOM5,CUSTOM6,CUSTOM7,CUSTOM8,CUSTOM9,CUSTOM10,CUSTOM21,CTRYCODE,CRNKEY,ISTESTEMP,EXPENSEUSER,EXPENSEAPPROVER,EXPENSEAPPROVEREMPLOYEEID,LEDGERKEY,LEDGERNAME,PROCESS_STATUS,RECORD_STATUS from xxsbs.xxsbs_emp_for_concur where record_status in ('CREATE', 'UPDATE', 'DELETE') and process_status is null
+and 
+(
+	(EMPID = 'testuser21' and FEEDRECORDNUMBER = '41626') 
+	OR (EMPID = 'testuser22' and FEEDRECORDNUMBER = '41625')
+	OR (EMPID = 'testuser23' and FEEDRECORDNUMBER = '41623') 
+	OR (EMPID = 'testuser24' and FEEDRECORDNUMBER = '41624')
+)&#93;&#93;></db:sql>
+		</db:select> [STUDIO] -->
+		<!-- [STUDIO:"Mocked - Get Employee Data from Oracle"]<ee:transform doc:name="Mocked - Get Employee Data from Oracle" doc:id="9798616c-1c8e-4c00-a4c2-41b0ebfaf79e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="employeeProfileDatabaseRecords" ><![CDATA[%dw 2.0
+output application/java
+
+var createSuccess = {
+	FIRSTNAME: "Test",
+	FIRSTNAME: "Test",
+	EXPENSEAPPROVER: null,
+	EXPENSEAPPROVER: null,
+	RECORD_STATUS: "CREATE",
+	RECORD_STATUS: "CREATE",
+	CRNKEY: "AUD",
+	CRNKEY: "AUD",
+	CUSTOM21: "SBS AU",
+	CUSTOM21: "SBS AU",
+	PASSWORD: null,
+	PASSWORD: null,
+	CUSTOM9: "110104",
+	CUSTOM9: "110104",
+	LEDGERNAME: "Oracle",
+	LEDGERNAME: "Oracle",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM7: "60020",
+	CUSTOM7: "60020",
+	CUSTOM8: "000000",
+	CUSTOM8: "000000",
+	CUSTOM5: "N",
+	CUSTOM5: "N",
+	CUSTOM6: "10",
+	CUSTOM6: "10",
+	EMPID: "12345",
+	EMPID: "12345",
+	CTRYCODE: "AU",
+	CTRYCODE: "AU",
+	LOGINID: "test_user_01_create_success@sbs.com.au",
+	LOGINID: "test_user_01_create_success@sbs.com.au",
+	LOCALENAME: "en_US",
+	LOCALENAME: "en_US",
+	ISTESTEMP: "N",
+	ISTESTEMP: "N",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	ACTIVE: "Y",
+	ACTIVE: "Y",
+	EMAILADDRESS: "test_user_01_create_success@sbs.com.au",
+	EMAILADDRESS: "test_user_01_create_success@sbs.com.au",
+	FEEDRECORDNUMBER: "34567",
+	FEEDRECORDNUMBER: "34567",
+	LASTNAME: "User_01",
+	LASTNAME: "User_01",
+	CUSTOM10: "4060",
+	CUSTOM10: "4060",
+	LEDGERKEY: "Oracle",
+	LEDGERKEY: "Oracle",
+	EXPENSEUSER: "Y", 
+	EXPENSEUSER: "Y"
+}
+var updateSuccess = {
+	FIRSTNAME: "Test",
+	EXPENSEAPPROVER: null,
+	RECORD_STATUS: "UPDATE",
+	CRNKEY: "AUD",
+	CUSTOM21: "SBS AU",
+	PASSWORD: null,
+	CUSTOM9: "110104",
+	LEDGERNAME: "Oracle",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM7: "60020",
+	CUSTOM8: "000000",
+	CUSTOM5: "N",
+	CUSTOM6: "10",
+	EMPID: "67890",
+	CTRYCODE: "AU",
+	LOGINID: "test_user_02_update_success@sbs.com.au",
+	LOCALENAME: "en_US",
+	ISTESTEMP: "N",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	ACTIVE: "Y",
+	EMAILADDRESS: "test_user_02_update_success@sbs.com.au",
+	FEEDRECORDNUMBER: "89012",
+	LASTNAME: "User_02",
+	CUSTOM10: "4060",
+	LEDGERKEY: "Oracle",
+	EXPENSEUSER: "Y"
+}
+var createFailure = {
+	FIRSTNAME: "Test",
+	EXPENSEAPPROVER: null,
+	RECORD_STATUS: "CREATE",
+	CRNKEY: "AUD",
+	CUSTOM21: "SBS AU",
+	PASSWORD: null,
+	CUSTOM9: "110104",
+	LEDGERNAME: "Oracle",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM7: "60020",
+	CUSTOM8: "000000",
+	CUSTOM5: "N",
+	CUSTOM6: "10",
+	EMPID: "23456",
+	CTRYCODE: "AU",
+	LOGINID: "test_user_03_create_failure@sbs.com.au",
+	LOCALENAME: "en_US",
+	ISTESTEMP: "N",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	ACTIVE: "Y",
+	EMAILADDRESS: "test_user_03_create_failure@sbs.com.au",
+	FEEDRECORDNUMBER: "34567",
+	LASTNAME: "User_03",
+	CUSTOM10: "4060",
+	LEDGERKEY: "Oracle",
+	EXPENSEUSER: "Y"
+}
+
+var updateFailure = {
+	FIRSTNAME: "Test",
+	EXPENSEAPPROVER: null,
+	RECORD_STATUS: "UPDATE",
+	CRNKEY: "AUD",
+	CUSTOM21: "SBS AU",
+	PASSWORD: null,
+	CUSTOM9: "110104",
+	LEDGERNAME: "Oracle",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM7: "60020",
+	CUSTOM8: "000000",
+	CUSTOM5: "N",
+	CUSTOM6: "10",
+	EMPID: "78901",
+	CTRYCODE: "AU",
+	LOGINID: "test_user_04_update_failure@sbs.com.au",
+	LOCALENAME: "en_US",
+	ISTESTEMP: "N",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	ACTIVE: "Y",
+	EMAILADDRESS: "test_user_04_update_failure@sbs.com.au",
+	FEEDRECORDNUMBER: "89012",
+	LASTNAME: "User_04",
+	CUSTOM10: "4060",
+	LEDGERKEY: "Oracle",
+	EXPENSEUSER: "Y"
+}
+
+var updateFailure_1 = {
+	FIRSTNAME: "Test",
+	EXPENSEAPPROVER: null,
+	RECORD_STATUS: "UPDATE",
+	CRNKEY: "AUD",
+	CUSTOM21: "SBS AU",
+	PASSWORD: null,
+	CUSTOM9: "110104",
+	LEDGERNAME: "Oracle",
+	CUSTOM3: "Commissioned Content",
+	CUSTOM1: "Content TV & Online",
+	CUSTOM7: "60020",
+	CUSTOM8: "000000",
+	CUSTOM5: "N",
+	CUSTOM6: "10",
+	EMPID: "78901",
+	CTRYCODE: "AU",
+	LOGINID: "test_user_04_update_failure_1@sbs.com.au",
+	LOCALENAME: "en_US",
+	ISTESTEMP: "N",
+	EXPENSEAPPROVEREMPLOYEEID: "10914",
+	ACTIVE: "Y",
+	EMAILADDRESS: "test_user_04_update_failure_1@sbs.com.au",
+	FEEDRECORDNUMBER: "89012",
+	LASTNAME: "User_04",
+	CUSTOM10: "4060",
+	LEDGERKEY: "Oracle",
+	EXPENSEUSER: "Y"
+}
+&#45;&#45;-
+[createSuccess, updateSuccess, createFailure, updateFailure, updateFailure_1&#93;
+//[createSuccess&#93;&#93;&#93;></ee:set-variable>
+			</ee:variables>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Log - number of records to process" doc:id="d91908fd-3e1c-4e86-bec2-902119b6b596" message="Number of records to process: #[sizeOf(vars.employeeProfileDatabaseRecords)]" category="fetchAllEmployeeProfileRecordsToProcessFlow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="63207d63-7398-4018-9197-8708282f123c" >
+				<logger level="INFO" doc:name="Log - error" doc:id="10e592dc-4d59-4ef1-aacc-39dd823a009e" message="Exception occurred while fetching employee profile records from the database. Exception: #[error.description]" category="fetchAllEmployeeProfileRecordsToProcessFlow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="updateEmployeeProfileRecordStatusFlow" doc:id="44106846-468c-48ec-8e47-5705205ea765" >
+		<db:update doc:name="Update Employee Profile Record Status" doc:id="b622a609-1d8e-4e4e-aedd-7fa00f5b3930" config-ref="oracle-database-config">
+						<db:sql><![CDATA[update xxsbs.xxsbs_emp_for_concur set last_update_date = sysdate, last_updated_by = :requested_user, process_status = :processStatus where EMPID = :receivedEmployeeId and FEEDRECORDNUMBER = :receivedFeedRecordNumber]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+	requested_user: vars.processMetadata.requestedUser,
+	processStatus: "SUCCESS",
+	receivedEmployeeId: vars.recordSubmittedToConcur.empId,
+	receivedFeedRecordNumber: vars.recordSubmittedToConcur.feedRecordNumber
+}]]]></db:input-parameters>
+					</db:update>
+		<logger level="INFO" doc:name="Log - record status updated" doc:id="869c16c4-5351-4160-bae3-58209036b3ea" message="Status have been updated for processed record: {requested_user: #[vars.processMetadata.requestedUser], receivedEmployeeId: #[vars.recordSubmittedToConcur.empId], receivedFeedRecordNumber: #[vars.recordSubmittedToConcur.feedRecordNumber]}. Result: #[payload]" category="updateEmployeeProfileRecordStatusFlow" />
+	</flow>
+</mule>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="writeFileIntoOracleAppServer" doc:id="fb575d5b-9f7b-44d3-be0f-0ea29e64dff2" >
+		<ftp:write doc:name="Write File to oracle app ftp server" doc:id="5a4ced3c-3821-455e-8f3b-a24204f367c9" config-ref="oracle-ftp-config" path="#[vars.oracleFtpPath]" >
+			<reconnect frequency="${concurSftp.reconnectionFrequencyMS}" count="${concurSftp.reconnectionAttempts}" />
+		</ftp:write>
+		<logger level="INFO" doc:name="Log - File write status" doc:id="f1a11adc-67fe-44cc-a6a9-0e57a9baa1b6" message='#["File written into Oracle App server. Path : " ++  vars.oracleFtpPath]' category="writeFileIntoOracleAppServer" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1ca09326-2a2f-4edd-ba56-9f43ba58a97e" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="45648981-bda1-487d-a8c7-a1c2ebaf696b" message="Exception occurred writing file to oracle app ftp server at #[vars.oracleFtpPath]. Exception type: #[error.errorType.identifier], description: #[error.description]" category="writeFileIntoOracleAppServer"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

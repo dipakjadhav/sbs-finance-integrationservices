@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<flow name="processCOARecordsFlow" doc:id="6996056f-b58b-4331-9922-17b1243e23e6" >
+		<vm:listener queueName="processCA" doc:name="Listener" doc:id="3332c150-e304-40b5-b65a-e1d25a90368f" config-ref="VM_Config"/>
+		<flow-ref doc:name="FetchCOA Record for each operation" doc:id="cd2bd89c-7dcf-45a9-8641-0c1fa8334c53" name="fetchAllCoaRecordsFlow"/>
+		<ee:transform doc:name="Extract COA Records from Oracle DB" doc:id="713e07da-7bf9-4783-bef9-294f73c4324b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+((payload filter (not isEmpty($.SEGMENT_NAME))) groupBy $.SEGMENT_NAME) pluck $ 
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each Segment" doc:id="1b259da9-98be-4798-9d82-8e63a51f8c37" >
+			<try doc:name="Try" doc:id="37447673-ef1c-47be-899c-29dd90924061" >
+				<flow-ref doc:name="Send ListItems ToConcur for each segment" doc:id="3787bb1a-c0fb-4d19-b074-a9855eb19537" name="sendlisItemsToConcurFlow" />
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;flatten(vars.processedRecords) map () -&gt; {&#10;	segment_name : vars.segment,&#10;	record_status : upper($.operation),&#10;	code : $.code,&#10;	description: $.value&#10;	&#10;}]" doc:name="Set COA Record Status Update Request" doc:id="779ff178-9904-4c7d-a87a-428ccc63d5b5" variableName="statusUpdateRequest" />
+				<flow-ref doc:name="Update COA Records status in DB" doc:id="bbdd83fe-4833-4249-bff1-41919f2d74af" name="bulkUpdateCoaRecordStatusFlow" />
+				<vm:publish doc:name="Publish record status to send summary email" doc:id="99d30ec6-3887-4a01-8ce3-da8d0c9f65d3" config-ref="VM_Config" queueName="processSummaryForListItems">
+				<vm:content><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('concurChartOfAccountEmailNotification.fromAddress'),
+	"toAddress" : Mule::p('concurChartOfAccountEmailNotification.toAddress'),
+	"subject" : "Chart Of Account Processing Status ::: " ++ (vars.segment default ""),
+	heading : "Chart Of Accounts Processing  Status for segment :: " ++ (vars.segment default ""),
+	recordsToBeProcessedCount : sizeOf(vars.recordsToBeProcessed) default 0,
+	processedRecords : vars.processedRecords,
+	failedRecords : vars.failedRecords
+}]]]></vm:content>
+			</vm:publish>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="82288302-d4eb-487b-a218-49b2559eedaf" >
+						<set-variable value='#[%dw 2.0&#10;output application/xml&#10;&#10;output application/xml&#10;---&#10;"html": {&#10;	&#10;	"body": {&#10;		h1: (if ( lower(error.errorType.asString) contains "db" )  "Status Update for succeeded records into Oracle DB failed "  else " Failed to Process Chart Of Accounts ") ++ " For the segment :: " ++  (vars.segment default "")  ,&#10;		h2 : "Error Code : " ++ (error.errorType.asString default ""),&#10;		h2 :  "Error Description : " ++ error.description default "Generic logs. Please check logs for more details"&#10;		&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="55ba7056-83c8-4f30-b807-879345fcb28c" variableName="emailContent" mimeType="text/plain"/>
+			<ee:transform doc:name="Set Email subject and content" doc:id="a636534d-37f9-4716-9f2b-07bfaa9e1c75" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress": Mule::p('concurChartOfAccountEmailNotification.fromAddress'),
+	"toAddress": if ( lower(error.errorType.asString) contains "db" ) Mule::p('concurChartOfAccountEmailNotification.oracleFailuresToAddress') else Mule::p('concurChartOfAccountEmailNotification.toAddress'),
+	"subject": (if ( lower(error.errorType.asString) contains "db" )  "Exception Alert : Status Update into Oracle DB failed "  else "Exception Alert :Chart Of Account Processing Exception")  ++ "for the segment :: " ++  (vars.segment default "") ,
+	"content": vars.emailContent,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+						<flow-ref doc:name="Send Email" doc:id="ac65a140-7c73-470d-b4b1-35a62123cf04" name="sendEmailNotificationSubFlow"/>
+		</on-error-continue>
+				</error-handler>
+			</try>
+			</foreach>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ed70a1d2-9e39-4864-83ef-eb195732b034" >
+			<set-variable value='#[%dw 2.0&#10;output application/xml&#10;&#10;output application/xml&#10;---&#10;"html": {&#10;	&#10;	"body": {&#10;		h1: "Failed to Process Chart Of Accounts " ,&#10;		h2 : "Error Code : " ++ (error.errorType.asString default ""),&#10;		h2 :  "Error Description : " ++ error.description default "Generic logs. Please check logs for more details"&#10;		&#10;	}&#10;}]' doc:name="Set emailContent" doc:id="7f37e73f-b90d-427e-b327-f8ef889be533" variableName="emailContent" mimeType="text/plain"/>
+			<ee:transform doc:name="Set Email subject and content" doc:id="e427fda2-3b6f-4b46-a23f-da4f82ef97a5" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"fromAddress" :  Mule::p('concurChartOfAccountEmailNotification.fromAddress'),
+	"toAddress" : Mule::p('concurChartOfAccountEmailNotification.toAddress'),
+	"subject" : "Alert : Chart Of Account Processing Exception",
+	"content" : vars.emailContent,
+	"contentType": "text/html"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Send Email" doc:id="f03a454c-adc9-44af-9195-9e8637bae0cd" name="sendEmailNotificationSubFlow"/>
+		</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="sendlisItemsToConcurFlow" doc:id="2c4079ee-c1b7-47f6-9b73-7186f15276e5" >
+		<ee:transform doc:name="Set recordsToBeprocessed andsegment vars" doc:id="f6fbbc4d-c6b8-4555-8caa-67e7788a165e" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="segment" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload.SEGMENT_NAME[0])]]></ee:set-variable>
+					<ee:set-variable variableName="processedRecords" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+					<ee:set-variable variableName="failedRecords" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+					<ee:set-variable variableName="bulkListItemsResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="recordsToBeProcessed" ><![CDATA[%dw 2.0
+output application/json
+var operationsInSequence = ["create","update","delete"]
+fun mapRecord(records,operation) = records map (record) -> {
+	"code": record.CODE,
+	"shortCode": record.CODE,
+	"value": record.DESCRIPTION,
+	(deleted: true)  if ((lower(operation) == "delete"))
+}
+---
+(operationsInSequence map (operation) -> do {
+	var records = payload filter  ((lower($.RECORD_STATUS) as String) == (operation))
+	---
+	if ( not isEmpty(records) ) {
+		operation: operation,
+		records: mapRecord(records,operation)
+	} else {
+	}
+}) filter (not isEmpty($))]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<set-variable value="#[Mule::p('concur.lists.' ++ (lower(vars.segment) default &quot;&quot;))]" doc:name="Set listId" doc:id="a7836909-d6a8-4cc8-856a-a09f56ec39db" variableName="listId"/>
+			<logger level="INFO" doc:name="Log coaRecordsToBeprocessed" doc:id="d07d2837-bcfc-4f8a-bbc4-e075c5e6ad35" message="Processing segment :: #[vars.segment]. listId :: #[vars.listId]. Creating #[sizeOf(vars.recordsToBeProcessed.CREATE default [])] items. Updating #[sizeOf(vars.coaRecordsToBeProcessed.UPDATE default [])]  items. Deleting #[sizeOf(vars.coaRecordsToBeProcessed.DELETE default [])]  items." category="processCOARecordsFlow" />
+			<flow-ref doc:name="Call - getAccessTokenFlow" doc:id="02ca23e9-dcb6-4c4a-83ef-ce210166e7cb" name="getAccessTokenFlow" target="bearerToken" />
+		<foreach doc:name="For Each Operation" doc:id="6ead34f8-40d4-4d93-abd9-33b4b270ac90" collection="#[vars.recordsToBeProcessed default []]">
+			<ee:transform doc:name="Set Operation and requestPart" doc:id="229ce1e6-a9b9-42c4-aec3-3a9a455feace" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="operation" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.operation]]></ee:set-variable>
+					<ee:set-variable variableName="requestPart" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.records]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<foreach doc:name="For Each 100 list items request" doc:id="2a86a890-ba4c-4071-a01d-39e4ffb17059" collection="#[payload.records default []]" batchSize="${concur.listItem.batchSize}">
+				<try doc:name="Try" doc:id="7b63067d-fa7c-4c2b-903e-29aacb889219">
+				<choice doc:name="Check operation and send listems to Concur" doc:id="58588ae4-b939-4f09-af28-f939c3e26092" >
+						<when expression="#[vars.operation == 'create']">
+							<flow-ref doc:name="Create list item in concur" doc:id="9e44e0ee-d26c-4c69-91e5-c23f455b94a3" name="createListItemBulkFlow"/>
+						</when>
+						<when expression="#[vars.operation == 'update']">
+							<flow-ref doc:name="Update list item in concur" doc:id="71e56d0b-a50d-4b50-99bd-c35babadcc42" name="updateListItemBulkFlow"/>
+						</when>
+						<when expression="#[vars.operation == 'delete']">
+							<ee:transform doc:name="Set delete request" doc:id="c58c309b-9634-469e-8fc3-583d2602a401">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map () -> $ - "value"]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<flow-ref doc:name="Delete list item in concur" doc:id="fd4d36b2-2b80-4890-a627-17a5b96c9bd6" name="deleteListItemBulkFlow"/>
+						</when>
+					</choice>
+					<error-handler  >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ccfab916-df3f-4634-aea7-06a6da617b03">
+							<set-payload value='#[%dw 2.0&#10;output application/json&#10;var errorResponse = error.suppressedErrors.exception.errorMessage.payload[0]&#10;--- &#10;{&#10;  "status": "FAILURE",&#10;  "recordsSucceeded": 0,&#10;  "recordsFailed": sizeOf(vars.requestPart default []),&#10;  "errors": vars.requestPart map (record) -&gt;&#10;    {&#10;      "id": errorResponse.error.id  default error.errorType.asString,&#10;      "message":  errorResponse.error.message default error.description,&#10;      "listItem": {&#10;         code : record.code,&#10;         shortCode : record.shortCode,&#10;        value : record.value,&#10;        operation : vars.operation,&#10;      }&#10;    }&#10;  &#10;}]' doc:name="Set Error Payload" doc:id="beaa7405-6a67-4675-ae28-5963ee9405ad" />
+						</on-error-continue>
+					</error-handler>
+						</try>
+				<flow-ref doc:name="Extract Processed and failed Records" doc:id="3176013b-7d81-4590-985c-7af0195be973" name="categorizeCOARecordsFlow" />
+			</foreach>
+						
+			</foreach>
+			<logger level="INFO" doc:name="Log processed and failed Records" doc:id="5bf894e2-c0eb-4c5d-8914-09534dda256e" message="Processed COA Records for segment :: #[vars.segment]. listId :: #[vars.listId] ." category="processCOARecordsFlow"/>
+			
+	</flow>
+	<error-handler name="bulkImportErrorHandler" doc:id="6583ce90-80e2-471e-9f88-7b2f8a9fde6c" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1272e43f-7f71-4c58-a720-90ba0519d84a" when="#[(error.errorMessage.attributes.statusCode &gt;= 400) and (error.errorMessage.attributes.statusCode &lt; 500)  and (error.errorMessage.attributes.statusCode != 429) ]">
+			<logger level="INFO" doc:name="Log Error respose" doc:id="eee87bdb-27d4-4de1-99d3-55ee7b9b58ad" message="#[%dw 2.0&#10;output application/json&#10;--- &#10;error.suppressedErrors.exception.errorMessage.payload]" category="patchListItembulkFlow" />
+					<set-payload value='#[%dw 2.0&#10;output application/json&#10;var errorResponse = error.muleMessage.payload&#10;---&#10;if ( lower(errorResponse.status) == "failure" ) errorResponse else &#10;{&#10;	"status": "FAILURE",&#10;	"recordsSucceeded": 0,&#10;	"recordsFailed": sizeOf(vars.requestPart default []),&#10;	"errors": vars.requestPart map (record) -&gt;&#10;    {&#10;		"id": errorResponse.error.id default attributes.statusCode,&#10;		"message": errorResponse.error.message default error.description,&#10;		"listItem": {&#10;			code: record.code,&#10;			shortCode: record.shortCode,&#10;			value: record.value,&#10;			operation: vars.operation,&#10;		}&#10;	}&#10;}]' doc:name="Set Error Payload" doc:id="3f54d4ec-e6db-4d33-b8bf-7146c7ba6233" />
+			<!-- [STUDIO:"Set bulkListItemsResponse"]<set-variable value='#[%dw 2.0&#10;output application/json&#10;var errorResponse = error.suppressedErrors.exception.errorMessage.payload[0&#93;&#10;&#45;&#45;- &#10;{&#10;  "status": "FAILURE",&#10;  "recordsSucceeded": 0,&#10;  "recordsFailed": sizeOf(vars.requestPart default [&#93;),&#10;  "errors": vars.requestPart map (record) -&gt;&#10;    {&#10;      "id": errorResponse.error.id,&#10;      "message": [errorResponse.httpStatus default "" ,errorResponse.error.message default ""&#93; joinBy " - ",&#10;      "listItem": {&#10;         code : record.code,&#10;         shortCode : record.shortCode,&#10;        value : record.value,&#10;        operation : vars.operation,&#10;      }&#10;    }&#10;  &#10;}&#93;' doc:name="Set bulkListItemsResponse" doc:id="ef0492b0-8765-42e1-a0a7-ca2ac17db473" variableName="bulkListItemsResponse"/> [STUDIO] -->
+						
+		</on-error-continue>
+	</error-handler>
+	<flow name="categorizeCOARecordsFlow" doc:id="269b30b6-160c-4195-b6ec-0234f2c701fb" >
+		<ee:transform doc:name="Extract response Status and error messages" doc:id="40c3d0be-0c8f-4fa5-98d2-b4aee11c3a57">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+
+output application/json  
+---
+vars.requestPart map (record) -> do {
+      var error = payload.errors[?((($.listItem.code == record.code) or ($.listItem.shortCode == record.shortCode) or ($.listItem.value == record.value)))][0]
+      ---
+      {
+        code: record.code,
+        value: record.value,
+        operation: vars.operation,
+        (if (isEmpty(error))
+          {
+            status: "success"
+          }
+        else
+          {
+            status: "failed",
+            errorCode: error.id,
+            errorMessage: error.message
+          })
+      }
+    }]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+		<ee:transform doc:name="Set Processed and failed Records from Concur Response" doc:id="eaeb65d1-05b6-42ef-bcc5-999b310c98c1">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="processedRecords"><![CDATA[%dw 2.0
+output application/java
+---
+(vars.processedRecords default [])++ ((flatten(payload))[?($.status == "success")] default [])]]></ee:set-variable>
+							<ee:set-variable variableName="failedRecords"><![CDATA[%dw 2.0
+output application/java
+
+---
+(vars.failedRecords default []) ++ ((flatten(payload))[?($.status == "failed")] default [])]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<error-handler  >
+						
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8cef2558-1e26-4e44-aa20-d36c6dc0f511" >
+							<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.failedRecords default []) ++ (vars.requestPart map () -&gt; {&#10;	code: record.code,&#10;	value: record.value,&#10;	operation: vars.operation,&#10;	errorCode: error.errorType.asString default "GENERIC_ERROR",&#10;	errorMessage: error.description default "Failed to process. Please check logs for more details"&#10;})]' doc:name="Set failedRecords" doc:id="e6d5b128-16fb-4ae7-ba03-8312aec50b43" variableName="failedRecords"/>
+						</on-error-continue>
+					</error-handler>
+	</flow>
+</mule>

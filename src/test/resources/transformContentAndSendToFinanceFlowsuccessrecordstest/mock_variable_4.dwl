@@ -1,0 +1,42 @@
+[
+  {
+    "DEAL_ID": "12949",
+    "DEAL_CODE": "900479",
+    "CONTRACT_REFERENCE": "CN [RR]",
+    "DEAL_NAME": "Personally Speaking Series 1",
+    "DEAL_AKA": "",
+    "SUB_TYPE": "",
+    "SUB_TYPE_CODE": "",
+    "BUDGET_INFO": "INTERNAL PRODUCTION",
+    "BUDGET_INFO_CODE": "C11300",
+    "BUS_UNIT": "[2075]SBS Production",
+    "BUS_UNIT_ID": "",
+    "CONTENT_ID": "S126819",
+    "CONTENT_NAME": "PERSONALLY SPEAKING SERIES 1",
+    "TITLE_AKA": "",
+    "T_PGENRE": "News And Current Affairs",
+    "T_PGENRE_ID": "2363",
+    "T_SGENRE": "Current Affairs",
+    "T_SGENRE_ID": "2394"
+  },
+  {
+    "DEAL_ID": "80553",
+    "DEAL_CODE": "110245",
+    "CONTRACT_REFERENCE": "IN194",
+    "DEAL_NAME": "Footy Chicks",
+    "DEAL_AKA": "Footy Chicks",
+    "SUB_TYPE": "",
+    "SUB_TYPE_CODE": "",
+    "BUDGET_INFO": "COMMISSIONED",
+    "BUDGET_INFO_CODE": "C12500",
+    "BUS_UNIT": "[2076]Commissioned Content",
+    "BUS_UNIT_ID": "",
+    "CONTENT_ID": "T133942",
+    "CONTENT_NAME": "FOOTY CHICKS",
+    "TITLE_AKA": "Footy Chicks",
+    "T_PGENRE": "Factual",
+    "T_PGENRE_ID": "523",
+    "T_SGENRE": "Documentaries One Off",
+    "T_SGENRE_ID": "546"
+  }
+]

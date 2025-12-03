@@ -1,0 +1,40 @@
+
+%dw 2.0
+output application/java 
+---
+[{
+    TRANSACTION_TYPE : 51,
+    APPROVAL_TYPE : "consequatur,",
+    EMPLOYEE_ID : "f47f835078ea4552953",
+    SEGMENT1 : "quis",
+    SEGMENT2 : "qui",
+    SEGMENT3 : "Duis",
+    SEGMENT4 : "illo",
+    SEGMENT5 : "commodo",
+    SEGMENT6 : "magni",
+    SEGMENT7 : "culpa",
+    SEGMENT8 : "odit",
+    SEGMENT9 : "Neque",
+    SEGMENT10 : "cupidatat",
+    EXCEPTION_APPR_AUTHORITY : "error",
+    APPROVAL_LIMIT : 83,
+    APPR_LIMIT_CURR_CODE : "pariatur?",
+  },
+{
+    TRANSACTION_TYPE : 20,
+    APPROVAL_TYPE : "Nemo",
+    EMPLOYEE_ID : "7586c41b880a40e8b1a",
+    SEGMENT1 : "ad",
+    SEGMENT2 : "velit",
+    SEGMENT3 : "et",
+    SEGMENT4 : "voluptate",
+    SEGMENT5 : "dolorem",
+    SEGMENT6 : "qui",
+    SEGMENT7 : "sed",
+    SEGMENT8 : "dolorem",
+    SEGMENT9 : "nisi",
+    SEGMENT10 : "illo",
+    EXCEPTION_APPR_AUTHORITY : "esse",
+    APPROVAL_LIMIT : 4,
+    APPR_LIMIT_CURR_CODE : "odit",
+  }]

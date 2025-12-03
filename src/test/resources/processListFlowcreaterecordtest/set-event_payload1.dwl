@@ -1,0 +1,5 @@
+[
+  {
+    "RECORD_STATUS": "CREATE"
+  }
+]

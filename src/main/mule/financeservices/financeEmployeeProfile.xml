@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="financeEmployeeProfileFlow" doc:id="2e8a9902-379c-4b2b-be94-ab4248899809" >
+		<ee:transform doc:name="Set initVars" doc:id="4ec183aa-6c59-4eb1-afe4-8deb72a1c3fd">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				
+				<ee:set-variable variableName="activeProcessedFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+<ee:set-variable variableName="terminatedErrorFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="terminatedProcessedFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="activeErrorFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="d5235f67-c821-42bf-8a70-31737564d660">
+			<route >
+				<flow-ref doc:name="process Active Employees" doc:id="234d6a91-6f39-4669-a869-42f00fbba186" name="processFinanceActiveEmployeeFlow" />
+			</route>
+			<route >
+				<flow-ref doc:name="process Terminated Employees" doc:id="bbcfc89f-569d-4529-aa71-0efe210a72a2" name="processFinanceTerminatedEmployeesFlow" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Set payload sa JSON" doc:id="e4e2d4aa-3cd1-4f19-b262-6383fcea2fa3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="processedFiles" ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+var replacingTimeStamp = 
+ (now() >> "Australia/Sydney") as String {format: "dd-MM-yyyy_HH-mm-ss"} 
+ 
+---
+(vars.activeProcessedFiles default []) ++ (vars.terminatedProcessedFiles default []) map () ->
+ do {
+ 	var archiveFilename = substringAfterLast($,"\/")  replace "." with ("_" ++ replacingTimeStamp ++ ".")
+ 	 ---
+ 	{
+	sourceFilePath : $,
+	archiveFilePath :Mule::p("pncServices.moveFinanceEmpArchivePath") ++ archiveFilename,
+	archiveFilename : archiveFilename,
+	
+	
+}
+ }
+]]></ee:set-variable>
+				<ee:set-variable variableName="errorFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.activeErrorFiles default []) ++ (vars.terminatedErrorFiles default []) ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0&#10;output application/json&#10;&#10;---&#10;vars.processedFiles map () -&gt;&#10;	{&#10;    "sourceFilePath" : $.sourceFilePath,&#10;    "targetFilePath" : Mule::p("pncServices.moveFinanceEmpArchivePath"),&#10;    "renameTo" : $.archiveFilename&#10;  }]' doc:name="Set moveFinanceEmpFileRequest" doc:id="a9b1da56-6bc1-4202-b7f2-12269da42645" variableName="moveFinanceEmpFileRequest" mimeType="application/json"/>
+		<http:request method="POST" doc:name="Call pncHttpRequestConfig to move processed Files to Aurion SFTP" doc:id="27ec0449-0913-4889-953f-3e3e5937d1e5" config-ref="pncHttpRequestConfig" path="/moveFinanceEmployeeFiles">
+			<http:body ><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.moveFinanceEmpFileRequest]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Set Response payload" doc:id="3a4701f7-0549-4f23-bce5-63139f74955f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	response: "Finance Employee profile process completed",
+	message : if((isEmpty(vars.processedFiles)) and (isEmpty(vars.errorFiles))) 
+				"No matching File Found"
+				else 
+					"Successfully processed - " ++  ((vars.processedFiles.archiveFilePath default []) joinBy ", "),
+
+	("filesFailedToProcess " :    ((vars.errorFiles default []) joinBy ",")) if (not isEmpty(vars.errorFiles)),
+
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="moveFinanceEmployeeFilesRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a260bdaf-447b-470c-99c1-67081077f626" >
+				<logger level="INFO" doc:name="Log Error" doc:id="58f8fdca-44fa-4cea-8e49-630de7933a1f" message="#[error.description]" category="financeEmployeeProfileFlow"/>
+				<ee:transform doc:name="Transform Message" doc:id="74e4d8af-df67-48ae-a9cd-af48fc3ef537" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	response : "Failed to process Finance employee details"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="processFinanceActiveEmployeeFlow" doc:id="11971193-380a-4e48-8de5-67c048b11ba3" >
+		<http:request method="GET" doc:name="Call Active Employees from Pnc Integration Services" doc:id="3a1e3602-7f1b-4e7a-9c79-abe65948e38d" config-ref="pncHttpRequestConfig" path="/financeActiveEmployees" />
+		<logger level="INFO" doc:name="Log Active Employee File name" doc:id="792b4ab4-ee4e-42ad-a010-060594c3d898" message="Active Employee Profile File Found #[payload.attributes.name]" category="financeEmployeeProfileFlow" />
+		<foreach doc:name="For Each" doc:id="373695c9-268f-4d4d-bf4a-d1b8f5dafddc" >
+			<try doc:name="Try" doc:id="2f77fed6-2eb0-4fb5-b868-c52b23f3b0bc" >
+				<ee:transform doc:name="Set Payload for bulk insert" doc:id="b816758b-398f-46e4-b933-a3ab37340a21">
+			<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.payload map ((value , index) -> {
+	PLATFORM: value."Platform" default "",
+	CONTENT: value."Content" default "",
+	ACTIVITY: value."Activity" default "",
+	COST_CENTRE: value."Cost Centre" default "",
+	SBS_DOMAIN_EMAIL: value."SBS Domain Email" default "",
+	BANK_ACCOUNT: value."Bank Account" default "",
+	BSB: value."BSB" default "",
+	ACCOUNT_NAME: value."Account Name" default "",
+	PERSON_NUMBER: value."Person Number" default "",
+	EMPLOYEE_NUMBER: value."Employee Number" default "",
+	SURNAME: value."Surname" default "",
+	PREFERRED_NAME: value."Preferred Name" default "",
+	GIVEN_NAMES: value."Given Names" default "",
+	ACTUAL_POSITION_NUMBER: value."Actual Position Number" default "",	
+	ACTUAL_JOB_TITLE: value."Actual Job Title" default "",
+	OU_LEVEL_01: value."Organisation Unit Level 01" default "",
+	OU_LEVEL_02: value."Organisation Unit Level 02" default "",
+	OU_LEVEL_03: value."Organisation Unit Level 03" default "",
+	OU_LEVEL_04: value."Organisation Unit Level 04" default "",
+	OU_LEVEL_05: value."Organisation Unit Level 05" default "",
+	OU_LEVEL_06: value."Organisation Unit Level 06" default "",
+	OU_LEVEL_07: value."Organisation Unit Level 07" default "",
+	NATIVE_SUP_VIS_PREFERRED_NAME: value."Native Supervisor Preferred Name" default "",
+	NATIVE_SUP_VIS_GIVEN_NAMES: value."Native Supervisor Given Names" default "",
+	NATIVE_SUP_VIS_SURNAME: value."Native Supervisor Surname" default "",
+	NATIVE_SUP_VIS_EMP_NUMBER: value."Native Supervisor Employee Number" default "",
+	ACTUAL_SUP_VIS_PREFERRED_NAME:value."Actual Supervisor Preferred Name" default "",
+	ACTUAL_SUP_VIS_GIVEN_NAMES: value."Actual Supervisor Given Names" default "",
+	ACTUAL_SUP_VIS_SURNAME: value."Actual Supervisor Surname" default "",
+	ACTUAL_SUP_VIS_EMP_NUMBER: value."Actual Supervisor Employee Number" default "",		
+	POSTAL_STREET_ADDRESS: value."Postal Street Address" default "",
+	POSTAL_SUBURB: value."Postal Suburb" default "",
+	POSTAL_STATE: value."Postal State" default "",
+	POSTAL_POSTCODE: value."Postal Postcode" default ""
+})]]></ee:set-payload>
+
+</ee:message>
+		<ee:variables>
+				<ee:set-variable variableName="filename"><![CDATA[%dw 2.0
+output application/java
+---
+payload.attributes.name]]></ee:set-variable>
+						<ee:set-variable variableName="sourceFilePath" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.attributes.path]]></ee:set-variable>
+			
+</ee:variables>
+			
+		</ee:transform>
+				<db:bulk-insert doc:name="Bulk insert of active Employees" doc:id="51145b9c-9ac6-41e6-9541-8321e16fa0f7" config-ref="oracle-database-config">
+			<db:sql><![CDATA[insert into xxsbs.xxsbs_active_emp_temp(CREATION_DATE,PLATFORM,CONTENT,ACTIVITY,COST_CENTRE,SBS_DOMAIN_EMAIL,BANK_ACCOUNT,BSB,ACCOUNT_NAME,PERSON_NUMBER,EMPLOYEE_NUMBER,SURNAME,PREFERRED_NAME,GIVEN_NAMES,ACTUAL_POSITION_NUMBER,ACTUAL_JOB_TITLE,OU_LEVEL_01,OU_LEVEL_02,OU_LEVEL_03,OU_LEVEL_04,OU_LEVEL_05,OU_LEVEL_06,OU_LEVEL_07,NATIVE_SUP_VIS_PREFERRED_NAME,NATIVE_SUP_VIS_GIVEN_NAMES,NATIVE_SUP_VIS_SURNAME,NATIVE_SUP_VIS_EMP_NUMBER,ACTUAL_SUP_VIS_PREFERRED_NAME,ACTUAL_SUP_VIS_GIVEN_NAMES,ACTUAL_SUP_VIS_SURNAME,ACTUAL_SUP_VIS_EMP_NUMBER,POSTAL_STREET_ADDRESS,POSTAL_SUBURB,POSTAL_STATE,POSTAL_POSTCODE) values (sysdate,:PLATFORM,:CONTENT,:ACTIVITY,:COST_CENTRE,:SBS_DOMAIN_EMAIL,:BANK_ACCOUNT,:BSB,:ACCOUNT_NAME,:PERSON_NUMBER,:EMPLOYEE_NUMBER,:SURNAME,:PREFERRED_NAME,:GIVEN_NAMES,:ACTUAL_POSITION_NUMBER,:ACTUAL_JOB_TITLE,:OU_LEVEL_01,:OU_LEVEL_02,:OU_LEVEL_03,:OU_LEVEL_04,:OU_LEVEL_05,:OU_LEVEL_06,:OU_LEVEL_07,:NATIVE_SUP_VIS_PREFERRED_NAME,:NATIVE_SUP_VIS_GIVEN_NAMES,:NATIVE_SUP_VIS_SURNAME,:NATIVE_SUP_VIS_EMP_NUMBER,:ACTUAL_SUP_VIS_PREFERRED_NAME,:ACTUAL_SUP_VIS_GIVEN_NAMES,:ACTUAL_SUP_VIS_SURNAME,:ACTUAL_SUP_VIS_EMP_NUMBER,:POSTAL_STREET_ADDRESS,:POSTAL_SUBURB,:POSTAL_STATE,:POSTAL_POSTCODE)]]></db:sql>
+		</db:bulk-insert>
+				<ee:transform doc:name="Set File path for Move Emp files" doc:id="5f7c616f-36ef-4de6-b997-8729f9659767">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+						<ee:set-variable variableName="activeProcessedFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.activeProcessedFiles default []) ++ [vars.sourceFilePath]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3ee284b1-463a-4a3c-9e71-44889ec1d110" >
+						<ee:transform doc:name="Append Error files" doc:id="a1adb87a-8e15-4bdd-b495-08e526126d79" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="activeErrorFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.errorFiles default [] ++ [vars.sourceFilePath default "undefined"]]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<logger level="INFO" doc:name="Log Error" doc:id="4bcc4d40-d83f-4910-a7c5-ad69e7204f5d" message="#[vars.filename] failed to process. #[error.description]" category="processFinanceActiveEmployeeFlow"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+		</flow>
+	<flow name="processFinanceTerminatedEmployeesFlow" doc:id="e0d6afe1-e01c-4d60-9fbc-4259cb2b7097" >
+		<http:request method="GET" doc:name="Call Terminated Employees from Pnc Integration Services" doc:id="fbd54dfc-0826-48fc-8d14-2056c0ef5405" config-ref="pncHttpRequestConfig" path="/financeTerminatedEmployees"/>
+		<logger level="INFO" doc:name="Log TerminatedEmployee File name" doc:id="c09f30d7-cea0-4d0a-b1de-476a2e87258b" message="Terminated Employee Profile File Found #[payload.attributes.name]" category="financeEmployeeProfileFlow" />
+		<foreach doc:name="For Each" doc:id="956f653f-1471-4c88-8480-38dae83f6248" >
+			<try doc:name="Try" doc:id="8702909d-dbb2-455c-a133-055d9781f0cf" >
+			<ee:transform doc:name="Set payload" doc:id="7600d25d-be8e-4cb0-9fdf-86eeed4998dc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload.payload map ((value , index) -> {
+	DATE_TERMINATED: value."Date Terminated",
+	EMPLOYEE_NUMBER: value."Employee Number"
+})]]></ee:set-payload>
+			</ee:message>
+				<ee:variables>
+				<ee:set-variable variableName="filename"><![CDATA[%dw 2.0
+output application/java
+---
+payload.attributes.name]]></ee:set-variable>
+					<ee:set-variable variableName="sourceFilePath"><![CDATA[%dw 2.0
+output application/java
+---
+payload.attributes.path]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<db:bulk-insert doc:name="Bulk insert of terminated employees" doc:id="9b984056-b66e-4890-bdbe-eeb4cb86694f" config-ref="oracle-database-config">
+			<db:sql><![CDATA[insert into xxsbs.xxsbs_terminated_emp_temp(CREATION_DATE,EMPLOYEE_NUMBER,DATE_TERMINATED) values(sysdate,:EMPLOYEE_NUMBER,:DATE_TERMINATED)]]></db:sql>
+		</db:bulk-insert>
+		<ee:transform doc:name="Set File path for Move Emp files" doc:id="f98f6e50-815d-4d0a-94b2-6a20bf51b2c0" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+						<ee:set-variable variableName="terminatedProcessedFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.terminatedProcessedFiles default []) ++ [vars.sourceFilePath]]]></ee:set-variable>
+				
+</ee:variables>
+			</ee:transform>
+			<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="69b842db-3df8-4c1b-9584-5061e2268fd9" >
+						<ee:transform doc:name="Append Error files" doc:id="abe922e0-39e8-4260-ad11-1106ae901b38" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="terminatedErrorFiles" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.errorFiles default [] ++ [vars.sourceFilePath default "undefined"]]]></ee:set-variable>
+							
+</ee:variables>
+						</ee:transform>
+						<logger level="INFO" doc:name="Log Error" doc:id="20b5a744-0a73-4361-809e-dde8e6692369" message="#[vars.filename] failed to process. #[error.description]" category="processFinanceActiveEmployeeFlow"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+	
+</flow>
+</mule>

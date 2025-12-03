@@ -1,0 +1,42 @@
+[
+  {
+    "VALIDATE_ONLY": "F",
+    "KM_UNITS": 2,
+    "EMPLOYEE_NO": "00001",
+    "TRAVEL_DATE": "00000001",
+    "ALLOWANCE_CODE": "TEST1",
+    "STATUS": "CREATE"
+  },
+  {
+    "VALIDATE_ONLY": "F",
+    "KM_UNITS": 2,
+    "EMPLOYEE_NO": "00001",
+    "TRAVEL_DATE": "00000001",
+    "ALLOWANCE_CODE": "TEST1",
+    "STATUS": "CREATE"
+  },
+  {
+    "VALIDATE_ONLY": "F",
+    "KM_UNITS": 3,
+    "EMPLOYEE_NO": "00002",
+    "TRAVEL_DATE": "00000002",
+    "ALLOWANCE_CODE": "TEST2",
+    "STATUS": "CREATE"
+  },
+  {
+    "VALIDATE_ONLY": "F",
+    "KM_UNITS": 2,
+    "EMPLOYEE_NO": "00001",
+    "TRAVEL_DATE": "00000001",
+    "ALLOWANCE_CODE": "TEST1",
+    "STATUS": "CREATE"
+  },
+  {
+    "VALIDATE_ONLY": "F",
+    "KM_UNITS": 3,
+    "EMPLOYEE_NO": "00002",
+    "TRAVEL_DATE": "00000002",
+    "ALLOWANCE_CODE": "TEST2",
+    "STATUS": "CREATE"
+  }
+]

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"><flow name="validateApiKeyFlow" doc:id="95db6aed-8f25-4682-9379-ea3f6688c6a5" >
+		<choice doc:name="Validate API Key" doc:id="18de88f3-3da4-43a9-9fe4-826adb0a2def" >
+			<when expression="#[(attributes.headers.apiKey default &quot;&quot; as String) == p('secure::sbsapi.key')]">
+				<logger level="INFO" doc:name="Log: API Key Validation passed" doc:id="c9876f40-8288-445e-a8ec-09a2e2bc4c48" message="API Key successfully validated. Starting to process the request" category="authValidationFlow"/>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise Not Authorized" doc:id="f7b25a7d-aa69-4e67-9b7f-c9d6fde10452" type="SBS:NOT_AUTHORIZED" description="API Authentication Key  not valid"/>
+			</otherwise>
+		</choice>
+		</flow>
+		</mule>

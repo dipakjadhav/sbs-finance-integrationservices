@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="emailNotification-suite.xml" />
+	<munit:test name="sendCostCenterAccountAnalysisReportEmailNotificationFlow-test" doc:id="c3ac2db0-4f9f-49fe-93f5-d3d2f8d8a2bc" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - sendEmailNotificationFlow" doc:id="23d0e85c-a331-4981-8a54-46883c5390a6" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - sendEmailNotificationFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="47743933-9667-4db0-848f-96d0dd620eda" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processStartDateTime" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_3.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processEndDateTime" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_4.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="totalNumberOfFiles" value="#[output application/json --- readUrl('classpath://sendCostCenterAccountAnalysisReportEmailNotificationFlowtest\set-event_variable_5.dwl', 'applicaiton/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sendCostCenterAccountAnalysisReportEmailNotificationFlow" doc:id="52d9bd5d-9885-4b34-86e0-3c737202a32d" name="sendCostCenterAccountAnalysisReportEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="91b896ef-3055-440a-b44d-97003f5673a6" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendCostCenterAccountAnalysisReportEmailNotificationFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="sendCostCenterFsgReportEmailNotificationFlow-test" doc:id="1554040b-750f-406a-994a-5b272ac823d1" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - sendEmailNotificationFlow" doc:id="9fff5a25-be44-4458-9713-86ec722f8aef" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - sendEmailNotificationFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="cef46e77-6d0c-45c9-9c31-701fa726f26c" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="sourceFileVars" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="targetReportFileVars" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="initVars" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processStartDateTime" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_3.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processEndDateTime" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_4.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="totalNumberOfFiles" value="#[output application/json --- readUrl('classpath://sendCostCenterFSGReportEmailNotificationFlowtest\set-event_variable_5.dwl', 'application/dw', {onlyData: true})]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sendCostCenterFsgReportEmailNotificationFlow" doc:id="a9160e97-d19c-4da8-b869-208b6ce1543d" name="sendCostCenterFsgReportEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="2e8de05e-d2ef-41ff-9f73-fdb9fa6db3d3" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendCostCenterFSGReportEmailNotificationFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="sendEmployeeProfileProcessingEmailNotificationFlow-create-success-test" doc:id="4554abb9-fd7d-4109-bd01-76cd9c09ce5b" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - sendEmailNotificationFlow" doc:id="1541c174-303f-478e-96bf-6359ba775b97" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="50db5a92-33c6-4ec0-b8a3-ab387a56f91e" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Prepare Email Body HTML Content" doc:id="b7b2a1c5-b8a9-463c-881d-684ea3502f5f" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="4fb21b1b-9fda-4d5e-8cad-eacb11124d91" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="612bcf82-b303-4e62-a88d-ae858d8d7031" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest::spy_assert_payload
+---
+spy_assert_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="61a853a9-9b12-4b7f-8719-da291682290e" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest::spy_assert_payload1
+---
+spy_assert_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:spy doc:name="Spy Prepare Email Notification Payload" doc:id="38f29f3b-35ae-458a-8c7e-5aaf27b453ca" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="66b894b4-ec3c-437a-8a46-43ad2ef5f7c7" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="7e250d4e-85cd-4b9a-bcb6-0a5bd67432dc" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest::spy_assert_payload2
+---
+spy_assert_payload2::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="7157ff6e-4b8d-46ae-8570-c3ec9fa0c7cc" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest::spy_assert_payload3
+---
+spy_assert_payload3::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="95bb65c0-5a84-4285-8466-d3edbb1eddc9" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sendEmployeeProfileProcessingEmailNotificationFlow" doc:id="a4bb2b10-a0d1-4204-a17e-0efa341c708b" name="sendEmployeeProfileProcessingEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="8951eb41-7ff1-4bc4-9a14-95a529d40958" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="sendEmployeeProfileProcessingEmailNotificationFlow-multiple-scenarios-test" doc:id="2020b7fe-7a6b-4368-9c33-65d4a330137d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - sendEmailNotificationFlow" doc:id="7e7f5034-ce3c-4967-864c-3468043c8e69" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="50db5a92-33c6-4ec0-b8a3-ab387a56f91e" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Prepare Email Body HTML Content" doc:id="5791c8f4-f856-4b12-8a10-160e8b2f8026" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="4fb21b1b-9fda-4d5e-8cad-eacb11124d91" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="9fa0e80b-f287-448d-a734-d2cf53a4456e" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest::spy_assert_payload
+---
+spy_assert_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="db14ad28-b6e1-4abe-8fca-1298dab9760e" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest::spy_assert_payload1
+---
+spy_assert_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:spy doc:name="Spy Prepare Email Notification Payload" doc:id="eddbcbb0-9755-4f09-b0b4-bc64a29e29a7" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="66b894b4-ec3c-437a-8a46-43ad2ef5f7c7" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="c9124b02-4498-4022-bc9a-0e3fcbfc01e1" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest::spy_assert_payload2
+---
+spy_assert_payload2::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="0e64a991-045e-432c-9997-95410cf03c4f" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest::spy_assert_payload3
+---
+spy_assert_payload3::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="1ab4b1fe-2442-491d-a53b-5b3475e44186" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sendEmployeeProfileProcessingEmailNotificationFlow" doc:id="a62f3438-6a9a-46e6-a671-95b6b2094914" name="sendEmployeeProfileProcessingEmailNotificationFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="628c6dae-44d3-47d4-a374-b6b6f8aef054" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import sendEmployeeProfileProcessingEmailNotificationFlowmultiplescenariostest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

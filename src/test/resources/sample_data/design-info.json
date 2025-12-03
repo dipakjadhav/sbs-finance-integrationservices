@@ -1,0 +1,36 @@
+{
+  "sampleData": {
+    "572fa21a-2e2c-4ef1-aa18-4f1d4ebfc8bf": {
+      "payload": "sample_data/list_java.dwl"
+    },
+    "a5445eae-f6bc-48df-8265-9c12b323a9b3": {
+      "vars-header": "sample_data/defaultstringtype.dwl",
+      "payload": "sample_data/list_csv.csv"
+    },
+    "dbf97279-1bb2-4d59-be3c-fbb3f598d7c1": {
+      "payload": "sample_data/json_2.json"
+    },
+    "4cf2c82a-516c-49fc-984f-f9a592d36711": {
+      "payload": "sample_data/json_3.json"
+    },
+    "ff0bc902-0579-4e52-b148-09e903f7fdc5": {
+      "payload": "sample_data/defaultstringtype_2.dwl"
+    },
+    "af58a355-c5a1-4b23-93a6-6362d685f96d": {
+      "payload": "sample_data/json_4.json"
+    },
+    "b95c320e-bebf-4441-a47a-594c966a9354": {
+      "payload": "sample_data/json_5.json"
+    },
+    "6da76fcd-7fc4-4903-9957-d2243daf08e8": {
+      "payload": "sample_data/defaultstringtype_3.dwl"
+    },
+    "b7acde14-5626-49f8-bbcd-d596d3e379c2": {
+      "payload": "sample_data/defaultstringtype_4.dwl"
+    },
+    "5f7c616f-36ef-4de6-b997-8729f9659767": {
+      "vars-sourceFilePath": "sample_data/java.dwl",
+      "vars-filename": "sample_data/java_1.dwl"
+    }
+  }
+}

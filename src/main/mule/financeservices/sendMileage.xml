@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+	<flow name="sendMileageMainFlow" doc:id="37ae3f66-8544-4802-86ca-997ba9a57209" >
+		<ee:transform doc:name="Initialize Variables" doc:id="05421b94-48f7-4fd6-9774-b145d2951684" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="responseStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+				<ee:set-variable variableName="initVars" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	call3function: Mule::p('aurionWS.call3MileageParamFunction'),
+	call3delimiter: Mule::p('aurionWS.call3MileageParamDelimiter'),
+	call3wrapper: Mule::p('aurionWS.call3MileageParamWrapper')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - getMileageFlow" doc:id="b01dbd7f-4a4d-4484-a9ca-9840b1eec513" name="getMileageFlow" target="mileageList"/>
+		<choice doc:name="Check Mileage Records" doc:id="2397fd2a-d70b-42d0-af12-6638bfb5ca26" >
+			<when expression="#[isEmpty(vars.mileageList)]">
+				<logger level="INFO" doc:name="Log - No Records Found" doc:id="37f98fcc-e2ef-43aa-a4b2-3d47eea3b8cd" message="#['No Matching Mileage Records found']" category="sendMileageMainFlow"/>
+				<set-variable value="#['No Matching Mileage Records found']" doc:name="Set Response Status" doc:id="21014522-4eb7-4dbf-9351-1b16c88658fa" variableName="responseStatus"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Call - callFunction31Flow" doc:id="cc2288f7-6567-4eec-b6ee-b639dcba73ca" name="callFunction31Flow"/>
+			</otherwise>
+		</choice>
+		<set-payload value="#[vars.responseStatus]" doc:name="Send Response" doc:id="34fb711b-5d92-4a44-8c98-3acdecd841a1" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="915cf790-f8d0-4d02-b676-61d0a8c6c21c" >
+				<flow-ref doc:name="Call - commonExceptionSubflow" doc:id="18aa2c77-6e97-4814-8c25-9fc2781b37eb" name="commonExceptionSubflow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="callFunction31Flow" doc:id="b4dbe8e5-ef4b-4736-b80d-bfe4b074771b" >
+<flow-ref doc:name="Call - logonSoapServiceFlow" doc:id="96bc9d69-79f7-40e4-8d04-1be749d9885f" name="logonSoapServiceFlow"/>
+		<flow-ref doc:name="Call - callFunction3Flow" doc:id="5afc2e4f-c2d9-4fb3-b510-3d6669535b0f" name="callFunction3Flow"/>
+		<set-variable value="#[payload]" doc:name="Set Response Status" doc:id="baaed0fe-0e42-493c-a354-58ffd0a109e2" variableName="responseStatus"/>
+		<flow-ref doc:name="Call - logoffSoapServiceFlow" doc:id="bb3b8bc0-ad23-4ac1-ae8b-045153dd8e6b" name="logoffSoapServiceFlow" />
+		<choice doc:name="Check For Processed Records" doc:id="a7eea4ca-47cb-4c1c-8e16-8caff9311bd6" >
+			<when expression="#[isEmpty(vars.responseStatus.processedEmployees)]">
+				<logger level="INFO" doc:name="Log - No Procesed Records" doc:id="04146b5c-84d3-4126-94df-7a7ecd3b916b" message="No Processed Records" category="callFunction31Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Call - updateMileageStatusFlow" doc:id="bc12b8f5-32ed-4ff2-9d77-ad7ad078dc26" name="updateMileageStatusFlow"/>
+			</otherwise>
+		</choice>
+		<choice doc:name="Check For Non-Processed Records" doc:id="11b81cea-547f-493f-9c31-bada17c6db80" >
+			<when expression="#[isEmpty(vars.responseStatus.nonProcesedEmployees)]">
+				<logger level="INFO" doc:name="Log - No Non-Procesed Employee Records" doc:id="17341175-6ebc-43f3-b5a5-3c7a052309a6" message="No Non-Processed Records" category="callFunction31Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Call - sendEmailNotificationFlow" doc:id="e99b9709-0cdc-46f4-bd9e-cf359d7091ea" name="sendEmailNotificationFlow"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="callFunction3Flow" doc:id="33675b38-4578-432c-aeeb-5aeb9cb48eac" >
+		<ee:transform doc:name="Initialize Flow Variables" doc:id="0e5eca21-4453-4ed5-83e0-a424eb5c61b9" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="processedEmployeeNumbersArray" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="responseStringsArray" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="nonProcessedEmployeeNumbersArray" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="33522cfc-4c6a-4fe5-804c-4d0a14ae0539" collection="#[vars.mileageList]">
+			<ee:transform doc:name="Prepare PARAMETERS" doc:id="9ca6a473-1b59-4cbd-bab8-e906bc523dfa" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="p_PARAMETERS" ><![CDATA[%dw 2.0
+output application/java
+var employeeNumberStr = payload.EMPLOYEE_NO
+var validateOnlyStr = payload.VALIDATE_ONLY
+var allowanceCodeStr = payload.ALLOWANCE_CODE
+var unitsStr= payload.KM_UNITS as String
+var dateStr = payload.TRAVEL_DATE
+---
+"EMPLOYEE_NO=" ++ employeeNumberStr ++ "," ++
+	"VALIDATE_ONLY=" ++ validateOnlyStr ++ "," ++
+	"ALLOWANCE_CODE=" ++  allowanceCodeStr ++ "," ++
+	"UNITS=" ++ unitsStr ++ "," ++
+	"DATE=" ++ dateStr]]></ee:set-variable>
+					<ee:set-variable variableName="EMPLOYEE_NO" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.EMPLOYEE_NO]]></ee:set-variable>
+				
+</ee:variables>
+			</ee:transform>
+<ee:transform doc:name="Prepare payload for CALLFUNCTION3" doc:id="b8c3ea97-0886-4a3b-99de-33a42613d902" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"aurionFuncName": vars.initVars.call3function,
+	"token": vars.P_TOKEN,
+	"delimiter": vars.initVars.call3delimiter,
+	"wrapper": vars.initVars.call3wrapper,
+	"aurionFuncParams": vars.P_PARAMETERS
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Call - pnc API for Aurion CALLFUNCTION3" doc:id="149cdc66-e72a-45ee-ba36-eb8281baa985" config-ref="pncHttpRequestConfig" path="${pncServices.aurion.callFunction3ApiEndpoint}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	SOAPAction : "POST",
+	ContentType : "text/xml"
+}]]]></http:headers>
+		</http:request>
+			<ee:transform doc:name="Capture Response" doc:id="d9149fb5-3583-4d62-a405-65376acb102d">
+				<ee:message>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="responseStringsArray" ><![CDATA[%dw 2.0
+output application/java
+var returnValue =  payload.Envelope.Body.CALLFUNCTION3.return default ''
+var pTokenValue =  payload.Envelope.Body.CALLFUNCTION3.P_TOKEN default ''
+var pMessageValue =  payload.Envelope.Body.CALLFUNCTION3.P_MESSAGE default ''
+var pStatusValue =  payload.Envelope.Body.CALLFUNCTION3.P_STATUS default ''
+var stringResponse = "employee_no --> " ++ vars.EMPLOYEE_NO ++ "-->return --> " ++ returnValue ++ "-->token --> " ++ pTokenValue ++ "-->message --> " ++ pMessageValue ++ "-->status --> " ++ pStatusValue
+---
+(vars.responseStringsArray default []) ++ [stringResponse]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="INFO" doc:name="Log - return value for the proccessed employee number" doc:id="8d629cb3-7e06-4288-b11f-b9a61360b4d0" message="#[%dw 2.0&#10;output application/java&#10;---&#10;'Employee No: ' ++ vars.EMPLOYEE_NO ++ ', Returned value: ' ++ (payload.Envelope.Body.CALLFUNCTION3.return default '')]" category="callFunction3Flow"/>
+			<choice doc:name="Check For Return Value" doc:id="30900eaa-6b59-46f7-8ff1-c90d94c541f4" >
+				<when expression='#[(payload.Envelope.Body.CALLFUNCTION3.P_STATUS as Number) == 0]'>
+					<ee:transform doc:name="Capture Processed Emaployees Number" doc:id="a49176d2-529a-4467-b470-c095f4dd8de3">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="processedEmployeeNumbersArray"><![CDATA[%dw 2.0
+output application/java
+var processedEmployeeObject = { "EMPLOYEE_NO": vars.EMPLOYEE_NO, "MESSAGE": if(not isEmpty(payload.Envelope.Body.CALLFUNCTION3.P_MESSAGE)) payload.Envelope.Body.CALLFUNCTION3.P_MESSAGE else "Processed" }
+---
+(vars.processedEmployeeNumbersArray default []) ++ [processedEmployeeObject]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				</when>
+				<otherwise >
+<ee:transform doc:name="Capture Non-Processed Emaployees Number" doc:id="66577e6f-26b2-4395-9a1c-d50060169e40">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="nonProcessedEmployeeNumbersArray"><![CDATA[%dw 2.0
+output application/java
+var failedEmployeeObject = { "EMPLOYEE_NO": vars.EMPLOYEE_NO, "MESSAGE": payload.Envelope.Body.CALLFUNCTION3.P_MESSAGE }
+---
+(vars.nonProcessedEmployeeNumbersArray default []) ++ [failedEmployeeObject]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				</otherwise>
+			</choice>
+		</foreach>
+		<ee:transform doc:name="Prepare Final Response" doc:id="54a7c7bb-0727-48ea-86c7-c7d237ce84a9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json 
+---
+{
+	"response":  (vars.responseStringsArray default []) joinBy ',',
+	"processedEmployees": (vars.processedEmployeeNumbersArray default []),
+	"nonProcesedEmployees": (vars.nonProcessedEmployeeNumbersArray default [])
+}
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+
+	
+</flow>
+	<flow name="logonSoapServiceFlow" doc:id="08d51020-fc48-4891-a220-a16a706193a3" >
+		<ee:transform doc:name="Prepare payload for LOGON" doc:id="5ef9ec7a-f3bb-4193-81a9-3da963b1646e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "username" : Mule::p('aurionWS.username'),
+  "password" : Mule::p('secure::aurionWS.password')
+}			]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Call - pnc API for Aurion LOGON" doc:id="4aeb6662-73c9-4ab4-a18b-96f051121c7e" config-ref="pncHttpRequestConfig" path="${pncServices.aurion.logonApiEndpoint}" responseTimeout="120000">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	SOAPAction : "POST",
+	ContentType : "text/xml"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Extract TOKEN" doc:id="82da3ce4-1632-4cad-8048-6c028a811515" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="P_TOKEN" ><![CDATA[%dw 2.0
+ns ns0 http://www.FatTail.com/api
+output application/java
+---
+payload.token
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+	<flow name="logoffSoapServiceFlow" doc:id="2eb8c002-607b-447a-8585-11aa22d7fb4b">
+		<ee:transform doc:name="Prepare payload for LOGOFF" doc:id="9eaab712-64e6-464d-8d9e-e75f7f1695e1">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "token" : vars.P_TOKEN
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Call - pnc API for Aurion LOGOFF" doc:id="ff59a016-8f6f-4af9-960c-2e7c79de161b" config-ref="pncHttpRequestConfig" path="${pncServices.aurion.logOffApiEndpoint}	">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	SOAPAction : "POST",
+	ContentType : "text/xml"
+}]]]></http:headers>
+		</http:request>
+	</flow>
+</mule>

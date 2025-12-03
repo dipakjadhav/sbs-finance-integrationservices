@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="employeeServices-suite.xml" />
+	<munit:test name="processEmployeesProfileFlow-success-test" doc:id="43b100c4-f843-4820-a00f-47f10dcad972" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - performConcurOperationForEachFlow" doc:id="d4ef4770-f505-49d2-881c-f9f9ef65cca5" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - performConcurOperationForEachFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="performConcurOperationForEachFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_payload.dwl')]" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_3.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_5.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_8.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_9.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_10.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_11.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - fetchAllEmployeeProfileRecordsToProcessFlow" doc:id="43fe123d-ad49-4574-83b6-dedfbe5e79ca" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - fetchAllEmployeeProfileRecordsToProcessFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="fetchAllEmployeeProfileRecordsToProcessFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_12.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_14.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_15.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_16.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_17.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\mock_variable_18.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="132be18d-6875-43e2-bec4-f6e317516895" >
+				<munit:payload value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://processEmployeesProfileFlowsuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processEmployeesProfileFlow" doc:id="52486aa5-347c-4e3c-92bc-0e5207dae91f" name="processEmployeesProfileFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="d5bee54f-1f7d-42f3-bc87-308de0a36086" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processEmployeesProfileFlowsuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="performConcurOperationForEachFlow-create-success-test" doc:id="850fbdd6-8946-4876-8446-00093e1ac2dd" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - createOrUpdateEmployeeProfileFlow" doc:id="aaacdeda-79b7-4c0d-9ecf-d026059a7ac3" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - createOrUpdateEmployeeProfileFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="createOrUpdateEmployeeProfileFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_3.dwl')]" />
+						<munit-tools:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_10.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_11.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_12.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - getAccessTokenFlow" doc:id="dc975f0e-6c76-4964-83cd-336765b11c29" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getAccessTokenFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="bearerToken" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_payload1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_14.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_15.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_16.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_17.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_18.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_19.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_20.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_21.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_22.dwl')]" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_23.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\mock_variable_24.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="12e07f97-2357-4b61-bd23-f1d86fa3f08d" >
+				<munit:payload value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_attributes.dwl')]" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://performConcurOperationForEachFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to performConcurOperationForEachFlow" doc:id="e044f69f-715c-4265-96b6-bd4816567b1a" name="performConcurOperationForEachFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="6f9b7050-cce4-48e5-a9c2-a8cd3ad4eebe" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import performConcurOperationForEachFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="createOrUpdateEmployeeProfileFlow-create-success-test" doc:id="148b6fa0-8651-469e-a93e-a46f658f845d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - getUserByLoginIdOrUsernameFlow" doc:id="5856d270-a7fe-4075-af20-c10213093271" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - getUserByLoginIdOrUsernameFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="getUserByLoginIdOrUsernameFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_9.dwl')]" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_10.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_11.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - updateEmployeeProfileSubFlow" doc:id="317bd15e-5dda-4769-98ee-fb326b04cc31" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - updateEmployeeProfileSubFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="updateEmployeeProfileSubFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_payload1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_12.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_13.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_14.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_15.dwl')]" />
+						<munit-tools:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_16.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_17.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_18.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_19.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_20.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_21.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_22.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_23.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_24.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\mock_variable_25.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Update employeeProfileDatabaseRecord.RECORD_STATUS" doc:id="c15b5fcd-4a07-42c4-981d-90bec0ff4bad" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Update employeeProfileDatabaseRecord.RECORD_STATUS" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="682d64ce-7bb8-4d4e-8ec4-d0b834dc23c8" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import createOrUpdateEmployeeProfileFlowcreatesuccesstest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="cb3ed76a-c977-441a-81b5-9549ef74aabb" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import createOrUpdateEmployeeProfileFlowcreatesuccesstest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="beb4ca44-c58c-41ef-b3d7-d9d8580aac68" >
+				<munit:payload value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_.dwl')]" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_1.dwl')]" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_8.dwl')]" />
+					<munit:variable key="employeeProfileDatabaseRecord" value="#[output application/java --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://createOrUpdateEmployeeProfileFlowcreatesuccesstest\set-event_variable_10.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to createOrUpdateEmployeeProfileFlow" doc:id="3fd6c5c1-24f0-4f1c-b404-62453dbca8e3" name="createOrUpdateEmployeeProfileFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="db739147-e301-4311-9f6e-cc14857bc668" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import createOrUpdateEmployeeProfileFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Update employeeProfileDatabaseRecord.RECORD_STATUS" doc:id="80040803-4c13-43ba-b5d5-41920fecbfd3" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ce408dbe-0309-4bb7-8c95-feeeb2cedd85" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="updateEmployeeProfileSubFlow-create-success-test" doc:id="b318d56e-fc9f-40bd-b5dd-50b3308edaa9" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - captureRecordsSubmittedToConcurFlow" doc:id="bfe2c153-3462-45aa-b359-d4d12279e3dd" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - captureRecordsSubmittedToConcurFlow" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="captureRecordsSubmittedToConcurFlow" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_3.dwl')]" />
+						<munit-tools:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_10.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_11.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_12.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Call - Update Concur API" doc:id="ea8f0d02-c9e8-437c-b38e-09bc6bf85752" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - Update Concur API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[output application/json &#10;---&#10;{"localeOverrides":{"preferenceEndDayViewHour":20,"preferenceFirstDayOfWeek":"Sunday","preferenceDateFormat":"mm/dd/yyyy","preferenceCurrencySymbolLocation":"BeforeAmount","preferenceHourMinuteSeparator":":","preferenceDistance":"mile","preferenceDefaultCalView":"month","preference24Hour":"H:mm AM/PM","preferenceNumberFormat":"1,000.00","preferenceStartDayViewHour":8,"preferenceNegativeCurrencyFormat":null,"preferenceNegativeNumberFormat":null},"addresses":[],"timezone":"Australia/Sydney","meta":{"resourceType":"User","created":"2024-05-16T17:15:36.612821Z","lastModified":"2024-11-12T16:11:33.545206404Z","version":178,"location":"https://us2.api.concursolutions.com/profile/identity/v4.1/Users/339d5b8f-0703-4d6b-aede-79911bb79a87","statusUrl":"https://us2.api.concursolutions.com/profile/v4/provisions/914a5632-6521-47a9-8cb1-f4e1bf759bdb/status","provisionId":"914a5632-6521-47a9-8cb1-f4e1bf759bdb"},"displayName":"Test user23","name":{"formatted":"test user23","middleName":null,"middleInitial":null,"familyName":"user23","givenName":"test","honorificPrefix":null,"honorificSuffix":null},"phoneNumbers":[],"emergencyContacts":null,"preferredLanguage":"en-US","title":null,"dateOfBirth":null,"nickName":"Test","schemas":["urn:ietf:params:scim:schemas:core:2.0:User","urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"],"active":true,"id":"339d5b8f-0703-4d6b-aede-79911bb79a87","emails":[{"verified":false,"type":"work","value":"test.user23@sbs.com.au","notifications":true}],"userName":"test.user23@sbs.com.au","urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"terminationDate":null,"companyId":"e7f90e00-8b8e-4f33-8779-7558c12a9866","costCenter":null,"startDate":"2024-05-16T23:58:00Z","employeeNumber":"testuser23"}}]' mediaType="application/java" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_2.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_3.dwl')]" />
+						<munit-tools:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_4.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_5.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="configValues" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_7.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_8.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_9.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_10.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="recordsSubmittedToConcur" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_11.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_12.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\mock_variable_13.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Construct - Update concur user request payload" doc:id="9cb71028-26fb-4b6f-862d-84eb9355b193" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Construct - Update concur user request payload" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="0dc44033-11c8-4779-8cb4-3571f6e2bcd5" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import updateEmployeeProfileSubFlowcreatesuccesstest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="248f6cac-08f2-4a11-8981-cf25422669ef" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import updateEmployeeProfileSubFlowcreatesuccesstest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="8fbf4ac3-c331-4584-8c02-37db959125ba" >
+				<munit:payload value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_.dwl')]" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_1.dwl')]" />
+					<munit:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="counter" value="#[readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_7.dwl')]" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_10.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://updateEmployeeProfileSubFlowcreatesuccesstest\set-event_variable_11.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to updateEmployeeProfileSubFlow" doc:id="3b704ee9-4487-4b3f-91a1-3ad092964a81" name="updateEmployeeProfileSubFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="905a361d-bfe5-4f88-af9f-6a2cd7451aee" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import updateEmployeeProfileSubFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Construct - Update concur user request payload" doc:id="7634fe0c-446d-4537-a40c-51ff54b64792" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ac92a2ab-cd8b-4ac5-9e9b-c08a25b56bf3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="captureRecordsSubmittedToConcurFlow-create-success-test" doc:id="14d7459f-6db8-4fc7-8858-da6a403db351" >
+		<munit:behavior >
+			<munit-tools:spy doc:name="Spy Capture Records Submitted to Concur" doc:id="3eceac7e-3079-41c3-9e4f-1dd12bc40232" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Capture Records Submitted to Concur" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="c87f7642-bfa1-4544-8960-159ad72b290c" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureRecordsSubmittedToConcurFlowcreatesuccesstest::spy_assert_variables
+---
+spy_assert_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert variables" doc:id="63e80f90-3120-4439-abd8-48b347f13d89" message="The variables do not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureRecordsSubmittedToConcurFlowcreatesuccesstest::spy_assert_variables1
+---
+spy_assert_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="c3c34816-5cc2-4f9b-8695-2a8587ffed49" >
+				<munit:payload value="#[output application/java --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_.dwl')]" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_1.dwl')]" />
+					<munit:variable key="failedRecords" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="counter" value="#[readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_3.dwl')]" />
+					<munit:variable key="concurUserResponsePayload" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_4.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="employeeProfileDatabaseRecords" value="#[output application/java --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="configValues" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_6.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="concurUserRequestPayload" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_7.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="getConcurUserResponse" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_8.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_9.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="bearerToken" value="#[output application/java --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_10.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="recordsSubmittedToConcur" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_11.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="employeeProfileDatabaseRecord" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_12.dwl')]" encoding="UTF-8" mediaType="application/json" />
+					<munit:variable key="processMetadata" value="#[output application/json --- readUrl('classpath://captureRecordsSubmittedToConcurFlowcreatesuccesstest\set-event_variable_13.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to captureRecordsSubmittedToConcurFlow" doc:id="4a447211-1588-4ada-b33e-26b01fc7b7a3" name="captureRecordsSubmittedToConcurFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="0500295e-e007-436c-9240-71702da25d8e" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import captureRecordsSubmittedToConcurFlowcreatesuccesstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Capture Records Submitted to Concur" doc:id="c4278300-729c-411d-ba73-f32046fe9514" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f72c57a9-d97d-4cfb-a108-04eb977a9c5c" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

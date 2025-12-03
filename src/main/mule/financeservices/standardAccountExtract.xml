@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:smb="http://www.mulesoft.org/schema/mule/smb" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/smb http://www.mulesoft.org/schema/mule/smb/current/mule-smb.xsd">
+	<flow name="invokeSaeApi" doc:id="6aae0987-5ecc-4790-8d7b-4432149ecb80" >
+		<logger level="INFO" doc:name="Log - Trigger" doc:id="d3a10fb4-4cfd-4a79-9d11-59a346b933a5" message="SAE Process Called" category="invokeSaeApi" />
+		<http:request method="GET" doc:name="Call Get SAE Files" doc:id="a2a236ed-9c10-4c2a-a835-d92f5ad2b14b" config-ref="HTTP_Request_configuration" path="${https.saePath}" responseTimeout="300000">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"apiKey" : Mule::p('secure::sbsapi.key')
+}]]]></http:headers>
+		</http:request>
+		<choice doc:name="Check Response Status" doc:id="e8c70eb3-9fb5-4741-baf4-847c8a4aa7ad" >
+			<when expression="#[attributes.statusCode != 200]">
+				<logger level="INFO" doc:name="Log - Error Response" doc:id="c29eb84a-36f2-4be6-b513-cb2687c2ec4b" message="Failed to process get SAE File" category="invokeSaeApi"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - Success Response" doc:id="6008bf45-7438-4fba-bc9d-ef83071e00d4" message="Processed get SAE File Successfully" category="invokeSaeApi"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="standardAccountingExtractMainFlow" doc:id="b9fa51c0-d532-43a3-b159-906d37c10dba" >
+		<logger level="INFO" doc:name="Log - Start" doc:id="38493cec-0fac-4929-ada6-2ddc763d42fd" message="SAE Process Started" category="standardAccountingExtractMainFlow" />
+		<http:request method="GET" doc:name="Call - eis concur sftp list files API" doc:id="d80d1d04-bb73-47cf-a439-b50279a5ff09" config-ref="HTTP_Request_configuration_eis_concur_sftp" path="/${concurSftp.endPoint}/list">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"directoryPath" : Mule::p('concurSftp.inboundPath'),
+	"filenamePattern": Mule::p('concurSftp.saeExportFileExtension')
+}]]]></http:headers>
+		</http:request>
+		<choice doc:name="Check payload is empty?" doc:id="2dbb79e5-54bf-462a-8ae1-debc248c6bae" >
+			<when expression="#[isEmpty(payload)]">
+				<logger level="INFO" doc:name="Log - No files to process" doc:id="f4897324-e229-4f79-a6a5-7de45e0b829a" message="Payload is empty or no files to process" category="standardAccountingExtractMainFlow"/>
+				<set-payload value="#[%dw 2.0
+&#10;
+&#10;output application/json
+&#10;
+&#10;---
+&#10;
+&#10;{
+&#10;message : 'No files to Process'
+&#10;}]" doc:name="Set Empty Files Response" doc:id="7e352c51-dc08-4876-9f56-be7a07f27f69" />
+			</when>
+			<otherwise>
+				<set-variable value='#[(payload[0].path default "")]' doc:name="Set - concurSftpFilePath" doc:id="bcbe79ac-c2d8-497f-8c17-4ba7e193d37e" variableName="concurSftpFilePath"/>
+				<set-variable value="#[payload[0].fileName]" doc:name="Set original filename" doc:id="fb442bbe-509f-49be-80fb-819dd074f7c1" variableName="originalFilename"/>
+				<http:request method="GET" doc:name="Call - eis concur sftp read file API" doc:id="68233347-bb84-4175-b569-61bf6acbd044" config-ref="HTTP_Request_configuration_eis_concur_sftp" path="/${concurSftp.endPoint}">
+	<http:headers ><![CDATA[#[output application/java
+---
+{
+	"filePath" : (vars.concurSftpFilePath default "")
+}]]]></http:headers>
+</http:request>
+				<logger level="INFO" doc:name="Log- Concur sftp completed" doc:id="f302198c-b4a5-4203-b586-dc412740a162" message='#[vars.concurSftpFilePath default ""] has been read from concur' category="standardAccountingExtractMainFlow" />
+				<ee:transform doc:name="Remove .Pgp extension in filename and set original payload" doc:id="6ddc0278-93ca-4697-896f-6eb6d8369f1a">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="modifiedFilename" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.originalFilename replace '.pgp' with '' default "none"]]></ee:set-variable>
+						<ee:set-variable variableName="originalSAEpayload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Decrypt file content" doc:id="77d214e2-a719-462b-a306-c46d77329bbc" name="decryptFileContent"/>
+				<set-variable value="#[Mule::p('concurSftp.inboundPath') ++ &quot;/&quot; ++ vars.originalFilename]" doc:name="Set concurPath" doc:id="d567745d-ad6d-4c43-9f64-bc9142876565" variableName="concurPath"/>
+				<flow-ref doc:name="process SAE file content" doc:id="0ca84e32-fd11-4bd6-8853-568375ecdd08" name="processSaeFile" />
+				<flow-ref doc:name="Archive Original SAE file" doc:id="f9d59c00-f632-4d29-a0ba-7de87ab0c3e5" name="archiveOriginalSaeFile" />
+				<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message : 'SAE File - ' ++ vars.originalFilename ++ ' Successfully Processed '&#10;}]" doc:name="Set Response" doc:id="e5d7d38f-1190-4526-bff6-53d258ef7ca3" mimeType="application/json" />
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Log - End" doc:id="481b208f-9c5d-4232-a7f5-b795ab2e3528" message="SAE Process Completed" category="standardAccountingExtractMainFlow" />
+		<error-handler >
+			  <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e9003bd7-e5b4-4809-bf8e-da4d63da5585" >
+                <logger level="ERROR" doc:name="Log - error" doc:id="4eb9da2a-c248-441a-a161-24f7923ad331" message="Exception type: #[error.errorType.identifier], description: #[error.description]" category="standardAccountingExtractMainFlow"/>
+				<flow-ref doc:name="Common Exception flow" doc:id="d92cc4ea-2f6c-4ccd-8bad-46f94bb06881" name="commonExceptionSubflow"/>
+            </on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="processSaeFile" doc:id="ed63117b-7111-49b0-8d39-076b5e3f560f" >
+		<scatter-gather doc:name="Send SAE Files" doc:id="757b451a-8f43-42fd-922b-416fbe7ed0bd" >
+			<route >
+				<set-variable value="#[p('oracleftp.standardAccountExtractPath') ++ vars.modifiedFilename]" doc:name="Set target Filepath" doc:id="8c65f7d7-5427-4eb4-b5ad-cb9f50550aa1" variableName="oracleFtpPath"/>
+				<flow-ref doc:name="Send SAE file to Oracle" doc:id="ac18030a-2cf6-41cd-bdd3-89b3a45f4819" name="writeFileIntoOracleAppServer"/>
+				<flow-ref doc:name="Purge the SAE file in Concur SFTP" doc:id="3f1f3ea8-3304-4eb3-af36-a5625827b9e7" name="purgeFileInConcurFlow"/>
+				
+			</route>
+			<route >
+				<try doc:name="Try" doc:id="9764bbfb-bde2-4149-8568-3c0c73b3beb3" >
+					<smb:file-write doc:name="Archive SAE file to oracle share" doc:id="6306c6ba-7cc5-4dd6-96aa-ce1763fd0091" config-ref="SMB_Connector_Config" fileName="#[vars.modifiedFilename]" dirName="${saearchive.processedfileArchivepath}" />
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6128d3d8-d6f9-4ba9-a446-6a968018fe70" >
+							<logger level="ERROR" doc:name="Log Error" doc:id="7e6d63ef-ca50-4e0e-b50b-6287d7bb7890" message="Unable to archive the file in Oracle Share. Exception type: #[error.errorType.identifier], description: #[error.description]" category="ProcessSAEFile"/>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+		</scatter-gather>
+	</sub-flow>
+	<sub-flow name="archiveOriginalSaeFile" doc:id="e16dd11f-ff4a-45a3-95e8-32a0e832fc68" >
+	<set-variable value="#[Mule::p('oracleftp.saeArchivePath') ++ ( vars.originalFilename default &quot;empty&quot;)]" doc:name="Set target Filepath" doc:id="901e6047-d3a3-4454-a3ab-973f3aa5fde3" variableName="oracleFtpPath"/>
+						<set-payload value="#[vars.originalSAEpayload]" doc:name="Set Original SAE Payload" doc:id="ccbf60ab-39fd-4f07-bbfc-287c3e3cbcb8" />
+		<flow-ref doc:name="Archive Original SAE File in Oracle Server" doc:id="dfaf4eb1-ce30-41b1-990e-7716ed0d192a" name="writeFileIntoOracleAppServer" />
+		<logger level="INFO" doc:name="Log - Success" doc:id="29944ce1-36bb-401b-ab01-197d5d5f82bc" message="Successfully Archived the Original SAE file" category="archiveOriginalSaeFile"/>
+	</sub-flow>
+</mule>

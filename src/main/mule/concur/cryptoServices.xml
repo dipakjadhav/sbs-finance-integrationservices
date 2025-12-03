@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd">
+	<sub-flow name="encryptCsvFileContent" doc:id="31169412-7258-406d-b983-88e7245f1dc0" >
+		<crypto:pgp-encrypt doc:name="Encrypt CSV file content" doc:id="42a1ce8c-022e-471f-862f-fa64d57e01e4" config-ref="Crypto_pgp_Encrypt" keyId="concurKey" fileName="#[vars.outputFilename ++ p('oracleftp.fileExtension')]"/>
+		
+	
+</sub-flow>
+	<sub-flow name="decryptFileContent" doc:id="113589da-d397-4427-886d-620f2b464e5f" >
+	<crypto:pgp-decrypt doc:name="Pgp decrypt file content" doc:id="a2c74eae-46df-4295-a05f-80080015b2ec" config-ref="Crypto_pgp_Decrypt" />
+	</sub-flow>
+</mule>

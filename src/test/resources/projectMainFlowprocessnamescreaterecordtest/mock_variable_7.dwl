@@ -1,0 +1,1 @@
+"<TABLE border = 1><THEAD><TH>PROJECT</TH><TH>ERROR MESSAGE</TH></THEAD><TBODY><TR><TD>8C104 </TD><TD> HTTP:BAD_REQUEST=400,The item code was specified more than once. Duplicate items codes are not supported by the API.</TD></TR></TBODY></TABLE>"

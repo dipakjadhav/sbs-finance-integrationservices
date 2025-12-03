@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="contentCreationSchedulerFlow" doc:id="59c43cdd-c5de-491a-8834-0c520818d7f9" initialState="${scheduler.contentCreationSchedulerInitialState}">
+		<scheduler doc:name="Scheduler - run daily" doc:id="b950c0bc-50b4-45ae-9adb-12c285e63690" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.contentCreationCronExpression}" timeZone="${scheduler.contentCreationTimeZone}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Call - contentCreationMainFlow" doc:id="0f318a94-aadf-4a37-ba54-e40a650a0362" name="contentCreationMainFlow"/>
+	</flow>
+	<flow name="standardAccountingExtractSchedulerFlow" doc:id="f4de6201-9a6c-4bb6-828b-01324ef20c7f" initialState="${concurSftp.saeSchedulerInitialState}">
+		<scheduler doc:name="Poll SAE file at 3:00 am" doc:id="ac4e005c-93e0-4d78-b5e6-04579dadf6b4" >
+			<scheduling-strategy >
+				<cron expression="${concurSftp.saeCronExpression}" timeZone="${concurSftp.saeCronTimeZoneId}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Call - standardAccountingExtractMainFlow" doc:id="634a2261-a5c2-4289-9cf0-06228fa1ef0f" name="invokeSaeApi"/>
+	</flow>
+	<flow name="IC036AcreditCardProgramDecryptionSchedulerFlow" doc:id="d7e0762f-dfc3-42b2-acd0-c418a9646ffa" initialState="${scheduler.creditCardProgramDecryptionInitialState}">
+		<scheduler doc:name="Poll IC-036A Corporate Card Travel Expenses Statement Decryption" doc:id="20d03a50-cba2-4568-8fc5-95ddb4a2d227" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.creditCardProgramDecryptionCronExpression}" />
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Call - creditCardProgramConfigFlow" doc:id="1acb8203-51fb-43d2-b513-22bcb90231df" name="creditCardProgramConfigFlow"/>
+	</flow>
+</mule>

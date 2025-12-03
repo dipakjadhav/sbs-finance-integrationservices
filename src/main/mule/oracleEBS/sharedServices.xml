@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="submitInterfaceDetailsFlow" doc:id="0d488eba-c2b3-42c7-a591-82779038f02f" >
+		<ee:transform doc:name="Initialize variables" doc:id="6595fc3e-a3c8-47da-9ff6-92f2c5db3031" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="category" ><![CDATA[attributes.headers["category"] default "callInterface"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log - request received" doc:id="1ab5d600-746d-477a-a19c-043203239fc7" message='&lt;&lt;#[vars.category]&gt;&gt; Request received at #[now() as String {format: "dd/MM/yyyy hh:mm:ss"}] &gt;&gt;&gt; with payload is : #[payload]' category="submitInterfaceDetailsFlow" />
+		<vm:publish queueName="callInterfaceMulesoftInitProcedureQueue" doc:name="Publish - callInterfaceMulesoftInitProcedureQueue" doc:id="6569f272-2003-40ff-983b-45cb0e73531d" config-ref="VM_Config" >
+			<vm:content ><![CDATA[#[output application/json
+---
+{
+	"payload": payload,
+	"category": vars.category
+	}]]]></vm:content>
+		</vm:publish>
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	message: "Submitted Stored Procedure call request"&#10;}]' doc:name="Set Payload" doc:id="5e3d0f21-d425-46ff-a692-088068275e32" />
+	</flow>
+	<flow name="asyncProcessCallMuleSoftInitStoreProcedureFlow" doc:id="8b04200d-e8bd-4286-81ee-7aea1dc5eadb" >
+		<vm:listener queueName="callInterfaceMulesoftInitProcedureQueue" doc:name="Listen - callInterfaceMulesoftInitProcedureQueue" doc:id="b240474c-724e-4b43-9b83-dd7cb59d1bad" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Log - START" doc:id="b917b20e-2919-4190-a047-d5813aa87f39" message='&lt;&lt;#[payload.category]&gt;&gt; START - Process Started at #[now() as String {format: "dd/MM/yyyy hh:mm:ss"}] &gt;&gt;&gt; Received Payload is : #[payload]' category="asyncProcessCallMuleSoftInitStoreProcedureFlow" />
+		<ee:transform doc:name="Set - inputParameters" doc:id="992ddd9c-d079-4758-974d-12cfe9676c29">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="inputParameters"><![CDATA[%dw 2.0
+output application/java
+---
+{	
+	filename: payload.payload.filename,
+	mulesoftstatus: payload.payload.mulesoftstatus,
+	interfacekey: payload.payload.interfacekey,
+	batchid : if(payload.payload.bachid == null or isEmpty(payload.payload.bachid)) "0" else payload.payload.bachid,
+	batchcount: if(payload.payload.batchcount == null or isEmpty(payload.payload.batchcount)) "0" else payload.payload.batchcount,
+	mulesofterror: if(payload.payload.mulesofterror == null or payload.payload.mulesofterror == "") "No Error" else payload.payload.mulesofterror
+}]]></ee:set-variable>
+				<ee:set-variable variableName="category" ><![CDATA[payload.category]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Query Parameter Values" doc:id="ccc825f4-c0b9-4e1d-a60b-b5c70ec61e3c" message="&lt;&lt;#[vars.category]&gt;&gt; Input parameters are: #[vars.inputParameters]" category="asyncProcessCallMuleSoftInitStoreProcedureFlow" />
+		<flow-ref doc:name="Call - callMuleSoftInitStoreProcedureFlow" doc:id="88e45f0e-52df-4876-9b7d-2093a3e0cfc1" name="callMuleSoftInitStoreProcedureFlow"/>
+		<logger level="INFO" doc:name="Log - END" doc:id="1a2ad6da-415f-434c-a897-3fcfa75ad5e4" message='&lt;&lt;#[vars.category]&gt;&gt;END - Process completed at #[now() as String {format: "dd/MM/yyyy hh:mm:ss"}] &gt;&gt;&gt; Received Payload is : #[payload]' category="asyncProcessCallMuleSoftInitStoreProcedureFlow" />
+	</flow>
+	<flow name="getAccountAnalysisConfigDetails" doc:id="5d4b2c60-7399-4800-a8c4-97268323b607" >
+		<logger level="INFO" doc:name="Log - start" doc:id="6148fa0a-82a6-4c08-a9aa-e8c8eb714adc" message='Process Started at #[now() as String {format: "dd/MM/yyyy hh:mm:ss"}] &gt;&gt;&gt; Received parent id is : #[attributes.queryParams.parentRequestId]' category="getAccountAnalysisConfigDetails"/>
+		<ee:transform doc:name="Initialize variables" doc:id="037c189e-8f56-4612-bcf5-9bbede711fa9" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="initVars" ><![CDATA[%dw 2.0
+output application/java
+var parentRequestID = attributes.queryParams.'parentRequestId'
+---
+{
+	"parentRequestID": parentRequestID,
+	"queryString": 'select distinct c.OUTFILE_NAME, c.ARGUMENT10, c.ARGUMENT20 from apps.FND_CONCURRENT_REQUESTS c,  apps.FND_CONCURRENT_REQUESTS p where c.priority_request_id=' ++ parentRequestID ++ ' and p.HAS_SUB_REQUEST = \'Y\' and p.IS_SUB_REQUEST = \'N\' and p.DESCRIPTION =\'SBS GL Account Analysis Request Set\' and c.parent_request_id <> ' ++ parentRequestID ++ ' and c.request_id <> ' ++ parentRequestID  ++ ' order by 3 '
+}]]></ee:set-variable>
+				<ee:set-variable variableName="queryString" ><![CDATA[%dw 2.0
+output application/java
+var parentRequestID = attributes.queryParams.'parentRequestId'
+---
+'select distinct c.OUTFILE_NAME, c.ARGUMENT10, c.ARGUMENT20 from apps.FND_CONCURRENT_REQUESTS c,  apps.FND_CONCURRENT_REQUESTS p where c.priority_request_id=' ++ parentRequestID ++ ' and p.HAS_SUB_REQUEST = \'Y\' and p.IS_SUB_REQUEST = \'N\' and p.DESCRIPTION =\'SBS GL Account Analysis Request Set\' and c.parent_request_id <> ' ++ parentRequestID ++ ' and c.request_id <> ' ++ parentRequestID  ++ ' order by 3 ']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log initVars" doc:id="9b50321e-5bdd-4b23-9901-b4d24e7cda9f" message="InitVars are: #[vars.initVars]" category="getAccountAnalysisConfigDetails"/>
+		<db:select doc:name="Get account analysis config values by parent request id" doc:id="c1a381e0-7e05-49ec-8287-a263fffb01c0" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[:queryString]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"queryString": vars.initVars.queryString
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Check Payload?" doc:id="11b53e43-9633-476b-bfd1-5d15b51692ee" >
+			<when expression="#[payload == null or payload.size() == 0]">
+				<raise-error doc:name="Raise error" doc:id="a3fb75c5-8894-4f13-9a24-c70b971a2b1c" description="No matching record found returned null or empty payload" type="CUSTOM:CUSTOM_ERROR"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="map to json payload" doc:id="b6541b59-57e8-44d2-8df4-adc2d6a721c4" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) ->  {
+	outputfilename: if(item.OUTFILE_NAME == null) item.OUTFILE_NAME  else "",
+	month: if(item.ARGUMENT10 == null) item.ARGUMENT10  else "",
+	costcentre: if(item.ARGUMENT20 == null) item.ARGUMENT20 else ""
+})]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - payload" doc:id="3c36d321-0192-484d-9b44-5a012b85a6c8" message="batch id in shared services=====#[payload]" category="getAccountAnalysisConfigDetails"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f8c3935a-abb3-4a74-a226-a6eb3dc55aec" >
+				<flow-ref doc:name="Call - commonExceptionSubflow" doc:id="087e4e5b-63cf-4513-b6a8-b01f38163d20" name="commonExceptionSubflow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getfsgReportsCostCentreMappingDetailsFlow" doc:id="5f25da7b-e677-40b2-8321-7ac91fc9bc8c" >
+		<db:select doc:name="Get Cost Centre Mapping Details" doc:id="82f0b953-9291-4bb5-a538-9c9d0b4f356a" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select report_name, attribute1 path from apps.RG_REPORT_REQUESTS_V where attribute1 is not null]]></db:sql>
+		</db:select>
+		<choice doc:name="Check Payload?" doc:id="48fe7919-eed2-43db-8315-51cf8644e406" >
+			<when expression="#[payload == null or payload.size() == 0]">
+				<raise-error doc:name="Raise error" doc:id="12b767d7-55bb-407e-82cd-1599922e889e" description="No matching record found returned null or empty payload" type="CUSTOM:CUSTOM_ERROR"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="map to json payload" doc:id="d90582d4-daa7-4735-9a72-3000357df997" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - payload" doc:id="727a1d53-9054-4be8-9e6c-02c4964be976" message="batch id in shared services=====#[payload]" category="getfsgReportsCostCentreMappingDetailsFlow"/>
+			
+</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cb2a6d17-4421-44d8-b06d-b82975d948b2" >
+				<flow-ref doc:name="Call - commonExceptionSubflow" doc:id="9f6d4d49-1ed3-402a-9ee9-0a11e3091834" name="commonExceptionSubflow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getBatchIdFlow" doc:id="8e87cf2d-fb71-497c-a1cc-45b1f21c62db" >
+		<db:select doc:name="getBatchId" doc:id="42964ac2-ee8f-495c-b6f6-d1408c39418c" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select apps.xxsbs_integration_common.get_batch_id from dual]]></db:sql>
+		</db:select>
+		<choice doc:name="Check Payload?" doc:id="905637d7-eb9f-4e14-8923-f2333adda6f8" >
+			<when expression="#[payload == null or payload.size() == 0]">
+				<raise-error doc:name="Raise error" doc:id="2170f876-12e2-4dc5-b2c3-c1cbf614d679" description="No matching record found returned null or empty payload" type="CUSTOM:CUSTOM_ERROR"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="map to json payload" doc:id="b4f17346-029b-4bd9-8c55-f4deab1e06f0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	batchid:payload[0].GET_BATCH_ID
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - payload" doc:id="e25e1140-b683-42e5-82ae-e784d17f1335" message="batch id in shared services=====#[payload]" category="getBatchIdFlow"/>
+			
+</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="34e9729e-4176-4198-8e02-f67ab1b33bd6" >
+				<flow-ref doc:name="Call - commonExceptionSubflow" doc:id="907c800e-28a3-4e93-8555-7a378f179109" name="commonExceptionSubflow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getSeqNumFlow" doc:id="2cb98669-f19f-442e-9b0a-0aed87b91cc6" >
+		<db:select doc:name="getSeqNum" doc:id="c2490cd7-da9c-4e61-9c89-c7fa34559bbe" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[select apps.xxsbs_ap_rba_seq.nextval from dual]]></db:sql>
+		</db:select>
+		<choice doc:name="Check Payload?" doc:id="678867f5-a18b-4891-9d2c-f6e00f2ae1d7" >
+			<when expression="#[payload == null or payload.size() == 0]">
+				<raise-error doc:name="Raise error" doc:id="6559c3a3-fea4-4c4b-90c2-8082af672097" description="No matching record found returned null or empty payload" type="CUSTOM:CUSTOM_ERROR"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="map to json payload" doc:id="435dbba6-61f3-46fa-9e25-d31e2515eda1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	seqnum:payload[0].NEXTVAL
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - payload" doc:id="65055ebb-085e-4c55-afd2-91f4a9319902" message="batch id in shared services=====#[payload]" category="getSeqNumFlow"/>
+			
+</otherwise>
+		</choice>
+	</flow>
+	<flow name="getInterfaceDetailsFromIntegrationSource" doc:id="2192f982-3e30-482a-9baf-fd79015e90aa" >
+		<validation:is-not-blank-string doc:name="Validate interfaceKey variable exists" doc:id="9be7d604-e65b-44bf-a3aa-df688f2db5c1" value="#[vars.interfaceKey]" message="The variable 'interfaceKey' must exist to execute flow 'getInterfaceDetailsFromIntegrationSource'"/>
+		<logger level="DEBUG" doc:name="DEBUG - Log interface key" doc:id="57cd8a47-dad4-494a-8b5c-43cc4d8f6f49" message='&lt;&lt;#[vars.configValues.logCategory default "Unknown category"]&gt;&gt; Extracting interface details from integration source table for interface #[vars.interfaceKey] ' category="getIntefaceDetailsFromIntegrationSource"/>
+		<db:select doc:name="Select interface details from xxsbs_integration_source" doc:id="a7144c30-bad1-4259-a475-5c77342d9077" config-ref="oracle-database-config">
+			<db:sql ><![CDATA[#["SELECT * FROM $(Mule::p('db.oracle.integrationSourceTable')) WHERE INTERFACE_KEY=:interfaceKey"]]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	interfaceKey: vars.interfaceKey
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Throw error if no results" doc:id="27d26643-2619-44bd-8616-72664e946c7d" >
+			<when expression="#[isEmpty(payload)]">
+				<raise-error doc:name="Raise error - No config entry" doc:id="fc7e4228-8c19-44ad-ba26-9058d2902a6c" type="FINANCE_DB:NO_CONFIG" description="No entry matching the provided interface key."/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Set interface details as payload" doc:id="ace0f682-ab76-4f6b-84ef-18bdf4093106">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json
+//Only 1 record is expected for a given IC
+var interfaceDetails = payload[0]
+/* For SMB shares, the server and basepath are included in the integration source table
+ * Since the SMB connector in use requires these to be predefined, we must drop them from
+ * the data pulled from the XXSBS_INTEGRATION_SOURCE table.
+ * The if condition allows us to handle FTP paths which do not contain the server details.
+ * E.g. "//ns1hcifsv01/GLOBAL-SHARE/Transfer_To_Oracle/ANZCorporateCardProgram/Encrypted/" is returned as
+ * "/Transfer_To_Oracle/ANZCorporateCardProgram/Encrypted"
+ */
+fun dropServerBasepath(directoryPath) = 	
+	if (directoryPath startsWith "//") 
+		("/" ++ (((directoryPath splitBy "/") drop 4) joinBy "/")) 
+	else directoryPath
+---
+{
+	interfaceKey: interfaceDetails.INTERFACE_KEY,
+	fullTargetPath: interfaceDetails.ORACLE_PATH,
+	targetPath: dropServerBasepath(interfaceDetails.ORACLE_PATH),
+	fullArchivePath: interfaceDetails.ORACLE_ARCHIVE_PATH,
+	archivePath: dropServerBasepath(interfaceDetails.ORACLE_ARCHIVE_PATH),
+	errorPath: dropServerBasepath(interfaceDetails.ORACLE_ERROR_PATH),
+	interfaceDescription: interfaceDetails.INTERFACE_DESCRIPTION,
+	eFinRequestSet: interfaceDetails.EFIN_REQUEST_SET,
+	loaderCTLFile: interfaceDetails.LOADER_CTL_FILE,
+	supportEmail: interfaceDetails.SUPPORT_EMAIL_LOOKUP,
+	initResponsibility: interfaceDetails.INIT_RESPONSIBILITY,
+	sourceFTPHost: interfaceDetails.SOURCE_FTP_HOST,
+	sourceFTPPort: interfaceDetails.SOURCE_FTP_PORT,
+	targetFTPHost: interfaceDetails.TARGET_FTP_HOST,
+	targetFTPPort: interfaceDetails.TARGET_FTP_PORT,
+	fileMask: interfaceDetails.FILE_MASK,
+	fullSourcePath: interfaceDetails.SOURCE_DIRECTORY,
+	sourcePath: dropServerBasepath(interfaceDetails.SOURCE_DIRECTORY),
+	fullSourceArchivePath: interfaceDetails.SOURCE_ARCHIVE_DIRECTORY,
+	sourceArchivePath: dropServerBasepath(interfaceDetails.SOURCE_ARCHIVE_DIRECTORY),
+	certificateFilepath: interfaceDetails.CERTIFICATE_FILEPATH,
+	transferType: interfaceDetails.FILE_TRANSFER_TYPE,
+	emailFrom: interfaceDetails.EMAIL_FROM,
+	active: interfaceDetails.ACTIVE_INDICATOR
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

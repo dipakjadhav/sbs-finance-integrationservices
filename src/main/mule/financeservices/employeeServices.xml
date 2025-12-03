@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mule-sap-concur-connector="http://www.mulesoft.org/schema/mule/mule-sap-concur-connector" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/mule-sap-concur-connector http://www.mulesoft.org/schema/mule/mule-sap-concur-connector/current/mule-mule-sap-concur-connector.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd">
+	<sub-flow name="captureRecordsSubmittedToConcurFlow" doc:id="5df2b493-67fb-4d06-a583-c3280b1c6650" >
+		<logger level="INFO" doc:name="Log - Record submitted to concur successfully" doc:id="0393aa7d-607a-45d3-ad23-3f4957ecedb2" message="Record submitted to concur successfully. {empId: #[vars.employeeProfileDatabaseRecord.EMPID], feedRecordNumber: #[vars.employeeProfileDatabaseRecord.FEEDRECORDNUMBER], recordStatus: #[vars.employeeProfileDatabaseRecord.RECORD_STATUS], provisionId: #[vars.concurUserResponsePayload.meta.provisionId]}" category="captureRecordsSubmittedToConcurFlow" />
+		<ee:transform doc:name="Capture Records Submitted to Concur" doc:id="f72c57a9-d97d-4cfb-a108-04eb977a9c5c">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+				<ee:set-variable resource="dwl/concurEmployeeProfile/captureProcessedRecords.dwl" variableName="recordsSubmittedToConcur" />
+						</ee:variables>
+					</ee:transform>
+	</sub-flow>
+	<sub-flow name="captureFailedConcurUserRecordsFlow" doc:id="ac74e89f-a777-411b-bdfe-373a8ecba3b9" >
+		<logger level="INFO" doc:name="Log - Failed to process a record" doc:id="a0e106ee-405e-4eec-9f13-8bfc3f52130f" message='Failed to process a record {empId: #[vars.employeeProfileDatabaseRecord.EMPID], feedRecordNumber: #[vars.employeeProfileDatabaseRecord.FEEDRECORDNUMBER], recordStatus: #[vars.employeeProfileDatabaseRecord.RECORD_STATUS]}' category="captureFailedConcurUserRecordsFlow"/>
+		<ee:transform doc:name="Process Failed Records" doc:id="ce0e472f-8f85-4bc0-a947-712e31cbe2d7">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+				<ee:set-variable resource="dwl/concurEmployeeProfile/captureFailedRecords.dwl" variableName="failedRecords" />
+						</ee:variables>
+					</ee:transform>
+	</sub-flow>
+	<flow name="getUserByLoginIdOrUsernameFlow" doc:id="3cfc52ed-764c-47f1-8f5b-3c5f608c6768" >
+		<http:request method="GET" doc:name="Call - Get user by LoginId" doc:id="67ac54b7-7a4b-4086-9d80-6df99905ecda" config-ref="concurAPIHttpRequestConfig" path="${api.concur.userProvisioningEndPoint}" target="getConcurUserResponse">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.bearerToken default "")
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"filter" : "userName eq " ++ (vars.employeeProfileDatabaseRecord.LOGINID default "")
+}]]]></http:query-params>
+		</http:request>
+		<!-- [STUDIO:"Mocked - Call - Get user by LoginId/UserName"]<ee:transform doc:name="Mocked - Call - Get user by LoginId/UserName" doc:id="93340753-9f9f-446c-a229-9d3b9a0663e7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="getConcurUserResponse" ><![CDATA[%dw 2.0
+output application/json
+var userId =  uuid()
+var companyId =  uuid()
+var userIdentity = {
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    &#93;,
+    "totalResults": 1,
+    "startIndex": 1,
+    "itemsPerPage": 1,
+    "Resources": [
+        {
+            "localeOverrides": {
+                "preferenceEndDayViewHour": 20,
+                "preferenceFirstDayOfWeek": "Sunday",
+                "preferenceDateFormat": "mm/dd/yyyy",
+                "preferenceCurrencySymbolLocation": "BeforeAmount",
+                "preferenceHourMinuteSeparator": ":",
+                "preferenceDistance": "mile",
+                "preferenceDefaultCalView": "month",
+                "preference24Hour": "H:mm AM/PM",
+                "preferenceNumberFormat": "1,000.00",
+                "preferenceStartDayViewHour": 8,
+                "preferenceNegativeCurrencyFormat": "(100)",
+                "preferenceNegativeNumberFormat": "-100"
+            },
+            "addresses": [&#93;,
+            "timezone": "Australia/Perth",
+            "meta": {
+                "resourceType": "User",
+                "created": now(),
+                "lastModified": now(),
+                "version": 10,
+                "location": "https://us2.api.concursolutions.com/profile/identity/v4/Users/" ++ userId
+            },
+            "displayName": vars.employeeProfileDatabaseRecord.FIRSTNAME ++ " " ++ vars.employeeProfileDatabaseRecord.LASTNAME,
+            "name": {
+                "honorificSuffix": null,
+                "middleInitial": null,
+                "formatted": vars.employeeProfileDatabaseRecord.FIRSTNAME ++ " " ++ vars.employeeProfileDatabaseRecord.LASTNAME,
+                "familyName": vars.employeeProfileDatabaseRecord.LASTNAME,
+                "givenName": vars.employeeProfileDatabaseRecord.FIRSTNAME,
+                "familyNamePrefix": null,
+                "honorificPrefix": null,
+                "middleName": null
+            },
+            "phoneNumbers": [&#93;,
+            "emergencyContacts": null,
+            "preferredLanguage": "en-US",
+            "title": null,
+            "dateOfBirth": null,
+            "nickName": null,
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:User",
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+            &#93;,
+            "active": true,
+            "id": userId,
+            "emails": [
+                {
+                    "verified": false,
+                    "type": "work",
+                    "value": vars.employeeProfileDatabaseRecord.EMAILADDRESS,
+                    "notifications": true
+                }
+            &#93;,
+            "userName": vars.employeeProfileDatabaseRecord.userName,
+            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                "terminationDate": null,
+                "companyId": companyId,
+                "costCenter": null,
+                "startDate": now(),
+                "employeeNumber": vars.employeeProfileDatabaseRecord.employeeNumber
+            }
+        }
+    &#93;
+}
+var emptyResponse = {
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    &#93;,
+    "totalResults": 0,
+    "startIndex": 1,
+    "itemsPerPage": 0,
+    "Resources": [&#93;
+}
+var nonEmptyResponse = {
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    &#93;,
+    "totalResults": 0,
+    "startIndex": 1,
+    "itemsPerPage": 0,
+    "Resources": [userIdentity&#93;
+}
+&#45;&#45;-
+if((upper(vars.employeeProfileDatabaseRecord.EMAILADDRESS) contains('CREATE')) or (upper(vars.employeeProfileDatabaseRecord.EMAILADDRESS) contains('_1')))
+	emptyResponse
+else
+	nonEmptyResponse&#93;&#93;></ee:set-variable>
+			</ee:variables>
+		</ee:transform> [STUDIO] -->
+	</flow>
+	<flow name="createOrUpdateEmployeeProfileFlow" doc:id="4d06a813-1376-433c-bd12-220cc910731f" >
+		<flow-ref doc:name="Call - getUserByLoginIdOrUsernameFlow" doc:id="94e8be91-5923-4a75-989c-679c64c9e3ed" name="getUserByLoginIdOrUsernameFlow" />
+		<choice doc:name="Check duplicate user" doc:id="2fdbb141-0095-4fee-a68b-656fd6b10766">
+			<when expression='#[(sizeOf(vars.getConcurUserResponse.Resources) == 0)]'>
+				<logger level="INFO" doc:name="Log - User not found by loginId" doc:id="70fbf4f1-7b26-44e3-98bd-d2da78599932" message="User not found with loginId: #[vars.employeeProfileDatabaseRecord.LOGINID]" category="createOrUpdateEmployeeProfileFlow"/>
+				<flow-ref doc:name="Call - createEmployeeProfileFlow" doc:id="0ad56768-ad50-425e-9401-ee8529caac3e" name="createEmployeeProfileFlow"/>
+			</when>
+			<when expression='#[(sizeOf(vars.getConcurUserResponse.Resources) &gt; 0) and (vars.getConcurUserResponse.Resources[0]."urn:ietf:params:scim:schemas:extension:enterprise:2.0:User".employeeNumber == vars.employeeProfileDatabaseRecord.EMPID)]'>
+				<logger level="INFO" doc:name="Log - User found with loginId and empId combination" doc:id="f14bc2a0-e8a2-41a9-bd76-3ce5711c15f7" message="&lt;&lt;User found with loginId: #[vars.employeeProfileDatabaseRecord.LOGINID] and empId: #[vars.employeeProfileDatabaseRecord.EMPID] combination" category="createOrUpdateEmployeeProfileFlow"/>
+				<ee:transform doc:name="Update employeeProfileDatabaseRecord.RECORD_STATUS" doc:id="ce408dbe-0309-4bb7-8c95-feeeb2cedd85">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="employeeProfileDatabaseRecord" ><![CDATA[%dw 2.0
+import * from dw::util::Values
+output application/json
+---
+vars.employeeProfileDatabaseRecord update "RECORD_STATUS" with "UPDATE"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Call - updateEmployeeProfileSubFlow" doc:id="11cd67c4-e06a-40b5-9b72-72c13a4cc25c" name="updateEmployeeProfileSubFlow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - User found by loginId but with different empId" doc:id="6341fc2a-0131-4f39-a1c7-67400cfcfb34" message='User found with loginId: #[vars.employeeProfileDatabaseRecords.LOGINID] but different empId. Oracle empId: #[vars.employeeProfileDatabaseRecords.EMPID], Concur empId: #[vars.getConcurUserResponse.Resources[0]."urn:ietf:params:scim:schemas:extension:enterprise:2.0:User".employeeNumber]' category="createOrUpdateEmployeeProfileFlow" />
+				<raise-error doc:name="Raise error" doc:id="b76ac99f-b600-4566-b21a-27553b744dcd" type="SBS:MULTIJOB" description="User (Employee profile) found with multiple jobs on concur"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="createEmployeeProfileFlow" doc:id="98358441-6976-4d84-8c8e-0b2d7e85738b" >
+<ee:transform doc:name="Construct - Create Concur User Request Payload" doc:id="f4b9ed05-c30f-470c-8831-1c46aba3c85b">
+				<ee:message>
+				</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dwl/concurEmployeeProfile/prepareConcurCreateUserRequestPayload.dwl" variableName="concurUserRequestPayload" />
+			</ee:variables>
+			</ee:transform>
+		<logger level="INFO" doc:name="Log - Create concur user request payload" doc:id="c26617cf-fc1f-497e-bc31-cc30c4ca84b0" message="Create concur user request payload: #[vars.concurUserRequestPayload]" category="createEmployeeProfileFlow"/>
+			<try doc:name="Try" doc:id="0589f36b-1672-4cfb-a370-a2098cf940cf" >
+			<http:request method="POST" doc:name="Call -  Create Concur API" doc:id="321f9a4d-0980-4c99-bf11-97de9756d3c0" config-ref="concurAPIHttpRequestConfig" path="${api.concur.userEndPoint}" target="concurUserResponsePayload">
+			<http:body ><![CDATA[#[vars.concurUserRequestPayload]]]></http:body>
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.bearerToken default ""),
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+			<!-- [STUDIO:"Mocked - Call -  Create Concur API"]<ee:transform doc:name='Mocked - Call -  Create Concur API' doc:id="782d3552-01d8-4067-b35b-1804c70caa18" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="concurUserResponsePayload" ><![CDATA[%dw 2.0
+output application/json
+var userId =  uuid()
+var provisionId =  "00000000-0000-0000-0000-0000000" ++ (vars.employeeProfileDatabaseRecord.EMPID default "")
+&#45;&#45;-
+{
+    "meta": {
+        "resourceType": "User",
+        "created": now(),
+        "lastModified": now(),
+        "version": 0,
+        "location": "https://{datacenterURI}/profile/identity/v4/Users/" ++ userId,
+        "statusUrl": "https://{datacenterURI}/profile/v4/provisions/" ++ provisionId ++ "/status",
+        "provisionId": provisionId
+    },
+    "displayName": vars.concurUserRequestPayload.displayName default "",
+    "name": {
+        "middleInitial": vars.concurUserRequestPayload.name.middleInitial default "",
+        "middleName": vars.concurUserRequestPayload.name.middleInitial default "",
+        "formatted": vars.concurUserRequestPayload.name.middlefoformattedrmattedInitial default "",
+        "honorificPrefix": vars.concurUserRequestPayload.name.honorificPrefix default "",
+        "legalName": vars.concurUserRequestPayload.name.middleInitial default "",
+        "familyName": vars.concurUserRequestPayload.name.legalName default "",
+        "givenName": vars.concurUserRequestPayload.name.givenName default "",
+        "honorificSuffix": vars.concurUserRequestPayload.name.honorificSuffix default ""
+    },
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:sap:2.0:User"
+    &#93;,
+    "active": true,
+    "id": userId,
+    "emails": [
+        {
+            "value": vars.concurUserRequestPayload.emails[0&#93;.value,
+            "type": vars.concurUserRequestPayload.emails[0&#93;["type"&#93;,
+            "notifications": vars.concurUserRequestPayload.emails[0&#93;.notifications,
+            "verified": vars.concurUserRequestPayload.emails[0&#93;.verified
+        }
+    &#93;,
+    "userName": vars.concurUserRequestPayload.userName,
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+        "employeeNumber": vars.concurUserRequestPayload.employeeNumber,
+        "companyId": vars.concurUserRequestPayload.companyId
+    }
+}&#93;&#93;></ee:set-variable>
+				</ee:variables>
+			</ee:transform> [STUDIO] -->
+			<flow-ref doc:name="Call - captureRecordsSubmittedToConcurFlow" doc:id="23cf6913-3361-4082-acde-15c33694c5a2" name="captureRecordsSubmittedToConcurFlow" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="96232fd7-1ba2-4c4a-8984-5593dc32c07f" >
+					<logger level="ERROR" doc:name="Log - error" doc:id="8bf92042-65ed-4dc0-acb9-ddfac04407c4" category="createEmployeeProfileFlow" message="Exception occurred creating concur user (Employee profile). Type: #[error.errorType.identifier], description: #[error.description]" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="updateEmployeeProfileFlow" doc:id="3701aed2-15fd-4de4-9054-0bf3ac9246e8">
+
+<flow-ref doc:name="Call - getUserByLoginIdOrUsernameFlow" doc:id="3394c11b-066f-41cb-8adc-5e91fdd186ff" name="getUserByLoginIdOrUsernameFlow" />
+		<choice doc:name="Choice" doc:id="34cc5a80-54aa-4ef0-b783-48429cd626f4">
+			<when expression="#[(sizeOf(vars.getConcurUserResponse.Resources) &gt; 0)]">
+				<flow-ref doc:name="Call - updateEmployeeProfileSubFlow" doc:id="77f34deb-38ed-40f5-95fb-f5c07854294b" name="updateEmployeeProfileSubFlow" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Log - User not found on concur" doc:id="d398efe5-94e8-48d9-8da5-9a858c7b2609" category="updateEmployeeProfileFlow" message="User (Employee profile) not found on concur with loginId: #[vars.employeeProfileDatabaseRecords.LOGINID]" />
+				<raise-error doc:name="Raise error" doc:id="44f573e8-1125-4e18-8b38-a49e7fb1a43d" type="SBS:RECORD_NOT_FOUND" description="User (Employee profile) not found on concur" />
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="updateEmployeeProfileSubFlow" doc:id="bd7a87b4-9781-4b8f-b5af-0a7729b623fb">
+		<ee:transform doc:name="Construct - Update concur user request payload" doc:id="ac92a2ab-cd8b-4ac5-9e9b-c08a25b56bf3">				
+				<ee:message>
+				</ee:message>
+			<ee:variables>
+				<ee:set-variable resource="dwl/concurEmployeeProfile/prepareConcurUpdateUserRequestPayload.dwl" variableName="concurUserRequestPayload" />
+			</ee:variables>
+			</ee:transform>
+		<logger level="INFO" doc:name="Log - Update concur user request payload" doc:id="abaa6f07-58a0-4f89-9f3f-4b491f106117" message="Update concur user request payload: #[vars.concurUserRequestPayload]" category="updateEmployeeProfileSubFlow" />
+		<try doc:name="Try" doc:id="91fb964c-2287-432d-8ce3-41638aadc647">
+					<http:request method="PATCH" doc:name="Call - Update Concur API" doc:id="f80e0513-878c-4fcf-b0cc-1e4a0dfac85b" config-ref="concurAPIHttpRequestConfig" path="${api.concur.userEndPoint}/{id}" target="concurUserResponsePayload">
+			<http:body ><![CDATA[#[vars.concurUserRequestPayload]]]></http:body>
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ (vars.bearerToken default ""),
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+					<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"id" : vars.getConcurUserResponse.Resources[0].id
+}]]]></http:uri-params>
+		
+</http:request>
+					<!-- [STUDIO:"Mocked - Call - Update Concur API"]<ee:transform doc:name="Mocked - Call - Update Concur API" doc:id="cf61c119-ca47-4d22-8c77-c5dfaded629a">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="concurUserResponsePayload"><![CDATA[%dw 2.0
+output application/json
+var userId =  uuid()
+var provisionId =  "00000000-0000-0000-0000-0000000" ++ (vars.employeeProfileDatabaseRecord.EMPID default "")
+&#45;&#45;-
+{
+    "meta": {
+        "resourceType": "User",
+        "created": now(),
+        "lastModified": now(),
+        "version": 0,
+        "location": "https://{datacenterURI}/profile/identity/v4/Users/" ++ userId,
+        "statusUrl": "https://{datacenterURI}/profile/v4/provisions/" ++ provisionId ++ "/status",
+        "provisionId": provisionId
+    },
+    "displayName": vars.concurUserRequestvars.concurUserRequestPayload.displayName default "",
+    "name": {
+        "middleInitial": vars.concurUserRequestvars.concurUserRequestPayload.name.middleInitial default "",
+        "middleName": vars.concurUserRequestPayload.name.middleInitial default "",
+        "formatted": vars.concurUserRequestPayload.name.middlefoformattedrmattedInitial default "",
+        "honorificPrefix": vars.concurUserRequestPayload.name.honorificPrefix default "",
+        "legalName": vars.concurUserRequestPayload.name.middleInitial default "",
+        "familyName": vars.concurUserRequestPayload.name.legalName default "",
+        "givenName": vars.concurUserRequestPayload.name.givenName default "",
+        "honorificSuffix": vars.concurUserRequestPayload.name.honorificSuffix default ""
+    },
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:sap:2.0:User"
+    &#93;,
+    "active": true,
+    "id": userId,
+    "emails": [
+        {
+            "value": vars.concurUserRequestPayload.emails[0&#93;.value,
+            "type": vars.concurUserRequestPayload.emails[0&#93;["type"&#93;,
+            "notifications": vars.concurUserRequestPayload.emails[0&#93;.notifications,
+            "verified": vars.concurUserRequestPayload.emails[0&#93;.verified
+        }
+    &#93;,
+    "userName": vars.concurUserRequestPayload.userName,
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+        "employeeNumber": vars.concurUserRequestPayload.employeeNumber,
+        "companyId": vars.concurUserRequestPayload.companyId
+    }
+}&#93;&#93;></ee:set-variable>
+				</ee:variables>
+			</ee:transform> [STUDIO] -->
+					<flow-ref doc:name="Call - captureRecordsSubmittedToConcurFlow" doc:id="2c9e4428-f15f-45ca-9c2a-ca559e7a8da2" name="captureRecordsSubmittedToConcurFlow" />
+			<error-handler>
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="88e55973-a891-415e-99c1-ec5ac6ea8276">
+							<logger level="ERROR" doc:name="Log - error" doc:id="12a58270-4eda-44a8-ad8a-f8fa55d61419" category="updateEmployeeProfileSubFlow" message="Exception occurred updating concur user (Employee profile): {empId: #[vars.employeeProfileDatabaseRecord.EMPID], feedRecordNumber: #[vars.employeeProfileDatabaseRecord.FEEDRECORDNUMBER], recordStatus: #[vars.employeeProfileDatabaseRecord.recordStatus]}. Type: #[error.errorType.identifier], description: #[error.errorMessage.payload]" />
+						</on-error-propagate>
+					</error-handler>
+				</try>
+	</sub-flow>
+	<flow name="performConcurOperationForEachFlow" doc:id="848a2535-d443-4d90-938a-48473ef978ac">
+		<foreach doc:name="For Each" doc:id="11057a2b-6a18-4a4b-b759-47dd775a6a4e" collection="#[vars.employeeProfileDatabaseRecords]">
+		<try doc:name="Try" doc:id="dbfcad15-6466-4faa-816a-c425e5628ca8">
+				<set-variable value="#[payload]" doc:name="Set - Concur employee profile database record" doc:id="88532a2e-979c-48d5-915a-1bfc4ec8602e" variableName="employeeProfileDatabaseRecord"/>
+				<flow-ref doc:name="Call - getAccessTokenFlow" doc:id="1d73d024-4afa-4e46-9a53-5c5c92bdbd5a" name="getAccessTokenFlow" target="bearerToken" />
+				<choice doc:name="Choice" doc:id="40fd3119-5d89-486c-b6ae-8e407dec6025">
+				<when expression='#[vars.employeeProfileDatabaseRecord.RECORD_STATUS == "CREATE"]'>
+					<flow-ref doc:name="Call - createOrUpdateEmployeeProfileFlow" doc:id="36c4785a-c532-459d-9089-c58b509cd2a1" name="createOrUpdateEmployeeProfileFlow" />
+				</when>
+				<when expression='#[(vars.employeeProfileDatabaseRecord.RECORD_STATUS == "UPDATE") or (vars.employeeProfileDatabaseRecord.RECORD_STATUS == "DELETE")]'>
+					<flow-ref doc:name="Call - updateEmployeeProfileFlow" doc:id="7e01960c-48dc-4fe8-b3f1-e4f16c522932" name="updateEmployeeProfileFlow" />
+				</when>
+				<otherwise>
+					<logger level="INFO" doc:name="Log - Invalid record status" doc:id="3f6e7c64-c7c5-4a83-9edb-5f4ded6854f2" message="Invalid employee database record status #[vars.employeeProfileDatabaseRecord.RECORD_STATUS]" category="performConcurOperationForEachFlow" />
+					
+				</otherwise>
+			</choice>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b3319b29-9905-4518-b5d3-e4411716f789">
+						<logger level="ERROR" doc:name="Log - error" doc:id="bea2a25f-806e-4f19-b588-550d68e55839" category="performConcurOperationForEachFlow" message="Exception occurred updating concur user (Employee profile): #[vars.employeeProfileDatabaseRecord]. Type: #[error.errorType.identifier], description: #[error.description]" />
+						<flow-ref doc:name="Call - captureFailedConcurUserRecordsFlow" doc:id="708341e7-7a7b-467f-b625-bd3b6ac75501" name="captureFailedConcurUserRecordsFlow" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+	</flow>
+	<flow name="processEmployeesProfileFlow" doc:id="17acd97e-711e-4656-9e89-159883d26c92">
+<logger level="INFO" doc:name="Log - start of concur employee processing" doc:id="6d8cc788-e030-40c4-af24-5db927e14748" message="START - Concur Employee Profile processing" category="processEmployeesProfileFlow" />
+		
+		<flow-ref doc:name="Call - fetchAllEmployeeProfileRecordsToProcessFlow" doc:id="b98e0513-76f3-4cef-bdb5-7b0964b4a65f" name="fetchAllEmployeeProfileRecordsToProcessFlow"/>
+		
+		<flow-ref doc:name="Call - performConcurOperationForEachFlow" doc:id="49447fe7-a722-4361-9540-ea21325fdd5f" name="performConcurOperationForEachFlow" />
+		<choice doc:name="Check for records for processing" doc:id="c58dc0e5-412f-4de0-bf7f-432108a13c58" >
+			<when expression="#[(not isEmpty(vars.recordsSubmittedToConcur)) or (not isEmpty(vars.failedRecords))]">
+				<tracing:with-correlation-id doc:name="With CorrelationID" doc:id="4679c1aa-1fe6-4750-9553-72c012140584" correlationId='#[correlationId ++ "-&lt;&lt;" ++ vars.configValues.employeeProfileProvisioningStatusProcessReference ++ "&gt;&gt;"]'>
+			<vm:publish queueName="provisioningRequestStatusQueue" doc:name="Publish to - manageProvisioningRequestStatusQueue" doc:id="3d128037-e1cd-46dc-aaea-8c8d89b30c3d" config-ref="VM_Config" sendCorrelationId="ALWAYS">
+				<vm:content><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"configValues": vars.configValues,
+	"processMetadata": vars.processMetadata,
+	"recordsSubmittedToConcur": vars.recordsSubmittedToConcur,
+	"failedRecords": vars.failedRecords
+}]]]></vm:content>
+			</vm:publish>
+		</tracing:with-correlation-id>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - no records to process" doc:id="47db6ac5-9192-4cc3-95f6-3fc1fc867e68" message="No records to process for provisioning request status" category="processEmployeesProfileFlow"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Set API response" doc:id="b921f7c5-ef46-4356-b21a-480f77ce3f25">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "message" : if(not isEmpty(vars.employeeProfileDatabaseRecords))"User provisioning process triggered for employee profiles" else "No Employee Records to Process"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[200]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<logger level="INFO" doc:name="Log - end of concur employee processing" doc:id="90b62cba-8880-40e7-b7da-4c4d47c285f5" message="END - Concur Employee Profile processing" category="processEmployeesProfileFlow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="739aa351-5e2b-47f7-b3e4-3a71321ab8ee">
+				<logger level="ERROR" doc:name="Log - error" doc:id="b13ac5c6-3a6c-41d3-8f93-3463b074f59c" category="processEmployeesProfileFlow" message="Exception occurred procissing employee profile request. Type: #[error.errorType.identifier], description: #[error.description]" />
+				<ee:transform doc:name="Set API response" doc:id="c5e7363a-19f0-4a45-8e27-0409858e895e">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "message" : 'Failed to processed employee profiles. Exception occurred. Type: ' ++ (error.errorType.identifier default '') ++ ', description: ' ++ (error.description default '')
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

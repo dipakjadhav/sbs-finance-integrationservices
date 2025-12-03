@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="getAccessTokenFlow" doc:id="a8c00bb2-8a36-4edd-b0ae-13a7cda85197">
+		<ee:transform doc:name="Initialize variables" doc:id="0e9e4013-63c7-4f10-b5a7-a7cde3055aa7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="category" ><![CDATA[vars.category default "generateConcurAccessToken"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call retrieve AuthToken from ObjectStore Flow" doc:id="9aafb4e4-323b-487a-b82c-4ce67fd00f35" name="retrieveAuthTokenFromObjectStoreFlow" />
+		<choice doc:name="Route based on previous AuthToken" doc:id="a3cd58c0-9d3d-4e7f-a3fc-3a4baef53c08">
+			<when expression="#[(not isEmpty(payload)) and (not isEmpty(payload.token))]">
+				<ee:transform doc:name="Extract authToken and Expiry timestamp" doc:id="b5ab8df9-0291-41d7-92f9-60005b254424">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="isAuthTokenExpired"><![CDATA[%dw 2.0
+output application/java
+var isTokenExpired = (tokenExpiryTimestamp) -> (now() as Number) > tokenExpiryTimestamp as Number default (now() as Number)
+---
+isTokenExpired(payload.token_expiry_unix_timestamp)
+]]></ee:set-variable>
+						<ee:set-variable variableName="authTokenString"><![CDATA[%dw 2.0
+output application/java
+---
+payload.token]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<choice doc:name="Route based on authToken expiry timestamp" doc:id="af60c9a9-1308-4a73-aad2-472bf238b72d">
+					<when expression="#[vars.isAuthTokenExpired == true]">
+						<flow-ref doc:name="Call get New AuthToken Flow" doc:id="fd763afb-29ee-410e-9a9f-cb0c61e15a4f" name="refreshTokenFlow" />
+						<set-variable value="Re-generated after previous token expired" doc:name="Set authToken source reference" doc:id="d105f1b2-a35c-43fa-8706-3f4f7a5438a1" variableName="authTokenSource"/>						
+					
+</when>
+					<otherwise>
+						<set-variable value="Retrieved from Object Store" doc:name="Set authToken source reference" doc:id="ef19d812-ad5b-47fa-9f52-8446391ff708" variableName="authTokenSource"/>
+					
+</otherwise>
+				</choice>
+			
+</when>
+			<otherwise>
+				<flow-ref doc:name="Call get New AuthToken Flow" doc:id="50d8e0ab-72fc-49c8-948f-e0005656528b" name="refreshTokenFlow" />
+				<set-variable value="Generated New" doc:name="Set authToken source reference" doc:id="cb719b4d-794b-404d-8bb4-08a40c5989f9" variableName="authTokenSource"/>
+			
+</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Log - access token generated" doc:id="e8013719-06ad-465a-987e-bdeeebce5b8e" message="&lt;&lt;#[(vars.category default '')]&gt;&gt; Access token generated:  #[%dw 2.0 import first, last from dw::core::Strings output application/json --- (vars.authTokenString first 5) ++ &quot;*****&quot; ++ (vars.authTokenString last 5)]. Expiry Time: #[payload.token_expiry_unix_timestamp as Number as DateTime], source: #[vars.authTokenSource]" category="getAccessTokenFlow" />
+		<set-payload value="#[vars.authTokenString]" doc:name="Set authTokenSource as Payload" doc:id="854e95c4-b983-41db-8b58-7c0a5044987f" />
+	
+</flow>
+	<sub-flow name="retrieveAuthTokenFromObjectStoreFlow" doc:id="68685f67-91c0-458e-a062-59db23198b36" >
+		<os:retrieve doc:name="Retrieve authToken" doc:id="6f3f4630-9b9a-4748-bdcf-fed58a541500" key="authTokenStoreKey" objectStore="ObjectStoreConfig" >
+			<os:default-value ><![CDATA[#[{}]]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="Transform authToken store key to Json Message" doc:id="f6dc1948-1704-4ef1-981a-01034fa548be">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+</sub-flow>
+	<sub-flow name="storeAuthTokenInObjectStoreFlow" doc:id="d0cdad4e-1a2d-4a1d-80d3-54aa9a0a2f96" >
+		<validation:is-true doc:name="Is authToken not empty" doc:id="58c7fea7-0261-4fe2-b989-68dec2815bf8" expression="#[(not isEmpty(payload)) and (not isEmpty(payload.access_token))]" />
+		<ee:transform doc:name="Transform to Object Store Key value" doc:id="978f039f-09ed-42fa-b376-eca1d6988095">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+// payload.expires_in is in seconds so expires_in to milliseconds - 5 minutes
+var duration = ((payload.expires_in as Number) * 1000) - 5*60*1000
+var toSec = (msec) -> (msec as Number default 0)/1000
+var toUnixTimestamp = (dateVal) -> dateVal as Number
+var fromUnixTimestamp = (uxtimestamp) -> uxtimestamp as DateTime
+---
+{
+	"token": payload.access_token default "",
+	"token_expiry_unix_timestamp": toUnixTimestamp(now() + ("PT$(toSec(duration))S" as Period)),
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="authTokenString" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.access_token default ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:store doc:name="Store authToken" doc:id="ed9dbf6e-deda-4201-a7db-e2a7bd31fbec" objectStore="ObjectStoreConfig" key="authTokenStoreKey" />
+	
+</sub-flow>
+	<sub-flow name="getNewAuthTokenFlow" doc:id="44f0a4c9-86a1-4c1e-befb-c53c42f7a273" >
+		<ee:transform doc:name="Set Payload" doc:id="67b0bd77-5a8c-4c2a-a634-0f4c8470cb37" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	'username': Mule::p('concur.auth.username'),
+	'password': Mule::p('secure::concur.auth.password'),
+	'grant_type': 'password',
+	'client_id': Mule::p('concur.auth.clientId'),
+	'client_secret': Mule::p('secure::concur.auth.clientSecret')
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Get Bearer Token (Call AuthToken REST API)" doc:id="07fc6e1a-5bc4-49a1-8769-17a86d6f16e5" config-ref="concurAPIHttpRequestConfig" path="${concur.auth.getAuthTokenURI}">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+		<logger level="DEBUG" doc:name="Log - AuthToken REST API response payload" doc:id="55579548-0e81-420a-beaa-1bf2bebfbfe0" message="&lt;&lt;#[(vars.category default '')]&gt;&gt; AuthToken REST API response payload : #[payload]" category="getNewAuthTokenFlow"/>
+		<flow-ref doc:name="Call store AuthToken in ObjectStore Flow" doc:id="fc811479-65e6-41f8-a365-57e1c666c2af" name="storeAuthTokenInObjectStoreFlow" />
+	
+</sub-flow>
+<sub-flow name="refreshTokenFlow" doc:id="a89bd254-021f-4db2-a093-3a7de429da20" >
+		<ee:transform doc:name="Set Payload" doc:id="68f0cea4-f732-4433-a32f-e4359c8e95aa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	"client_id": Mule::p('api.concur.clientId'),
+	"client_secret": Mule::p('secure::api.concur.clientSecret'),
+	"grant_type": Mule::p('api.concur.grantType'),
+	"refresh_token": Mule::p('secure::api.concur.refreshToken')
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Refresh Bearer Token (Call AuthToken REST API)" doc:id="18136b20-65f7-4370-b938-c2e0eca6288b" path="${api.concur.oautTokenEndPoint}" config-ref="concurAPIHttpRequestConfig">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+		<logger level="DEBUG" doc:name="Log - AuthToken REST API response payload" doc:id="eb3ab1dc-44dd-4c1d-a50b-48ef64c6055c" message="&lt;&lt;#[(vars.category default '')]&gt;&gt; AuthToken REST API response payload : #[payload]" category="refreshTokenFlow"/>
+		<flow-ref doc:name="Call store AuthToken in ObjectStore Flow" doc:id="7f97a42a-31f0-4018-aaf5-28ad0e9f3e63" name="storeAuthTokenInObjectStoreFlow" />
+	
+</sub-flow>
+</mule>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mule-sap-concur-connector="http://www.mulesoft.org/schema/mule/mule-sap-concur-connector"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mule-sap-concur-connector http://www.mulesoft.org/schema/mule/mule-sap-concur-connector/current/mule-mule-sap-concur-connector.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<flow name="projectMainFlow"
+		doc:id="595b76fe-c561-4331-a3c2-374d66c022a9">
+		<logger level="INFO" doc:name="Log - process start" doc:id="8c7fdec1-4e6a-4402-bcb8-b00fb47f79e8" message="#['START - project processing']" category="projectMainFlow" />
+		<choice doc:name="Check for Http method"
+			doc:id="3b9810fb-6afd-4716-acb1-3e83b4c3402c">
+			<when expression="#[attributes.method == 'GET']">
+				<flow-ref doc:name="Call - processProjectsFlow"
+					doc:id="06efef85-6432-4bd2-986e-8ed42adbdc6c"
+					name="processProjectsFlow" />
+			</when>
+			<when expression="#[attributes.method == 'POST']">
+				<set-variable value="CREATE"
+					doc:name="Set Operation Name"
+					doc:id="78443532-1143-4496-a500-629638bcea7a"
+					variableName="operationName" />
+				<flow-ref doc:name="Call - performOperationOnProjectFlow"
+					doc:id="b0198266-0dc9-4357-ad1c-e0debe3c7d76"
+					name="performOperationOnProjectFlow" />
+			</when>
+			<when expression="#[attributes.method == 'DELETE']">
+				<set-variable value="DELETE"
+					doc:name="Set Operation Name"
+					doc:id="53e324c3-be9b-4f97-b0df-54ad7cf184c4"
+					variableName="operationName" />
+				<flow-ref doc:name="Call - performOperationOnProjectFlow"
+					doc:id="065e4858-ae3c-4cdf-812e-f7a03ea0c45f"
+					name="performOperationOnProjectFlow" />
+			</when>
+			<otherwise>
+				<raise-error doc:name="Raise error"
+					doc:id="83eaf8e6-442b-40d1-8223-24f2e8953387"
+					type="CUSTOM:CUSTOM_ERROR"
+					description="Unsupported HTTP Method: #[attributes.method]" />
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Log - process completed" doc:id="27c39c62-3b20-4ca8-95e9-f524c7c83eb9" message="#['END - project processing']" category="projectMainFlow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true"
+				logException="true" doc:name="On Error Propagate"
+				doc:id="79aea30a-6c36-44cf-b7fa-2b99915f1423">
+				<flow-ref doc:name="Call - commonExceptionSubflow"
+					doc:id="8f277475-dff8-4be8-8430-775925f3007a"
+					name="commonExceptionSubflow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="processProjectsFlow"
+		doc:id="4989c7db-97a3-4ebe-b0bb-980f39e8c88c">
+		<flow-ref doc:name="Call - getProjectNameRecords"
+			doc:id="12c4c351-7ace-4237-813c-cf1bed97ab3a"
+			name="getProjectNameRecords" />
+		<set-variable
+			value='/projects'
+			doc:name="Set Request Path"
+			doc:id="bf45d570-ce14-4256-8dcf-8e679edbedd9"
+			variableName="requestPath" />
+		<flow-ref doc:name="Call - processListFlow"
+			doc:id="78398d8f-367a-407f-8042-7c6d88ecc505" name="processListFlow" />
+	</flow>
+	<flow name="performOperationOnProjectFlow"
+		doc:id="9b3cd099-11fb-4af3-90c3-a87ef3b88c29">
+		<ee:transform doc:name="Initialize flow variables"
+			doc:id="1c5022be-e765-4049-8403-ef4ad7c0cbbb">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable
+					variableName="successfullyProcessedRecords"><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="failedRecords"><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="initVars" ><![CDATA[%dw 2.0
+output application/java
+var listItem = "projectName"
+var listItemId = "concur.lists." ++ listItem
+var coAId = Mule::p(listItemId)
+---
+{
+	listItem: listItem,
+	listItemId: listItemId,
+	coAId: coAId
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - fetchAllProjectRecordsByOperationNameFlow" doc:id="aa938445-44fd-4ba3-a6a0-c0c37876c405" name="fetchAllProjectRecordsByOperationNameFlow" />
+		<flow-ref doc:name="Call - performOperationOnListOfProjectRecordsFlow" doc:id="2bd08a0f-6ebf-4400-a439-2d4d8a008a1d" name="performOperationOnListOfProjectRecordsFlow" />
+		<set-payload value="#[vars.responseStatus]"
+			doc:name="Set Payload" doc:id="6ef3f702-f836-409d-85b9-15abe5618c6f" />
+	</flow>
+	<flow name="performOperationOnListOfProjectRecordsFlow"
+		doc:id="56f2557a-291e-42ed-9e6c-7938d6b21649">
+		<choice doc:name="Check for Create CoA Records"
+			doc:id="53a07aa4-d89b-47ac-9a20-b21a3508e5fc">
+			<when expression="#[not isEmpty(payload)]">
+				<foreach doc:name="For Each"
+					doc:id="a8251735-56d1-4d6e-b6c7-4b3497fb90df"
+					collection="#[payload]">
+					<flow-ref doc:name="Call - performOperationOnProjectListItemFlow" doc:id="24e88f0f-6839-440a-badc-3ddd53f08ca1" name="performOperationOnProjectListItemFlow" />
+				</foreach>
+				<flow-ref doc:name="Call - handleEmailNotificationFlow"
+					doc:id="4bd06a0a-d50b-48e3-8c3d-d2d85593b420"
+					name="handleProjectEmailNotificationFlow" />
+				<set-variable
+					value="#[output application/json &#10;---&#10;{ &#10;	message: 'Successfully Processed ' ++ (sizeOf(vars.successfullyProcessedRecords default [])) ++ ' out of ' ++ (sizeOf(vars.successfullyProcessedRecords default []) + sizeOf(vars.failedRecords default [])) ++ ' record(s) for listId =' ++ (vars.initVars.listId default '')&#10;}]"
+					doc:name="Set Success Response Status"
+					doc:id="5628a08d-e11c-4a5a-9c7b-198745f784d8"
+					variableName="responseStatus" />
+			</when>
+			<otherwise>
+				<set-variable
+					value="#[output application/json &#10;---&#10;{&#10;	message: 'No matching records found for ' ++ (vars.operationName default '')&#10;}]"
+					doc:name="Set Response Status"
+					doc:id="266d8202-4bb0-4970-888d-056415abd7cd"
+					variableName="responseStatus" />
+				<logger level="INFO" doc:name="Log - no records to process" doc:id="bd4b8d63-eea7-43d4-ac53-9feeb45be688" message="#['No records to process for coaName: ' ++ (attributes.queryParams.coAName as String)]" category="performOperationOnListOfProjectRecordsFlow" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="performOperationOnProjectListItemFlow"
+		doc:id="54e413aa-89ec-485d-b27b-2ab3e754fa39">
+		<ee:transform doc:name="Map receivedRecord" doc:id="42869209-8595-4a77-99a8-dbfd7084d3de">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="requestPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"listId": vars.initVars.coAId,
+	"parentCode": null,
+	"shortCode": payload.PROJECT,
+	"code": payload.PROJECT,
+	"value": payload.PROJ_NAME
+}]]></ee:set-variable>
+				<ee:set-variable variableName="receivedRecord" ><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - getAccessTokenFlow" doc:id="926d60e5-43ab-4d0f-beba-a2c2f1e87989" name="getAccessTokenFlow" target="bearerToken" />
+		<choice doc:name="Check for operationName"
+			doc:id="13f34f18-cd89-451f-9f3f-5acd57c2d12c">
+			<when expression="#[vars.operationName == 'CREATE']">
+				<flow-ref doc:name="Call - createListItemFlow" doc:id="fa470497-667c-4cc5-95dd-b085e1e6036d" name="createListItemFlow" />
+			</when>
+			<when expression="#[vars.operationName == 'DELETE']">
+				<flow-ref doc:name="Call - deleteListItemFlow" doc:id="2c4378c6-0151-4fa1-9b34-ffb001326351" name="deleteListItemFlow" />
+			</when>
+			<otherwise>
+				<raise-error doc:name="Raise error"
+					doc:id="499491d4-978e-4d63-9c28-c2909ee8ed7c"
+					type="CUSTOM:CUSTOM_ERROR"
+					description="Invalid operationName: #[vars.operationName]" />
+			</otherwise>
+		</choice>
+		
+		<flow-ref doc:name="Call - updateProjectRecordStatusFlow" doc:id="31f693dc-39cd-40c8-8b7a-13ba98e3f862" name="updateProjectRecordStatusFlow"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f20b37fb-d5ea-423f-ada0-c7502a12ebba" >
+				
+				<logger level="ERROR" doc:name="Log - error" doc:id="ab66df75-488a-4528-a248-c6a82c05efa3" category="performOperationOnProjectListItemFlow" message="&lt;&lt;#[vars.category]&gt;&gt; Exception occurred processing concur listItem. Type: #[error.errorType.identifier], description: #[error.description]" />
+				<flow-ref doc:name="Call - map Concur Error Message Flow" doc:id="db3628dc-166c-434d-807c-5cf4f114d6db" name="mapConcurErrorMessageFlow"/>
+				<flow-ref doc:name="Call - captureFailedConcurListItemRecordsFlow" doc:id="2dec2068-b61d-4097-a56a-e8faa9eb63a9" name="captureFailedConcurListItemRecordsFlow" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="handleProjectEmailNotificationFlow"
+		doc:id="d4f770ff-8a9b-4dd0-a888-e314531b23e9">
+		<ee:transform doc:name="Prepare Table Content" doc:id="c5adffb7-3cee-4850-bb1c-af215cb11a49">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="successTableContent"><![CDATA[%dw 2.0
+output text/plain
+var tableHead = "<THEAD><TH>PROJECT</TH><TH>PROJECT NAME</TH></THEAD>"
+var tableBody = ["<TBODY>",
+(vars.processedRecords default []) map ((record) -> ["<TR><TD>", record.PROJECT, "</TD><TD>", record.PROJ_NAME, " </TD></TR> "] joinBy "") joinBy "", "</TBODY>"] joinBy  ""
+var tableHtml = "<TABLE border = 1>"  ++ (tableHead default "") ++ (tableBody default "") ++ "</TABLE>"
+
+---
+if(not isEmpty(vars.processedRecords)) tableHtml else ""]]></ee:set-variable>
+				<ee:set-variable variableName="failureTableContent"><![CDATA[%dw 2.0
+output text/plain
+var tableHead = "<THEAD><TH>PROJECT</TH><TH>PROJECT NAME</TH><TH>ERROR MESSAGE</TH></THEAD>"
+var tableBody = ["<TBODY>",
+(vars.failedRecords default []) map ((record) -> 
+	["<TR><TD>", record.request.PROJECT, "</TD><TD>", record.request.PROJ_NAME, "</TD><TD> ", 
+	record.response.errorType, "=", record.response.errorMessage, "</TD></TR>"
+] joinBy "") joinBy " ", "</TBODY>"] joinBy  ""
+var tableHtml = "<TABLE border = 1>"  ++ (tableHead default "") ++ (tableBody default "") ++ "</TABLE>"
+---
+if(not isEmpty(vars.failedRecords)) tableHtml else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Prepare Email Body HTML Content" doc:id="6cab1727-2ffb-4edd-9a4e-9f1beb2d2b98" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json
+var subject= Mule::p('concurChartOfAccountEmailNotification.processProjectsStatusSubject')
+var successTableSummary = "<H3>Successfully processed records are:</H3>"
+var successContent = if(not isEmpty(vars.successTableContent)) ([successTableSummary, "<BR />", vars.successTableContent, "<BR />"] joinBy "") else ""
+var failureTableSummary ="<H3>Failed records are:</H3>"
+var failureContent = if(not isEmpty(vars.failureTableContent)) ([failureTableSummary, "<BR />", vars.failureTableContent, "<BR />"] joinBy "") else ""
+var	contentType = "text/html"
+---
+{
+	subject: subject,
+	body:	["<H2>", subject, "</H2>", "<BR /><BR />", successContent, failureContent] joinBy "" ,
+	contentType: contentType
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<vm:publish doc:name="Publish to sendConcurChartOfAccountEmailNotificationQueue" doc:id="2b793937-ce21-47c5-96cd-3feab78c644b" config-ref="VM_Config" queueName="sendConcurChartOfAccountEmailNotificationQueue" sendCorrelationId="AUTO">
+				</vm:publish>
+	</flow>
+	</mule>

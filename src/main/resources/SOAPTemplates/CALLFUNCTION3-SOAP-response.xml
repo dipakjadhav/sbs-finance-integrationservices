@@ -1,0 +1,10 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tns="urn:uniface:applic:services:EV397_AURION_WS" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+   <soapenv:Body>
+      <tns:CALLFUNCTION3>
+         <return xsi:type="xsd:int">0</return>
+         <P_OUTPUT xsi:type="xsd:string" xsi:nil="true"/>
+         <P_MESSAGE xsi:type="xsd:string" xsi:nil="true"/>
+         <P_STATUS xsi:type="xsd:decimal">0</P_STATUS>
+      </tns:CALLFUNCTION3>
+   </soapenv:Body>
+</soapenv:Envelope>

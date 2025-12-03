@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<flow name="processListFlow" doc:id="00cf47e0-f38c-4a64-8fa1-4f0f3da8927d" >
+		<choice doc:name="Check For Number Of Records" doc:id="86de90b4-0fca-40fa-8519-ffba0e99511f" >
+			<when expression="#[not isEmpty(payload)]">
+				<foreach doc:name="For Each" doc:id="cf4d63de-35bd-41f5-b096-087b3ad560ee">
+					<flow-ref doc:name="Call - callConcurApiFlow" doc:id="b71bc887-5f79-4763-94db-9a6652780ee4" name="callConcurApiFlow" />
+				</foreach>
+				<ee:transform doc:name="Set Response" doc:id="0992dc81-4ef8-4528-9a66-5bbb9d405976" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: 'Successfully Completed Processing Operation(s)'
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+200]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - processing completed " doc:id="67fae4ce-90ce-4be8-b2c3-db42bffccb58" message="#['Successfully Completed Processing Operation(s)']" category="processListFlow" />
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Set Response" doc:id="86af6867-ae8e-4673-9e1b-afc4933ade5c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: 'No Records Found To Process'
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+200]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log - no records found to process" doc:id="3161984a-b611-4e9c-95ea-8d52c8fdc500" category="processListFlow" message="#['No Records Found To Process']"/>
+			</otherwise>
+		</choice>
+	</flow>
+		<flow name="callConcurApiFlow" doc:id="8c084fb5-a6ee-4c94-a98b-d918572f8ea9">
+		<ee:transform doc:name="Set Request Path And Request Method" doc:id="1a7cf2fe-b19b-4e24-85fc-bd2091dbf9e3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="requestMethod" ><![CDATA[%dw 2.0
+output application/java
+---
+if ( lower(payload.RECORD_STATUS) == "create" ) "POST" else if ( lower(payload.RECORD_STATUS) == "update" ) "PUT" else upper(payload.RECORD_STATUS)]]></ee:set-variable>
+				<ee:set-variable variableName="requestRecord" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="#[vars.requestMethod]" doc:name="Call - Process Concur Request  API" doc:id="0521b04c-15bc-4a07-8f16-ab06d2efff28" path="#['/concur' ++ (vars.requestPath default &quot;&quot;)]" config-ref="internal_http_request_configuration" responseTimeout="300000">
+			<http:body ><![CDATA[#[{}]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"apiKey" : Mule::p('secure::sbsapi.key')
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"coAName" : vars.requestRecord.SEGMENT_NAME
+}]]]></http:query-params>
+		</http:request>
+		<set-payload value="#[output application/json &#10;---&#10;{&#10;	message: 'Successfully Completed Processing Operation'&#10;}]" doc:name="Set Response" doc:id="cc716123-70ab-4938-9ed5-b57f57cb2910" />
+		<logger level="INFO" doc:name="Log - Success" doc:id="3f966a33-e713-4e35-ab82-93bfbef703b5" message="Processed  #[vars.requestRecord.RECORD_STATUS ] - operation for COA - #[ vars.requestRecord.SEGMENT_NAME ]" category="callConcurApiFlow"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2651dc8b-0d70-4776-898e-d289eb1342e1" >
+				<logger level="ERROR" doc:name="Log - error" doc:id="3291b1cb-fdd6-4bcb-87a0-03bce54d2068" message="#[%dw 2.0&#10;output text/plain&#10;---&#10;'Error calling API ' ++ (vars.requestMethod default '') ++ ' - ' ++ (vars.requestPath default &quot;&quot;) ++ ' with payload: ' ++ write(payload, &quot;application/json&quot;)]" category="callConcurApiFlow"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="mapConcurErrorMessageFlow" doc:id="cce93de2-c0bd-451a-be8a-95b835437de6" >
+	<ee:transform doc:name="Prepare error payload" doc:id="a5cf9a29-dc9d-4355-afe2-ef7e9c3adb2e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json  
+---
+if (error.errorType.namespace == "HTTP" and error.errorType.identifier == "BAD_REQUEST")
+  {
+    "errorType": 
+      if (isEmpty(error.errorType) or isEmpty(error.errorType.asString))
+        "Not available"
+      else
+        error.errorType.asString,
+    "errorMessage": ((error.muleMessage.attributes.statusCode default '') ++ "," ++ (error.muleMessage.payload.Message default ''))
+  }
+else
+  {
+    "errorType": 
+      if (isEmpty(error.errorType) or isEmpty(error.errorType.asString))
+        "Not available"
+      else
+        error.errorType.asString,
+    "errorMessage": 
+      if (isEmpty(error.description))
+        "Not available"
+      else
+        error.description
+  }]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</flow>
+	<sub-flow name="captureProcessedConcurListItemRecordsFlow" doc:id="4f2a1f14-3f4f-445f-bb52-aa6e6b70fa0c" >
+		<logger level="INFO" doc:name="Log - Record processed successfully" doc:id="451ef596-a3bc-4e07-b2c1-1462f47643ce" message='Record processed successfully #[vars.receivedRecord]' category="captureProcessedConcurListItemRecordsFlow" />
+		<ee:transform doc:name="Process Successful Records" doc:id="3ecddac9-9e85-4450-8ebf-f92706fafdc1">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+					<ee:set-variable variableName="processedRecords"><![CDATA[%dw 2.0
+output application/java
+---
+(vars.processedRecords default [])<< vars.receivedRecord]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+	</sub-flow>
+	<sub-flow name="captureFailedConcurListItemRecordsFlow" doc:id="421506f7-801a-4099-8344-1dcb96da8b7f" >
+		<logger level="INFO" doc:name="Log - Failed to process a record" doc:id="7761e89a-3605-4440-ae1b-ea83274035a3" message='Failed to process a record #[vars.receivedRecord]' category="captureFailedConcurUserRecordsFlow"/>
+		<ee:transform doc:name="Process Failed Records" doc:id="5388e322-e9b9-44d6-8d28-92a76781e142">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="failedRecords"><![CDATA[%dw 2.0
+output application/java
+var errorResponse = if(sizeOf(vars.getConcurListItemResponse.content) == 0)  {errorType: 'Missing Record', errorMessage: "ListItem not found on Concur"} else {errorType: 'Error', errorMessage: error.errorMessage.payload.error.message}
+var record = { request: vars.receivedRecord, response: errorResponse }
+---
+(vars.failedRecords default []) ++ [record]]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+	</sub-flow>
+</mule>

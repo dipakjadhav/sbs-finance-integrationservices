@@ -1,0 +1,42 @@
+[
+  {
+    "CONTENT_NAME": "PERSONALLY SPEAKING SERIES 1",
+    "DEAL_CODE": "900479",
+    "CONTENT_ID": "S126819",
+    "T_SGENRE_ID": 2394,
+    "TITLE_AKA": null,
+    "DEAL_AKA": null,
+    "T_SGENRE": "Current Affairs",
+    "T_PGENRE": "News And Current Affairs",
+    "BUDGET_INFO": "INTERNAL PRODUCTION",
+    "SUB_TYPE_CODE": null,
+    "SUB_TYPE": null,
+    "DEAL_NAME": "Personally Speaking Series 1",
+    "BUDGET_INFO_CODE": "C11300",
+    "T_PGENRE_ID": 2363,
+    "BUS_UNIT": "[2075]SBS Production",
+    "CONTRACT_REFERENCE": "CN [RR]",
+    "DEAL_ID": 12949,
+    "D_APPRV": "Prod Complete"
+  },
+  {
+    "CONTENT_NAME": "FOOTY CHICKS",
+    "DEAL_CODE": "110245",
+    "CONTENT_ID": "T133942",
+    "T_SGENRE_ID": 546,
+    "TITLE_AKA": "Footy Chicks",
+    "DEAL_AKA": "Footy Chicks",
+    "T_SGENRE": "Documentaries One Off",
+    "T_PGENRE": "Factual",
+    "BUDGET_INFO": "COMMISSIONED",
+    "SUB_TYPE_CODE": null,
+    "SUB_TYPE": null,
+    "DEAL_NAME": "Footy Chicks",
+    "BUDGET_INFO_CODE": "C12500",
+    "T_PGENRE_ID": 523,
+    "BUS_UNIT": "[2076]Commissioned Content",
+    "CONTRACT_REFERENCE": "IN194",
+    "DEAL_ID": 80553,
+    "D_APPRV": "SBSI Complete"
+  }
+]

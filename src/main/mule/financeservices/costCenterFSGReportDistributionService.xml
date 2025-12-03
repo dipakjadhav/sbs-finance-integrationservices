@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:smb="http://www.mulesoft.org/schema/mule/smb"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/smb http://www.mulesoft.org/schema/mule/smb/current/mule-smb.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<flow name="copyFsgReportFileFlow" doc:id="a540fe30-707e-4b15-bb26-6c3e5e27b7d9" >
+		<foreach doc:name="Read and copy file one by one" doc:id="55356e77-a2fc-4906-8fde-a5070684c999" collection="#[vars.configurations]">
+				<try doc:name="Try" doc:id="3ebea497-7e58-447d-bc3c-c6c16287e756">
+					<set-variable value="#[payload]" doc:name="Set config" doc:id="1e4b67d2-cc00-4176-a311-b94fab17f570" variableName="config" />
+					<ftp:read doc:name="Read from source path" doc:id="ab17b809-1288-4c67-98ee-28d46176a8ae" config-ref="oracle-ftp-config" path="#[vars.config.sourceFileAbsolutePath]" />
+				<choice doc:name="Choose connector type" doc:id="fcf85653-5323-46f7-9755-49f0e3e80062">
+					<when expression="#[Mule::p('smb.useJavaComponent')]">
+						<java:new constructor="SMBFileHandlerMS()" doc:name="Create new instance of SMBFileHandlerMS" doc:id="26f44632-9701-4d8f-ac7e-6e1389b607b0" class="com.sbs.util.SMBFileHandlerMS" target="smbFileHandlerMSObj" />
+						<java:invoke method="writeToSMB(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.io.InputStream)" doc:name="Invoking method - writeToSMB" doc:id="29ad404e-d293-4ab4-86cb-31df2f5caaba" instance="#[vars.smbFileHandlerMSObj]" class="com.sbs.util.SMBFileHandlerMS">
+							<java:args><![CDATA[#[{ arg0: Mule::p('smb.oracle.host'), arg1: Mule::p('smb.oracle.sharedDirectory'), arg2: Mule::p('smb.oracle.username'), arg3: Mule::p('secure::smb.oracle.password'), arg4: Mule::p('smb.oracle.domain'), arg5: ((vars.config.targetDirectory default "") ++ "/" ++ (vars.config.reportFileName default "")), arg6: payload }]]]></java:args>
+						</java:invoke>
+					</when>
+					<otherwise>
+						<smb:file-write doc:name="Write report file to target directory" doc:id="cde84c97-003b-4621-9416-30d8f6bf8d97" config-ref="SMB_Connector_Config-CostCenter" fileName='#[vars.config.reportFileName default ""]' dirName='#[vars.config.targetDirectory default ""]'>
+				<reconnect frequency="120000" count="5" blocking="false" />
+			</smb:file-write>
+					</otherwise>
+				</choice>
+				<ftp:delete doc:name="Delete source file" doc:id="40d1ef6d-6443-4197-ac9f-41a57fc6014a" config-ref="oracle-ftp-config" path="#[vars.config.sourceFileAbsolutePath]" />
+					<logger level="INFO" doc:name="Log - done processing/downloading report file" doc:id="e0bedbb2-585e-4af2-8726-443841803324" message='#[%dw 2.0&#10;output application/json&#10;---&#10;(vars.counter default 0) ++ ") Done processing/downloading report file " ++ (vars.config.sourceFileAbsolutePath default "") ++ " to " ++ (vars.config.targetDirectory default "")]' category="copyFsgReportFileFlow" />
+				<error-handler>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ee971be0-1908-40a4-aebb-a53bff516311">
+							<logger level="ERROR" doc:name="Log - exception occured" doc:id="7dc0b824-f12b-45e7-9659-0e4e4aaa40f0" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.config]" category="copyFsgReportFileFlow" />
+							<ee:transform doc:name="Capture failed files" doc:id="f07d3b82-62ac-4ebe-8abf-54884dc68ffc">
+								<ee:message />
+								<ee:variables>
+									<ee:set-variable variableName="failedFiles"><![CDATA[%dw 2.0
+output application/json
+---
+(vars.failedFiles default []) << vars.config.sourceFileAbsolutePath]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</foreach>
+	</flow>
+	<flow name="getListOfFSGReportTargetDirectoriesFlow" doc:id="03d944d7-479a-4b36-8f34-37e1bbeaa05b" >
+		<try doc:name="Try" doc:id="f4cde6b6-0418-49fb-bb54-fcf3f04902f5" >
+			<choice doc:name="Choose Connector Type" doc:id="0891cc55-e536-4498-bd8d-22550c07fd21">
+				<when expression="#[Mule::p('smb.useJavaComponent')]">
+					<java:new constructor="SMBFileHandlerMS()" doc:name="Create new instance of SMBFileHandlerMS" doc:id="71a6d356-7a8c-400d-b4bb-2ed658784ad6" class="com.sbs.util.SMBFileHandlerMS" target="smbFileHandlerMSObj" />
+					<java:invoke method="listFiles(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)" doc:name="Invoke method - listFiles" doc:id="1efbeca7-f24a-4903-8930-a025a418d115" instance="#[vars.smbFileHandlerMSObj]" class="com.sbs.util.SMBFileHandlerMS">
+						<java:args><![CDATA[#[{ arg0: Mule::p('smb.oracle.host'), arg1: Mule::p('smb.oracle.sharedDirectory'), arg2: Mule::p('smb.oracle.username'), arg3: Mule::p('secure::smb.oracle.password'), arg4: Mule::p('smb.oracle.domain'), arg5: Mule::p('costCenterFSGReport.target.workingDirectory') }]]]></java:args>
+					</java:invoke>
+					<logger level="INFO" doc:name="Log - After SMB List" doc:id="af6a7856-1d91-4048-96ca-b22f828bae59" message="After SMB List" category="getListOfFSGReportTargetDirectoriesFlow" />
+					<ee:transform doc:name="Set targetDirectories" doc:id="cfac440e-e27c-463f-8c5a-08d19682e569">
+						<ee:message />
+						<ee:variables>
+							<ee:set-variable variableName="targetDirectories"><![CDATA[%dw 2.0
+output application/json
+---
+payload default []]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<otherwise>
+					<smb:directory-list doc:name="Find target directories" doc:id="3a306f7f-ee79-4598-b256-11e6a912926f" config-ref="SMB_Connector_Config-CostCenter" dirName="${costCenterFSGReport.target.workingDirectory}" wildcard="*">
+			<reconnect frequency="120000" count="5" blocking="false" />
+		</smb:directory-list>
+					<logger level="INFO" doc:name="Log - After SMB List" doc:id="0e0f07af-95d4-425d-b3f2-1a513006081b" message="After SMB List" category="getListOfFSGReportTargetDirectoriesFlow" />
+					<ee:transform doc:name="Set targetDirectories" doc:id="0b40b364-822b-4a90-9c3d-0def1b7a3ed5" >
+						<ee:message />
+						<ee:variables >
+							<ee:set-variable variableName="targetDirectories" ><![CDATA[%dw 2.0
+output application/json
+---
+(payload default []).Filename]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</otherwise>
+			</choice>
+			<logger level="INFO" doc:name="Log - number of directories found" doc:id="512fe651-1b68-413e-bfc0-0cfb2dfc674b" message="Found #[sizeOf(vars.targetDirectories)] target directories" category="getListOfAccountAnalysisReportTargetDirectoriesFlow" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="059042d1-7298-4320-bb40-33e959643bd7" >
+					<logger level="ERROR" doc:name="Log - exception occured" doc:id="1449d391-4cdc-4d08-afad-697c068c69d4" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.configMapItem.basePath]" category="getListOfFSGReportTargetDirectoriesFlow" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="getListOfFSGSourceFilesFlow" doc:id="30a623e1-1be0-4f2e-aa72-459b08b5bf65" >
+		<try doc:name="Try" doc:id="f02fe2f0-ed68-49c7-bd34-33f7362db096" >
+			<ftp:list doc:name="List files from source directory" doc:id="110f8c6a-4b93-42e9-a6a4-424c6b2f2eac" config-ref="oracle-ftp-config" directoryPath="${costCenterFSGReport.source.workingDirectory}">
+			<reconnect frequency="120000" count="5" blocking="false" />
+			<ftp:matcher directories="EXCLUDE" symLinks="EXCLUDE" />
+		</ftp:list>
+			<ee:transform doc:name="Extract file details" doc:id="e2b5bcb8-90db-4621-b741-7201a2f1cb9b">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="sourceFiles"><![CDATA[%dw 2.0
+output application/json
+---
+(payload map((item, index)-> { name: item.attributes.name, path: item.attributes.path }))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<logger level="INFO" doc:name="Log - number of directories found" doc:id="8147414c-d409-487f-9a0f-83735a2a21d6" message="Found #[sizeOf(vars.sourceFiles)] source files" category="getListOfFSGSourceFilesFlow" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b13b00a7-5fe3-4809-899e-af6cb6d3fe03" >
+					<logger level="ERROR" doc:name="Log - exception occured" doc:id="b5937180-2249-456b-b82d-20f66aa0f603" message="Exception occurred. Type: #[error.errorType.identifier], message: #[error.description] for #[vars.configMapItem.basePath]" category="getListOfFSGSourceFilesFlow" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="processFsgReportRecordsFlow" doc:id="ca867c0a-b182-4ac8-9731-749a0d2e5b65" >
+		<vm:listener doc:name="Listen - process cost center fsg report distribution queue" doc:id="0500e9e1-bc55-4425-888e-21c983dab865" config-ref="VM_Config" queueName="processCostCenterFSGReportDistributionQueue"/>
+		<set-variable value="#[payload]" doc:name="Set configuration values" doc:id="645f4edd-7146-406a-8557-2848e3886dcb" variableName="configurations"/>
+		<ee:transform doc:name="Initialize process variables" doc:id="49cfd570-84ff-49d2-9145-d9f20e6b8b08">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="processStartDateTime" ><![CDATA[%dw 2.0
+output application/json
+---
+now() as String {format:'dd-MM-yyyy HH:mm:ss'}]]></ee:set-variable>
+				<ee:set-variable variableName="failedFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="totalNumberOfFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+0]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - getListOfFSGSourceFilesFlow" doc:id="fe8721c5-e635-4728-9b57-691bec02ad94" name="getListOfFSGSourceFilesFlow"/>
+		<flow-ref doc:name="Call - getListOfFSGReportTargetDirectoriesFlow" doc:id="d2c309cc-48d0-4b2a-b0cb-8166b1773a95" name="getListOfFSGReportTargetDirectoriesFlow"/>
+		<ee:transform doc:name="Map source file paths ad taregt directories" doc:id="d4030c25-899c-424b-978d-5257423aa4f7">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="configurations" ><![CDATA[%dw 2.0
+output application/json
+var targetWorkingDirectory = Mule::p('costCenterFSGReport.target.workingDirectory')
+
+fun findTargetDirectory(reportPath) = do {
+    var matchedDirectory = vars.targetDirectories filter ((item, index) -> item contains  reportPath)
+    ---
+    targetWorkingDirectory ++ if(not isEmpty(matchedDirectory)) matchedDirectory[0] else "dump"
+}
+
+fun findSourceFile(reportFileName) = do {
+var matchedFiles = vars.sourceFiles filter ((sourceFile) -> lower(trim(sourceFile.path)) contains lower(trim(reportFileName)))
+---
+if(not isEmpty(matchedFiles)) matchedFiles[0] else null
+}
+
+fun mapSourceFiles(config) = do{
+    var sourceFile = findSourceFile(config.reportFileName)
+    var targetDirectory = findTargetDirectory(config.reportPath)
+---
+	{
+		"reportFileName": sourceFile.name,
+        "reportPath": config.reportPath,
+		"sourceFileAbsolutePath": sourceFile.path,
+		"targetDirectory": targetDirectory
+	}
+}
+---
+vars.configurations map ((config, index) -> mapSourceFiles(config)) filter ((item, index) -> not isEmpty(item.sourceFileAbsolutePath))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - copyFsgReportFileFlow" doc:id="f3480a5d-d041-462a-9665-22ace7dc4e34" name="copyFsgReportFileFlow"/>
+		<ee:transform doc:name="Set process end time" doc:id="f39bb46c-9a95-4385-84b8-13612a06d42a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="totalNumberOfFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+sizeOf(vars.configurations)]]></ee:set-variable>
+				<ee:set-variable variableName="processEndDateTime" ><![CDATA[now() as String { format:'dd-MM-yyyy HH:mm:ss' }]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call - sendCostCenterFsgReportEmailNotificationFlow" doc:id="baa08ab4-6198-4358-bc99-37a7334ae475" name="sendCostCenterFsgReportEmailNotificationFlow"/>
+		<logger level="INFO" doc:name="Log - Process Completed Successfully" doc:id="36995d2f-e6a1-4d56-8b23-d0775cd763f1" message="Process Completed Successfully" category="processRecordsFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b10cf3c8-c76e-4232-bd39-2eaeef1e9744" >
+				<logger level="ERROR" doc:name="Log - error occurred" doc:id="eb7a5e69-45aa-4304-936e-fd06ae133932" message="Exception occurred: #[error.description]" category="processFsgReportRecordsFlow" />
+				<raise-error doc:name="Raise error" doc:id="2566db22-474f-4472-93b8-6f3146d92382" type="CUSTOM:BAD_REQUEST" description="Failed to process request" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="fsgReportDistributionMainFlow" doc:id="b5f9fa3b-a3fb-4bc3-bd4e-d270855cc985" >
+		<logger level="INFO" doc:name="Log - request received" doc:id="d0c45aff-e749-4d52-b46f-2a744bf36ca9" message="Request received" category="fsgReportDistributionMainFlow"/>
+		<flow-ref doc:name="Call - getFsgReportConfigFlow" doc:id="00faee2b-5ce7-4f9c-88d3-21b8bfe98817" name="getFsgReportConfigFlow" />
+		<choice doc:name="Is there any record found to process?" doc:id="a7ee5097-c8d5-4f44-8efc-7eb2ed072e09" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<vm:publish doc:name="Publish- process cost center fsg report distribution queue" doc:id="99ac6326-faaa-4415-a5f6-56dabf014249" config-ref="VM_Config" queueName="processCostCenterFSGReportDistributionQueue" />
+				<logger level="INFO" doc:name="Log - FSG Report Distribution Process Triggered" doc:id="d9a1ff83-281e-425a-a34e-76d98dfab03d" message="FSG Report Distribution Process Triggered" category="fsgReportDistributionMainFlow"/>
+				<ee:transform doc:name="Set API response" doc:id="11365b9f-4611-4ebd-8af2-3f6ce45bb578">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"FSG Report Distribution Process Triggered"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log - No records to process" doc:id="51631cfb-f128-407f-abc7-46ca14b30daf" message="No records to process" category="fsgReportDistributionMainFlow"/>
+				<ee:transform doc:name="Set API response" doc:id="347b96e3-a124-463f-8ab1-baf340e7e409">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	message: "No Records To Process"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5b97fcba-026e-4e5a-b121-6daa47fc46c5" >
+				<logger level="INFO" doc:name="Log - error occurred" doc:id="668c92ad-2350-407c-9f2a-e4c75a4820bc" message="Exception occurred: #[error.description]" category="fsgReportDistributionMainFlow"/>
+				<raise-error doc:name="Raise error" doc:id="6026d106-3708-4dcb-b6d6-ee29abf8950d" type="CUSTOM:BAD_REQUEST" description="Failed to process request"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

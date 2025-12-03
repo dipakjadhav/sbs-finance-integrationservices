@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="commonServices-suite.xml" />
+	<munit:test name="processListFlow-norecords-test" doc:id="ca989a58-69a9-44b4-897c-b29380649b1a" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="60962155-98a4-49be-8156-4694322f64e2" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://processListFlownorecordstest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processListFlownorecordstest\set-event_variable_.dwl')]" />
+					<munit:variable key="requestPath" value="#[readUrl('classpath://processListFlownorecordstest\set-event_variable_1.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processListFlownorecordstest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processListFlow" doc:id="1d40f60d-7235-4309-a09e-c4ee23a61f4e" name="processListFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="29bf03e0-883a-4f0e-87ab-3f44e58e0c5b" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlownorecordstest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="a1071ad2-1b45-432e-88fd-55d89e2f1087" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlownorecordstest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processListFlow-createrecord-test" doc:id="bee4814d-b0b7-427c-b828-d650c5a28c5f" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - callConcurApiFlow" doc:id="e2429671-141e-4bd8-890f-62d085a6a6db" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - callConcurApiFlow" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://processListFlowcreaterecordtest\mock_payload1.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://processListFlowcreaterecordtest\mock_attributes1.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://processListFlowcreaterecordtest\mock_variable_6.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://processListFlowcreaterecordtest\mock_variable_7.dwl')]" />
+						<munit-tools:variable key="requestMethod" value="#[output application/java --- readUrl('classpath://processListFlowcreaterecordtest\mock_variable_8.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://processListFlowcreaterecordtest\mock_variable_9.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processListFlowcreaterecordtest\mock_variable_10.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://processListFlowcreaterecordtest\mock_variable_11.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="c596cfb0-2499-4a82-985c-8e044ecaf6ad" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://processListFlowcreaterecordtest\set-event_payload1.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processListFlowcreaterecordtest\set-event_variable_3.dwl')]" />
+					<munit:variable key="requestPath" value="#[readUrl('classpath://processListFlowcreaterecordtest\set-event_variable_4.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processListFlowcreaterecordtest\set-event_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processListFlow" doc:id="82452900-6a97-4b5a-b730-51e6fac59de3" name="processListFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="f7f65307-59fb-463a-9dd6-0023b2352ab9" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlowcreaterecordtest::assert_expression_payload1
+---
+assert_expression_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="5d917848-467a-4b16-a516-94dc4a106753" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlowcreaterecordtest::assert_expression_variables1
+---
+assert_expression_variables1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="callConcurApiFlow-createrecord-test" doc:id="03ce60f6-a9b8-43e5-be17-f4786743f0e8" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call - Process Concur Request  API" doc:id="18d87e40-0d7b-47f8-a763-34d352406ce9" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Call - Process Concur Request  API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json  --- readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_payload.dwl')]" mediaType="application/json " encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_attributes.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="outboundHeaders" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_.dwl')]" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_1.dwl')]" />
+						<munit-tools:variable key="requestMethod" value="#[output application/java --- readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="requestPath" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_3.dwl')]" encoding="UTF-8" />
+						<munit-tools:variable key="correlationId" value="#[output application/java --- readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\mock_variable_5.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="16287d93-1c72-45ff-a97d-b8666eac622e" >
+				<munit:payload value="#[output application/java  --- readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/java " />
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_variable_1.dwl')]" />
+					<munit:variable key="requestPath" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_variable_2.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="counter" value="#[readUrl('classpath://callConcurAPIFlowcreaterecordtest\set-event_variable_4.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to callConcurApiFlow" doc:id="b0e79d99-5c27-47f0-b737-07e52614c496" name="callConcurApiFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="09b9c000-5c3f-474d-a9d8-ecad4e8d90be" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import callConcurAPIFlowcreaterecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert attributes" doc:id="eaacd839-81f6-4298-aa81-23c0f847e413" message="The attributes do not match">
+				<munit-tools:that><![CDATA[#[%dw 2.0
+import callConcurAPIFlowcreaterecordtest::assert_expression_attributes
+---
+assert_expression_attributes::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="028734e0-6511-40ed-a3f6-9ff0a9c6ca56" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import callConcurAPIFlowcreaterecordtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processListFlow-norecord-test" doc:id="76bc58df-69c3-4fe1-a74b-c75cfa5b70d4" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="32d7fe48-8d24-450f-a73a-49e6143c3fab" >
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processListFlownorecordtest\set-event_variable_.dwl')]" />
+					<munit:variable key="requestPath" value="#[readUrl('classpath://processListFlownorecordtest\set-event_variable_1.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processListFlownorecordtest\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processListFlow" doc:id="792f0d4f-d6f0-4f3a-b0e1-311661d28bfb" name="processListFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="f725b3c9-8933-4bea-b26e-af8dbe5aa061" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlownorecordtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="2dd05e19-ec40-433e-8275-1a726fe4db6d" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlownorecordtest::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="processListFlow-createrecord-test1" doc:id="76fb9861-36e7-428c-8fe7-32dc2249e735" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="044fd457-850e-48da-aad4-f5c402eefd66" >
+				<munit:variables >
+					<munit:variable key="outboundHeaders" value="#[readUrl('classpath://processListFlowcreaterecordtest1\set-event_variable_.dwl')]" />
+					<munit:variable key="requestPath" value="#[readUrl('classpath://processListFlowcreaterecordtest1\set-event_variable_1.dwl')]" encoding="UTF-8" />
+					<munit:variable key="correlationId" value="#[output application/java --- readUrl('classpath://processListFlowcreaterecordtest1\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to processListFlow" doc:id="c6da0a38-f4b3-4d8b-a4a5-1c5a853aadf4" name="processListFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="f2390395-d2b9-4edb-adc7-5f9a9581f64d" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlowcreaterecordtest1::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="Assert variables" doc:id="4cb95575-4ea6-40a9-a257-c59edb4030ed" message="The variables do not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import processListFlowcreaterecordtest1::assert_expression_variables
+---
+assert_expression_variables::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
